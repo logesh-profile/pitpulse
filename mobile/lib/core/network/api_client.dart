@@ -21,7 +21,7 @@ class ApiClient {
       ),
     );
 
-    // Logging interceptor for debugging (strictly redacts sensitive headers)
+    // Logging interceptor for debugging (strictly redacts sensitive credentials)
     if (kDebugMode) {
       _dio.interceptors.add(
         InterceptorsWrapper(
@@ -49,6 +49,14 @@ class ApiClient {
     _dio.options.baseUrl = newUrl;
   }
 
+  void setAuthToken(String? token) {
+    if (token != null && token.isNotEmpty) {
+      _dio.options.headers['Authorization'] = 'Bearer $token';
+    } else {
+      _dio.options.headers.remove('Authorization');
+    }
+  }
+
   Future<Response<T>> get<T>(
     String path, {
     Map<String, dynamic>? queryParameters,
@@ -57,6 +65,27 @@ class ApiClient {
     try {
       final response = await _dio.get<T>(
         path,
+        queryParameters: queryParameters,
+        options: options,
+      );
+      return response;
+    } on DioException catch (e) {
+      throw _handleDioException(e);
+    } catch (e) {
+      throw UnknownFailure(e.toString());
+    }
+  }
+
+  Future<Response<T>> post<T>(
+    String path, {
+    dynamic data,
+    Map<String, dynamic>? queryParameters,
+    Options? options,
+  }) async {
+    try {
+      final response = await _dio.post<T>(
+        path,
+        data: data,
         queryParameters: queryParameters,
         options: options,
       );
@@ -83,8 +112,22 @@ class ApiClient {
       case DioExceptionType.badResponse:
         final statusCode = error.response?.statusCode;
         final data = error.response?.data;
+        String errorMessage = 'Server error ($statusCode)';
+
+        if (data is Map && data.containsKey('detail')) {
+          final detail = data['detail'];
+          if (detail is String) {
+            errorMessage = detail;
+          } else if (detail is List && detail.isNotEmpty) {
+            final first = detail.first;
+            errorMessage = first['msg'] ?? detail.toString();
+          }
+        } else if (data is String) {
+          errorMessage = data;
+        }
+
         return ServerFailure(
-          'Server returned status $statusCode: ${data ?? error.message}',
+          errorMessage,
           statusCode: statusCode,
         );
       case DioExceptionType.cancel:

@@ -3,6 +3,7 @@ from fastapi import FastAPI, status
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 
+from app.api.v1 import api_v1_router
 from app.core.config import settings
 
 
@@ -31,6 +32,9 @@ def create_application() -> FastAPI:
         allow_methods=["*"],
         allow_headers=["*"],
     )
+
+    # Include API v1 Routers
+    app.include_router(api_v1_router)
 
     @app.get(
         "/health",

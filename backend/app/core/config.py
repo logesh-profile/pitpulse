@@ -1,5 +1,5 @@
 from typing import List, Union
-from pydantic import AnyHttpUrl, field_validator
+from pydantic import field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -25,13 +25,14 @@ class Settings(BaseSettings):
         return value
 
     # Security configuration
-    JWT_SECRET_KEY: str = "development-secret-key-must-be-changed-in-production-32chars"
+    JWT_SECRET_KEY: str = "94e77cb891fc4f8490a6e0c05764dcb91e457f00bc2611e3b6eb4cf2a52efc18"
     JWT_ALGORITHM: str = "HS256"
     JWT_ACCESS_EXPIRE_MINUTES: int = 30
     JWT_REFRESH_EXPIRE_DAYS: int = 7
 
-    # Database configuration placeholder for future stages
-    DATABASE_URL: str = "postgresql+asyncpg://pitpulse_user:placeholder@localhost:5432/pitpulse_db"
+    # Database configuration
+    DATABASE_URL: str = "postgresql+asyncpg://postgres:logesh%40360@127.0.0.1:5432/pitpulse_db"
+    SYNC_DATABASE_URL: str = "postgresql+psycopg2://postgres:logesh%40360@127.0.0.1:5432/pitpulse_db"
 
     model_config = SettingsConfigDict(
         env_file=".env",
