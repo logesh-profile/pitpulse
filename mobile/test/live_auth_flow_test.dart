@@ -18,7 +18,6 @@ void main() {
       email: testEmail,
       password: testPassword,
       fullName: testName,
-      role: 'PATIENT',
     );
 
     expect(registeredUser.email, testEmail);

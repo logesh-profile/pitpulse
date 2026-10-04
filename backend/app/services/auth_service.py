@@ -55,7 +55,7 @@ class AuthService:
             phone=req.phone.strip() if req.phone else None,
             full_name=req.full_name.strip(),
             password_hash=hashed_pw,
-            role=req.role,
+            role=RoleEnum.PATIENT,
             is_active=True,
         )
 

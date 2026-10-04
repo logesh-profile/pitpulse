@@ -21,8 +21,8 @@ router = APIRouter(prefix="/auth", tags=["Authentication & Identity"])
     "/register",
     response_model=UserResponse,
     status_code=status.HTTP_201_CREATED,
-    summary="Register a new user account",
-    description="Registers a real user in PostgreSQL. Public registration cannot create ADMIN users.",
+    summary="Register a new patient user account",
+    description="Registers a real patient user in PostgreSQL. Only PATIENT role can be registered publicly.",
 )
 async def register(
     req: UserRegisterRequest,

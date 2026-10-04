@@ -17,8 +17,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
   final _phoneController = TextEditingController();
   final _passwordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
-
-  String _selectedRole = 'PATIENT';
   bool _obscurePassword = true;
 
   @override
@@ -41,7 +39,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
       password: _passwordController.text,
       fullName: _fullNameController.text.trim(),
       phone: _phoneController.text.trim().isNotEmpty ? _phoneController.text.trim() : null,
-      role: _selectedRole,
     );
 
     if (success && mounted) {
@@ -73,7 +70,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 ),
                 const SizedBox(height: 6),
                 Text(
-                  'Register a genuine user profile into PostgreSQL',
+                  'Register a genuine patient profile into PostgreSQL',
                   style: theme.textTheme.bodyMedium?.copyWith(color: Colors.grey[600]),
                 ),
                 const SizedBox(height: 20),
@@ -150,30 +147,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     prefixIcon: Icon(Icons.phone_outlined),
                     border: OutlineInputBorder(),
                   ),
-                ),
-                const SizedBox(height: 14),
-
-                // Role Selector (Excludes ADMIN)
-                DropdownButtonFormField<String>(
-                  key: const Key('register_role_dropdown'),
-                  initialValue: _selectedRole,
-                  decoration: const InputDecoration(
-                    labelText: 'User Role',
-                    prefixIcon: Icon(Icons.badge_outlined),
-                    border: OutlineInputBorder(),
-                  ),
-                  items: const [
-                    DropdownMenuItem(value: 'PATIENT', child: Text('Patient (Personal Health)')),
-                    DropdownMenuItem(value: 'ASHA', child: Text('ASHA Health Worker (Field Care)')),
-                    DropdownMenuItem(value: 'DOCTOR', child: Text('Doctor / Clinical Physician')),
-                  ],
-                  onChanged: (val) {
-                    if (val != null) {
-                      setState(() {
-                        _selectedRole = val;
-                      });
-                    }
-                  },
                 ),
                 const SizedBox(height: 14),
 

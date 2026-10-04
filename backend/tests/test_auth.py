@@ -30,14 +30,13 @@ async def test_password_hashing_and_verification():
 
 @pytest.mark.asyncio
 async def test_user_registration_success(async_client: AsyncClient, db_session: AsyncSession):
-    """Verify successful user registration into PostgreSQL."""
+    """Verify successful user registration into PostgreSQL creates PATIENT role."""
     email = f"patient_{uuid.uuid4().hex[:8]}@pitpulse.org"
     payload = {
         "email": email,
         "password": "SecurePassword123!",
         "full_name": "Ravi Kumar",
         "phone": f"+9198{uuid.uuid4().hex[:8]}",
-        "role": "PATIENT",
     }
 
     response = await async_client.post("/api/v1/auth/register", json=payload)
@@ -58,6 +57,7 @@ async def test_user_registration_success(async_client: AsyncClient, db_session: 
     db_user = result.scalar_one_or_none()
     assert db_user is not None
     assert db_user.full_name == "Ravi Kumar"
+    assert db_user.role == RoleEnum.PATIENT
     assert verify_password("SecurePassword123!", db_user.password_hash) is True
 
 
@@ -69,7 +69,6 @@ async def test_duplicate_email_registration_rejection(async_client: AsyncClient)
         "email": email,
         "password": "SecurePassword123!",
         "full_name": "User One",
-        "role": "PATIENT",
     }
 
     resp1 = await async_client.post("/api/v1/auth/register", json=payload)
@@ -81,31 +80,76 @@ async def test_duplicate_email_registration_rejection(async_client: AsyncClient)
 
 
 @pytest.mark.asyncio
-async def test_prevent_public_admin_registration(async_client: AsyncClient):
-    """Verify that public registration endpoint rejects ADMIN role creation."""
+async def test_public_registration_rejects_asha_role(async_client: AsyncClient):
+    """Verify public registration rejects any attempt to self-assign ASHA role."""
     payload = {
-        "email": f"hacker_{uuid.uuid4().hex[:8]}@pitpulse.org",
+        "email": f"hacker_asha_{uuid.uuid4().hex[:8]}@pitpulse.org",
+        "password": "SecurePassword123!",
+        "full_name": "Fake ASHA",
+        "role": "ASHA",
+    }
+    response = await async_client.post("/api/v1/auth/register", json=payload)
+    assert response.status_code == 422  # Extra field forbidden
+
+
+@pytest.mark.asyncio
+async def test_public_registration_rejects_doctor_role(async_client: AsyncClient):
+    """Verify public registration rejects any attempt to self-assign DOCTOR role."""
+    payload = {
+        "email": f"hacker_doc_{uuid.uuid4().hex[:8]}@pitpulse.org",
+        "password": "SecurePassword123!",
+        "full_name": "Fake Doctor",
+        "role": "DOCTOR",
+    }
+    response = await async_client.post("/api/v1/auth/register", json=payload)
+    assert response.status_code == 422  # Extra field forbidden
+
+
+@pytest.mark.asyncio
+async def test_public_registration_rejects_admin_role(async_client: AsyncClient):
+    """Verify public registration rejects any attempt to self-assign ADMIN role."""
+    payload = {
+        "email": f"hacker_admin_{uuid.uuid4().hex[:8]}@pitpulse.org",
         "password": "SecurePassword123!",
         "full_name": "Fake Admin",
         "role": "ADMIN",
     }
-
     response = await async_client.post("/api/v1/auth/register", json=payload)
-    assert response.status_code == 422  # Pydantic validation rejection
+    assert response.status_code == 422  # Extra field forbidden
+
+
+@pytest.mark.asyncio
+async def test_malicious_client_cannot_create_privileged_account(async_client: AsyncClient, db_session: AsyncSession):
+    """Verify that even with raw HTTP injection of arbitrary role fields, no privileged user is created in PostgreSQL."""
+    for forbidden_role in ["ADMIN", "DOCTOR", "ASHA", "SUPERADMIN"]:
+        test_email = f"exploit_{forbidden_role.lower()}_{uuid.uuid4().hex[:6]}@pitpulse.org"
+        response = await async_client.post(
+            "/api/v1/auth/register",
+            json={
+                "email": test_email,
+                "password": "Password123!",
+                "full_name": f"Attacker {forbidden_role}",
+                "role": forbidden_role,
+            },
+        )
+        assert response.status_code == 422
+        # Verify no user created in DB with that email
+        stmt = select(User).where(User.email == test_email)
+        result = await db_session.execute(stmt)
+        assert result.scalar_one_or_none() is None
 
 
 @pytest.mark.asyncio
 async def test_successful_login_and_token_issuance(async_client: AsyncClient, db_session: AsyncSession):
     """Verify login against PostgreSQL Argon2id hash and JWT token issuance."""
-    email = f"doctor_{uuid.uuid4().hex[:8]}@pitpulse.org"
-    password = "DoctorPassword123!"
+    email = f"patient_login_{uuid.uuid4().hex[:8]}@pitpulse.org"
+    password = "PatientPassword123!"
 
-    # Register doctor
+    # Register patient
     reg_payload = {
         "email": email,
         "password": password,
-        "full_name": "Dr. Ananya Sharma",
-        "role": "DOCTOR",
+        "full_name": "Ananya Sharma",
     }
     reg_resp = await async_client.post("/api/v1/auth/register", json=reg_payload)
     assert reg_resp.status_code == 201
@@ -123,7 +167,7 @@ async def test_successful_login_and_token_issuance(async_client: AsyncClient, db
     assert "refresh_token" in data
     assert data["token_type"] == "bearer"
     assert data["user"]["email"] == email
-    assert data["user"]["role"] == "DOCTOR"
+    assert data["user"]["role"] == "PATIENT"
 
     # Verify refresh token hash was persisted in PostgreSQL
     token_hash = hash_token(data["refresh_token"])
@@ -137,12 +181,11 @@ async def test_successful_login_and_token_issuance(async_client: AsyncClient, db
 @pytest.mark.asyncio
 async def test_invalid_password_rejection(async_client: AsyncClient):
     """Verify that wrong password is rejected with generic 401 error."""
-    email = f"asha_{uuid.uuid4().hex[:8]}@pitpulse.org"
+    email = f"patient_pw_{uuid.uuid4().hex[:8]}@pitpulse.org"
     reg_payload = {
         "email": email,
-        "password": "AshaPassword123!",
+        "password": "CorrectPassword123!",
         "full_name": "Priya Devi",
-        "role": "ASHA",
     }
     await async_client.post("/api/v1/auth/register", json=reg_payload)
 
@@ -162,7 +205,7 @@ async def test_authenticated_auth_me_endpoint(async_client: AsyncClient):
 
     reg_resp = await async_client.post(
         "/api/v1/auth/register",
-        json={"email": email, "password": password, "full_name": "Sneha Patel", "role": "PATIENT"},
+        json={"email": email, "password": password, "full_name": "Sneha Patel"},
     )
     assert reg_resp.status_code == 201
 
@@ -193,7 +236,7 @@ async def test_token_rotation_and_revocation(async_client: AsyncClient, db_sessi
 
     await async_client.post(
         "/api/v1/auth/register",
-        json={"email": email, "password": password, "full_name": "Test Rotation", "role": "PATIENT"},
+        json={"email": email, "password": password, "full_name": "Test Rotation"},
     )
     login_resp = await async_client.post(
         "/api/v1/auth/login",
@@ -237,7 +280,7 @@ async def test_logout_revokes_token_in_postgresql(async_client: AsyncClient, db_
 
     await async_client.post(
         "/api/v1/auth/register",
-        json={"email": email, "password": password, "full_name": "Logout User", "role": "PATIENT"},
+        json={"email": email, "password": password, "full_name": "Logout User"},
     )
     login_resp = await async_client.post(
         "/api/v1/auth/login",
@@ -261,16 +304,16 @@ async def test_logout_revokes_token_in_postgresql(async_client: AsyncClient, db_
 
 
 @pytest.mark.asyncio
-async def test_role_based_authorization_backend(async_client: AsyncClient):
+async def test_role_based_authorization_backend(async_client: AsyncClient, db_session: AsyncSession):
     """Verify that backend strictly blocks unauthorized roles."""
     patient_email = f"patient_{uuid.uuid4().hex[:8]}@pitpulse.org"
     doctor_email = f"doctor_{uuid.uuid4().hex[:8]}@pitpulse.org"
     pw = "SecretPassword123!"
 
-    # Create patient
+    # Create patient via public registration
     await async_client.post(
         "/api/v1/auth/register",
-        json={"email": patient_email, "password": pw, "full_name": "Patient X", "role": "PATIENT"},
+        json={"email": patient_email, "password": pw, "full_name": "Patient X"},
     )
     patient_login = await async_client.post(
         "/api/v1/auth/login",
@@ -278,11 +321,17 @@ async def test_role_based_authorization_backend(async_client: AsyncClient):
     )
     patient_token = patient_login.json()["access_token"]
 
-    # Create doctor
-    await async_client.post(
-        "/api/v1/auth/register",
-        json={"email": doctor_email, "password": pw, "full_name": "Doctor Y", "role": "DOCTOR"},
+    # Provision doctor directly into PostgreSQL (secure internal provisioning)
+    doctor_user = User(
+        email=doctor_email,
+        password_hash=hash_password(pw),
+        full_name="Doctor Y",
+        role=RoleEnum.DOCTOR,
+        is_active=True,
     )
+    db_session.add(doctor_user)
+    await db_session.commit()
+
     doctor_login = await async_client.post(
         "/api/v1/auth/login",
         json={"email": doctor_email, "password": pw},

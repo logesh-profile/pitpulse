@@ -39,7 +39,6 @@ class FakeAuthRemoteDataSource implements AuthRemoteDataSource {
     required String password,
     required String fullName,
     String? phone,
-    required String role,
   }) async {
     if (shouldFail) throw const ServerFailure('Registration failed.');
     return UserModel(
@@ -47,7 +46,7 @@ class FakeAuthRemoteDataSource implements AuthRemoteDataSource {
       email: email,
       fullName: fullName,
       phone: phone,
-      role: role,
+      role: 'PATIENT',
       isActive: true,
       createdAt: '2026-10-04',
     );

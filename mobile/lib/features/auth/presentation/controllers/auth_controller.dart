@@ -111,7 +111,6 @@ class AuthController extends ChangeNotifier {
     required String password,
     required String fullName,
     String? phone,
-    required String role,
   }) async {
     _status = AuthStatus.loading;
     _errorMessage = null;
@@ -123,7 +122,6 @@ class AuthController extends ChangeNotifier {
         password: password,
         fullName: fullName,
         phone: phone,
-        role: role,
       );
 
       // Auto-login after successful registration

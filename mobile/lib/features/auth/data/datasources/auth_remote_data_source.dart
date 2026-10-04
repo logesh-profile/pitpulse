@@ -9,7 +9,6 @@ abstract class AuthRemoteDataSource {
     required String password,
     required String fullName,
     String? phone,
-    required String role,
   });
 
   Future<TokenModel> login({
@@ -41,7 +40,6 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
     required String password,
     required String fullName,
     String? phone,
-    required String role,
   }) async {
     final response = await apiClient.post<Map<String, dynamic>>(
       '/api/v1/auth/register',
@@ -50,7 +48,6 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
         'password': password,
         'full_name': fullName.trim(),
         'phone': phone?.trim(),
-        'role': role,
       },
     );
 
