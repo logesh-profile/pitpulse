@@ -77,3 +77,9 @@ class PatientProfile(Base):
         uselist=False,
         cascade="all, delete-orphan",
     )
+    pregnancies: Mapped[list["Pregnancy"]] = relationship(
+        "Pregnancy",
+        back_populates="patient",
+        cascade="all, delete-orphan",
+        order_by="desc(Pregnancy.pregnancy_number)",
+    )
