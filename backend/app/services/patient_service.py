@@ -6,6 +6,11 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
+from app.models.asha_patient_assignment import (
+    AshaPatientAssignment,
+    AssignmentStatusEnum,
+)
+from app.models.asha_profile import AshaProfile
 from app.models.health_record import HealthRecord
 from app.models.patient_profile import PatientProfile
 from app.models.user import RoleEnum, User
@@ -203,6 +208,29 @@ class PatientService:
                 status_code=status.HTTP_403_FORBIDDEN,
                 detail="Access denied: You do not have permission to access another patient's medical profile.",
             )
+
+        # If ASHA: MUST be actively assigned to this patient
+        if current_user.role == RoleEnum.ASHA:
+            stmt_asha = select(AshaProfile).where(AshaProfile.user_id == current_user.id)
+            asha_res = await db.execute(stmt_asha)
+            asha_prof = asha_res.scalar_one_or_none()
+            if not asha_prof:
+                raise HTTPException(
+                    status_code=status.HTTP_403_FORBIDDEN,
+                    detail="ASHA worker profile not found.",
+                )
+
+            stmt_assign = select(AshaPatientAssignment).where(
+                AshaPatientAssignment.asha_worker_id == asha_prof.id,
+                AshaPatientAssignment.patient_id == patient_id,
+                AshaPatientAssignment.status == AssignmentStatusEnum.ACTIVE,
+            )
+            assign_res = await db.execute(stmt_assign)
+            if not assign_res.scalar_one_or_none():
+                raise HTTPException(
+                    status_code=status.HTTP_403_FORBIDDEN,
+                    detail="Access denied: Patient is not actively assigned to this ASHA worker.",
+                )
 
         hr_resp = None
         if profile.health_record:

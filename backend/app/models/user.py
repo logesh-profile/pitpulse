@@ -57,6 +57,11 @@ class User(Base):
         default=True,
         nullable=False,
     )
+    is_verified: Mapped[bool] = mapped_column(
+        Boolean,
+        default=False,
+        nullable=False,
+    )
     must_change_password: Mapped[bool] = mapped_column(
         Boolean,
         default=False,

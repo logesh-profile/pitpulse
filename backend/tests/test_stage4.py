@@ -24,6 +24,8 @@ async def create_and_login_patient(async_client: AsyncClient, name_prefix: str =
         json={"email": email, "password": password, "full_name": full_name},
     )
     assert reg_res.status_code == 201
+    dev_token = reg_res.json()["dev_verification_token"]
+    await async_client.post("/api/v1/auth/verify-email", json={"token": dev_token})
 
     login_res = await async_client.post(
         "/api/v1/auth/login",
@@ -49,6 +51,7 @@ async def create_and_login_doctor(async_client: AsyncClient, db_session: AsyncSe
         password_hash=hash_password(password),
         role=RoleEnum.DOCTOR,
         is_active=True,
+        is_verified=True,
         must_change_password=False,
     )
     db_session.add(doc)

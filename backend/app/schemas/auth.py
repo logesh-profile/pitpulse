@@ -49,6 +49,7 @@ class UserResponse(BaseModel):
     full_name: str
     role: RoleEnum
     is_active: bool
+    is_verified: bool = False
     must_change_password: bool = False
     created_at: datetime
 
@@ -61,3 +62,27 @@ class TokenResponse(BaseModel):
     token_type: str = "bearer"
     expires_in: int
     user: UserResponse
+
+
+class VerifyEmailRequest(BaseModel):
+    token: str = Field(..., min_length=16, description="Email verification token")
+
+
+class ResendVerificationRequest(BaseModel):
+    email: EmailStr
+
+
+class ActivateProfessionalRequest(BaseModel):
+    token: str = Field(..., min_length=16, description="Professional activation token")
+    new_password: str = Field(..., min_length=8, description="Chosen password (minimum 8 characters)")
+
+
+class UserRegisterResponse(BaseModel):
+    message: str
+    user: UserResponse
+    dev_verification_token: Optional[str] = None
+
+
+class VerifyEmailResponse(BaseModel):
+    message: str
+    is_verified: bool

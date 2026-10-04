@@ -20,6 +20,7 @@ async def create_and_login_admin(async_client: AsyncClient, db_session: AsyncSes
         password_hash=hash_password(password),
         role=RoleEnum.ADMIN,
         is_active=True,
+        is_verified=True,
         must_change_password=False,
     )
     db_session.add(admin_user)
@@ -47,6 +48,7 @@ async def create_and_login_asha(
         password_hash=hash_password(password),
         role=RoleEnum.ASHA,
         is_active=True,
+        is_verified=True,
         must_change_password=False,
     )
     db_session.add(user)
@@ -88,6 +90,13 @@ async def create_and_login_patient(
         json={"email": email, "password": password, "full_name": full_name},
     )
     assert reg_res.status_code == 201
+    dev_token = reg_res.json().get("dev_verification_token")
+    if dev_token:
+        v_res = await async_client.post(
+            "/api/v1/auth/verify-email",
+            json={"email": email, "token": dev_token},
+        )
+        assert v_res.status_code == 200
 
     login_res = await async_client.post(
         "/api/v1/auth/login",

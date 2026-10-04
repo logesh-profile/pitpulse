@@ -12,6 +12,7 @@ from app.core.security import hash_password
 from app.models.asha_profile import AshaProfile
 from app.models.doctor_profile import DoctorProfile
 from app.models.user import RoleEnum, User
+from app.models.verification_token import TokenTypeEnum
 from app.schemas.admin import (
     AshaProvisionResponse,
     CreateAshaRequest,
@@ -19,6 +20,7 @@ from app.schemas.admin import (
     DoctorProvisionResponse,
     ProfessionalUserItem,
 )
+from app.services.email_service import EmailService
 
 
 def generate_secure_temporary_password(length: int = 14) -> str:
@@ -61,8 +63,9 @@ class AdminService:
                     detail="An account with this phone number already exists.",
                 )
 
-        temp_password = generate_secure_temporary_password()
-        hashed_pw = hash_password(temp_password)
+        # Initial random password hash to prevent empty login
+        dummy_seed_pw = generate_secure_temporary_password()
+        hashed_pw = hash_password(dummy_seed_pw)
 
         new_user = User(
             email=email_clean,
@@ -71,6 +74,7 @@ class AdminService:
             password_hash=hashed_pw,
             role=RoleEnum.DOCTOR,
             is_active=True,
+            is_verified=False,
             must_change_password=True,
         )
         db.add(new_user)
@@ -83,8 +87,26 @@ class AdminService:
             facility_name=req.facility_name.strip() if req.facility_name else None,
         )
         db.add(doc_profile)
+        await db.flush()
+
+        # Generate activation token
+        activation_token = await EmailService.create_verification_token(
+            db=db,
+            user_id=new_user.id,
+            token_type=TokenTypeEnum.PROFESSIONAL_ACTIVATION,
+            expire_hours=168,  # 7 days
+        )
+
         await db.commit()
         await db.refresh(new_user)
+
+        # Dispatch activation email
+        await EmailService.send_professional_activation_email(
+            email=new_user.email,
+            full_name=new_user.full_name,
+            role="DOCTOR",
+            token=activation_token,
+        )
 
         return DoctorProvisionResponse(
             user_id=new_user.id,
@@ -92,7 +114,8 @@ class AdminService:
             full_name=new_user.full_name,
             phone=new_user.phone,
             role=RoleEnum.DOCTOR,
-            temporary_password=temp_password,
+            activation_token=activation_token,
+            temporary_password=None,
             must_change_password=True,
             is_active=True,
             medical_license_number=doc_profile.medical_license_number,
@@ -126,8 +149,8 @@ class AdminService:
                     detail="An account with this phone number already exists.",
                 )
 
-        temp_password = generate_secure_temporary_password()
-        hashed_pw = hash_password(temp_password)
+        dummy_seed_pw = generate_secure_temporary_password()
+        hashed_pw = hash_password(dummy_seed_pw)
 
         new_user = User(
             email=email_clean,
@@ -136,6 +159,7 @@ class AdminService:
             password_hash=hashed_pw,
             role=RoleEnum.ASHA,
             is_active=True,
+            is_verified=False,
             must_change_password=True,
         )
         db.add(new_user)
@@ -148,8 +172,26 @@ class AdminService:
             primary_health_center=req.primary_health_center.strip() if req.primary_health_center else None,
         )
         db.add(asha_prof)
+        await db.flush()
+
+        # Generate activation token
+        activation_token = await EmailService.create_verification_token(
+            db=db,
+            user_id=new_user.id,
+            token_type=TokenTypeEnum.PROFESSIONAL_ACTIVATION,
+            expire_hours=168,  # 7 days
+        )
+
         await db.commit()
         await db.refresh(new_user)
+
+        # Dispatch activation email
+        await EmailService.send_professional_activation_email(
+            email=new_user.email,
+            full_name=new_user.full_name,
+            role="ASHA_WORKER",
+            token=activation_token,
+        )
 
         return AshaProvisionResponse(
             user_id=new_user.id,
@@ -157,7 +199,8 @@ class AdminService:
             full_name=new_user.full_name,
             phone=new_user.phone,
             role=RoleEnum.ASHA,
-            temporary_password=temp_password,
+            activation_token=activation_token,
+            temporary_password=None,
             must_change_password=True,
             is_active=True,
             worker_id_code=asha_prof.worker_id_code,

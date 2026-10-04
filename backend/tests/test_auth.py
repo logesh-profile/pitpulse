@@ -43,13 +43,13 @@ async def test_user_registration_success(async_client: AsyncClient, db_session: 
     assert response.status_code == 201
     data = response.json()
 
-    assert data["email"] == email
-    assert data["full_name"] == "Ravi Kumar"
-    assert data["role"] == "PATIENT"
-    assert data["is_active"] is True
-    assert "id" in data
-    assert "password" not in data
-    assert "password_hash" not in data
+    assert "dev_verification_token" in data
+    assert data["user"]["email"] == email
+    assert data["user"]["full_name"] == "Ravi Kumar"
+    assert data["user"]["role"] == "PATIENT"
+    assert data["user"]["is_active"] is True
+    assert data["user"]["is_verified"] is False
+    assert "id" in data["user"]
 
     # Verify directly in PostgreSQL
     stmt = select(User).where(User.email == email)
@@ -141,7 +141,7 @@ async def test_malicious_client_cannot_create_privileged_account(async_client: A
 
 @pytest.mark.asyncio
 async def test_successful_login_and_token_issuance(async_client: AsyncClient, db_session: AsyncSession):
-    """Verify login against PostgreSQL Argon2id hash and JWT token issuance."""
+    """Verify login against PostgreSQL Argon2id hash and JWT token issuance after email verification."""
     email = f"patient_login_{uuid.uuid4().hex[:8]}@pitpulse.org"
     password = "PatientPassword123!"
 
@@ -153,6 +153,11 @@ async def test_successful_login_and_token_issuance(async_client: AsyncClient, db
     }
     reg_resp = await async_client.post("/api/v1/auth/register", json=reg_payload)
     assert reg_resp.status_code == 201
+    dev_token = reg_resp.json()["dev_verification_token"]
+
+    # Verify email
+    ver_resp = await async_client.post("/api/v1/auth/verify-email", json={"token": dev_token})
+    assert ver_resp.status_code == 200
 
     # Login
     login_payload = {
@@ -187,7 +192,9 @@ async def test_invalid_password_rejection(async_client: AsyncClient):
         "password": "CorrectPassword123!",
         "full_name": "Priya Devi",
     }
-    await async_client.post("/api/v1/auth/register", json=reg_payload)
+    reg_resp = await async_client.post("/api/v1/auth/register", json=reg_payload)
+    dev_token = reg_resp.json()["dev_verification_token"]
+    await async_client.post("/api/v1/auth/verify-email", json={"token": dev_token})
 
     login_resp = await async_client.post(
         "/api/v1/auth/login",
@@ -208,6 +215,8 @@ async def test_authenticated_auth_me_endpoint(async_client: AsyncClient):
         json={"email": email, "password": password, "full_name": "Sneha Patel"},
     )
     assert reg_resp.status_code == 201
+    dev_token = reg_resp.json()["dev_verification_token"]
+    await async_client.post("/api/v1/auth/verify-email", json={"token": dev_token})
 
     login_resp = await async_client.post(
         "/api/v1/auth/login",
@@ -234,10 +243,13 @@ async def test_token_rotation_and_revocation(async_client: AsyncClient, db_sessi
     email = f"refresh_{uuid.uuid4().hex[:8]}@pitpulse.org"
     password = "MyPassword123!"
 
-    await async_client.post(
+    reg_resp = await async_client.post(
         "/api/v1/auth/register",
         json={"email": email, "password": password, "full_name": "Test Rotation"},
     )
+    dev_token = reg_resp.json()["dev_verification_token"]
+    await async_client.post("/api/v1/auth/verify-email", json={"token": dev_token})
+
     login_resp = await async_client.post(
         "/api/v1/auth/login",
         json={"email": email, "password": password},
@@ -278,10 +290,13 @@ async def test_logout_revokes_token_in_postgresql(async_client: AsyncClient, db_
     email = f"logout_{uuid.uuid4().hex[:8]}@pitpulse.org"
     password = "MyPassword123!"
 
-    await async_client.post(
+    reg_resp = await async_client.post(
         "/api/v1/auth/register",
         json={"email": email, "password": password, "full_name": "Logout User"},
     )
+    dev_token = reg_resp.json()["dev_verification_token"]
+    await async_client.post("/api/v1/auth/verify-email", json={"token": dev_token})
+
     login_resp = await async_client.post(
         "/api/v1/auth/login",
         json={"email": email, "password": password},
@@ -311,10 +326,13 @@ async def test_role_based_authorization_backend(async_client: AsyncClient, db_se
     pw = "SecretPassword123!"
 
     # Create patient via public registration
-    await async_client.post(
+    reg_resp = await async_client.post(
         "/api/v1/auth/register",
         json={"email": patient_email, "password": pw, "full_name": "Patient X"},
     )
+    dev_token = reg_resp.json()["dev_verification_token"]
+    await async_client.post("/api/v1/auth/verify-email", json={"token": dev_token})
+
     patient_login = await async_client.post(
         "/api/v1/auth/login",
         json={"email": patient_email, "password": pw},
@@ -328,6 +346,7 @@ async def test_role_based_authorization_backend(async_client: AsyncClient, db_se
         full_name="Doctor Y",
         role=RoleEnum.DOCTOR,
         is_active=True,
+        is_verified=True,
     )
     db_session.add(doctor_user)
     await db_session.commit()

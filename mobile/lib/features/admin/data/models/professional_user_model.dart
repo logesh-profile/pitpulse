@@ -4,6 +4,7 @@ class ProvisionedAccountResult {
   final String fullName;
   final String? phone;
   final String role;
+  final String activationToken;
   final String temporaryPassword;
   final bool mustChangePassword;
   final String? detailsKey;
@@ -15,6 +16,7 @@ class ProvisionedAccountResult {
     required this.fullName,
     this.phone,
     required this.role,
+    required this.activationToken,
     required this.temporaryPassword,
     required this.mustChangePassword,
     this.detailsKey,
@@ -22,13 +24,15 @@ class ProvisionedAccountResult {
   });
 
   factory ProvisionedAccountResult.fromJson(Map<String, dynamic> json) {
+    final token = json['activation_token'] as String? ?? json['temporary_password'] as String? ?? '';
     return ProvisionedAccountResult(
       userId: json['user_id'] as String? ?? '',
       email: json['email'] as String? ?? '',
       fullName: json['full_name'] as String? ?? '',
       phone: json['phone'] as String?,
       role: json['role'] as String? ?? '',
-      temporaryPassword: json['temporary_password'] as String? ?? '',
+      activationToken: token,
+      temporaryPassword: json['temporary_password'] as String? ?? token,
       mustChangePassword: json['must_change_password'] as bool? ?? true,
       detailsKey: json.containsKey('medical_license_number') ? 'License' : (json.containsKey('worker_id_code') ? 'Worker Code' : null),
       detailsValue: json['medical_license_number'] as String? ?? json['worker_id_code'] as String?,

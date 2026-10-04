@@ -13,6 +13,8 @@ from app.models.pregnancy import Pregnancy, PregnancyStatusEnum
 from app.models.refresh_token import RefreshToken
 from app.models.user import RoleEnum, User
 
+from app.models.verification_token import TokenTypeEnum, VerificationToken
+
 __all__ = [
     "Base",
     "User",
@@ -29,4 +31,6 @@ __all__ = [
     "HomeVisit",
     "VisitStatusEnum",
     "MaternalVitalRecord",
+    "VerificationToken",
+    "TokenTypeEnum",
 ]

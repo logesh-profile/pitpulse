@@ -58,11 +58,11 @@ class AssignmentService:
         admin_user: User,
         req: AshaAssignmentCreateRequest,
     ) -> AshaAssignmentResponse:
-        """Admin creates or reassigns a patient to an ASHA worker."""
-        if admin_user.role != RoleEnum.ADMIN:
+        """Admin or Doctor creates or reassigns a patient to an ASHA worker."""
+        if admin_user.role not in (RoleEnum.ADMIN, RoleEnum.DOCTOR):
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
-                detail="Only System Administrators can create or modify ASHA patient assignments.",
+                detail="Only Doctors or System Administrators can create or modify ASHA patient assignments.",
             )
 
         # 1. Validate ASHA profile

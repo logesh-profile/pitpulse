@@ -5,6 +5,11 @@ from fastapi import HTTPException, status
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.models.asha_patient_assignment import (
+    AshaPatientAssignment,
+    AssignmentStatusEnum,
+)
+from app.models.asha_profile import AshaProfile
 from app.models.patient_profile import PatientProfile
 from app.models.pregnancy import Pregnancy, PregnancyStatusEnum
 from app.models.user import RoleEnum, User
@@ -208,7 +213,8 @@ class PregnancyService:
         """
         Retrieves pregnancy list for a given patient_id with backend IDOR protection.
         - Patients can only query their own patient_id.
-        - DOCTOR, ASHA, and ADMIN can access.
+        - ASHA workers can only query patients actively assigned to them.
+        - DOCTOR and ADMIN can access.
         """
         stmt_prof = select(PatientProfile).where(PatientProfile.id == patient_id)
         prof_res = await db.execute(stmt_prof)
@@ -220,12 +226,35 @@ class PregnancyService:
                 detail="Patient profile not found.",
             )
 
-        # IDOR enforcement
+        # IDOR enforcement for PATIENT
         if current_user.role == RoleEnum.PATIENT and profile.user_id != current_user.id:
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
                 detail="Access denied: You do not have permission to view another patient's pregnancy records.",
             )
+
+        # IDOR enforcement for ASHA
+        if current_user.role == RoleEnum.ASHA:
+            stmt_asha = select(AshaProfile).where(AshaProfile.user_id == current_user.id)
+            asha_res = await db.execute(stmt_asha)
+            asha_prof = asha_res.scalar_one_or_none()
+            if not asha_prof:
+                raise HTTPException(
+                    status_code=status.HTTP_403_FORBIDDEN,
+                    detail="ASHA worker profile not found.",
+                )
+
+            stmt_assign = select(AshaPatientAssignment).where(
+                AshaPatientAssignment.asha_worker_id == asha_prof.id,
+                AshaPatientAssignment.patient_id == patient_id,
+                AshaPatientAssignment.status == AssignmentStatusEnum.ACTIVE,
+            )
+            assign_res = await db.execute(stmt_assign)
+            if not assign_res.scalar_one_or_none():
+                raise HTTPException(
+                    status_code=status.HTTP_403_FORBIDDEN,
+                    detail="Access denied: Patient is not actively assigned to this ASHA worker.",
+                )
 
         stmt = (
             select(Pregnancy)
@@ -256,12 +285,35 @@ class PregnancyService:
                 detail="Patient profile not found.",
             )
 
-        # IDOR enforcement
+        # IDOR enforcement for PATIENT
         if current_user.role == RoleEnum.PATIENT and profile.user_id != current_user.id:
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
                 detail="Access denied: You do not have permission to view another patient's pregnancy record.",
             )
+
+        # IDOR enforcement for ASHA
+        if current_user.role == RoleEnum.ASHA:
+            stmt_asha = select(AshaProfile).where(AshaProfile.user_id == current_user.id)
+            asha_res = await db.execute(stmt_asha)
+            asha_prof = asha_res.scalar_one_or_none()
+            if not asha_prof:
+                raise HTTPException(
+                    status_code=status.HTTP_403_FORBIDDEN,
+                    detail="ASHA worker profile not found.",
+                )
+
+            stmt_assign = select(AshaPatientAssignment).where(
+                AshaPatientAssignment.asha_worker_id == asha_prof.id,
+                AshaPatientAssignment.patient_id == patient_id,
+                AshaPatientAssignment.status == AssignmentStatusEnum.ACTIVE,
+            )
+            assign_res = await db.execute(stmt_assign)
+            if not assign_res.scalar_one_or_none():
+                raise HTTPException(
+                    status_code=status.HTTP_403_FORBIDDEN,
+                    detail="Access denied: Patient is not actively assigned to this ASHA worker.",
+                )
 
         stmt = select(Pregnancy).where(
             Pregnancy.id == pregnancy_id,

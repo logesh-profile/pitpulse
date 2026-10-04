@@ -29,10 +29,23 @@ TestingSessionLocal = async_sessionmaker(
 
 @pytest_asyncio.fixture(scope="function")
 async def db_session() -> AsyncGenerator[AsyncSession, None]:
-    """Provide isolated database session per test function."""
+    """Provide isolated database session per test function with post-test cleanup."""
+    from app.models.user import User
+    from sqlalchemy import select
+
     async with TestingSessionLocal() as session:
+        # Snapshot existing user IDs
+        initial_res = await session.execute(select(User.id))
+        initial_user_ids = set(initial_res.scalars().all())
+
         yield session
-        await session.rollback()
+
+        # Cleanup: delete any new test users created during this test
+        current_res = await session.execute(select(User).where(User.id.notin_(initial_user_ids)))
+        new_users = current_res.scalars().all()
+        for u in new_users:
+            await session.delete(u)
+        await session.commit()
 
 
 @pytest_asyncio.fixture(scope="function")

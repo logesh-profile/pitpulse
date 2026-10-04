@@ -3,12 +3,24 @@ import 'package:flutter/foundation.dart';
 import '../config/app_config.dart';
 import '../errors/failures.dart';
 
-/// Centralized API HTTP client wrapper around Dio.
+/// Centralized API HTTP client wrapper around Dio with single-shared session token management.
 class ApiClient {
+  static ApiClient? _sharedInstance;
+
+  /// Returns the global shared ApiClient instance to guarantee session token continuity across all features.
+  static ApiClient get instance => _sharedInstance ??= ApiClient();
+
+  /// Sets or overrides the global shared instance (useful for testing or custom configuration).
+  static void setSharedInstance(ApiClient client) {
+    _sharedInstance = client;
+  }
+
   late final Dio _dio;
   String _baseUrl;
+  String? _authToken;
 
   ApiClient({String? baseUrl}) : _baseUrl = baseUrl ?? AppConfig.defaultBaseUrl {
+    _authToken = _sharedInstance?._authToken;
     _dio = Dio(
       BaseOptions(
         baseUrl: _baseUrl,
@@ -17,6 +29,8 @@ class ApiClient {
         headers: {
           'Content-Type': 'application/json',
           'Accept': 'application/json',
+          if (_authToken != null && _authToken!.isNotEmpty)
+            'Authorization': 'Bearer $_authToken',
         },
       ),
     );
@@ -43,6 +57,7 @@ class ApiClient {
   }
 
   String get baseUrl => _baseUrl;
+  String? get authToken => _authToken;
 
   void updateBaseUrl(String newUrl) {
     _baseUrl = newUrl;
@@ -50,10 +65,21 @@ class ApiClient {
   }
 
   void setAuthToken(String? token) {
+    _authToken = token;
     if (token != null && token.isNotEmpty) {
       _dio.options.headers['Authorization'] = 'Bearer $token';
     } else {
       _dio.options.headers.remove('Authorization');
+    }
+
+    // Sync with singleton if this instance is distinct
+    if (_sharedInstance != null && _sharedInstance != this) {
+      _sharedInstance!._authToken = token;
+      if (token != null && token.isNotEmpty) {
+        _sharedInstance!._dio.options.headers['Authorization'] = 'Bearer $token';
+      } else {
+        _sharedInstance!._dio.options.headers.remove('Authorization');
+      }
     }
   }
 
@@ -145,7 +171,7 @@ class ApiClient {
       case DioExceptionType.sendTimeout:
       case DioExceptionType.receiveTimeout:
         return TimeoutFailure(
-          'Request timed out connecting to ${_dio.options.baseUrl}. Please check network or backend.',
+          'Request timed out connecting to ${_dio.options.baseUrl}. Please check your connection or backend server.',
         );
       case DioExceptionType.connectionError:
         return NetworkFailure(
@@ -162,10 +188,29 @@ class ApiClient {
             errorMessage = detail;
           } else if (detail is List && detail.isNotEmpty) {
             final first = detail.first;
-            errorMessage = first['msg'] ?? detail.toString();
+            if (first is Map && first.containsKey('msg')) {
+              errorMessage = first['msg'].toString();
+            } else {
+              errorMessage = detail.toString();
+            }
           }
         } else if (data is String) {
           errorMessage = data;
+        }
+
+        // Semantic error messaging
+        if (statusCode == 401) {
+          if (errorMessage == 'Invalid or expired access token.') {
+            errorMessage = 'Session expired. Please sign in again.';
+          }
+        } else if (statusCode == 403) {
+          if (errorMessage == 'Not authenticated') {
+            errorMessage = 'Authentication required. Please sign in to access this feature.';
+          }
+        } else if (statusCode == 404) {
+          if (errorMessage.startsWith('Server error')) {
+            errorMessage = 'The requested healthcare record was not found.';
+          }
         }
 
         return ServerFailure(

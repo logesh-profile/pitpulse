@@ -5,7 +5,7 @@ class PregnancyRemoteDataSource {
   final ApiClient _apiClient;
 
   PregnancyRemoteDataSource({ApiClient? apiClient})
-      : _apiClient = apiClient ?? ApiClient();
+      : _apiClient = apiClient ?? ApiClient.instance;
 
   Future<PregnancyModel> createPregnancy({
     required DateTime lmp,

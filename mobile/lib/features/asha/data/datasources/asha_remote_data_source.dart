@@ -5,7 +5,7 @@ class AshaRemoteDataSource {
   final ApiClient _apiClient;
 
   AshaRemoteDataSource({ApiClient? apiClient})
-      : _apiClient = apiClient ?? ApiClient();
+      : _apiClient = apiClient ?? ApiClient.instance;
 
   // ==========================================
   // ASHA Worker Endpoints

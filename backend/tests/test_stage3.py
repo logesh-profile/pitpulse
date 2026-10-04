@@ -19,6 +19,7 @@ async def create_and_login_admin(async_client: AsyncClient, db_session: AsyncSes
         password_hash=hash_password(password),
         role=RoleEnum.ADMIN,
         is_active=True,
+        is_verified=True,
         must_change_password=False,
     )
     db_session.add(admin_user)
@@ -32,17 +33,24 @@ async def create_and_login_admin(async_client: AsyncClient, db_session: AsyncSes
     return login_res.json()["access_token"]
 
 
-async def create_and_login_patient(async_client: AsyncClient) -> dict:
+async def create_and_login_patient(async_client: AsyncClient, name_prefix: str = "patient") -> dict:
     """Registers and authenticates a PATIENT user, returning token and user payload."""
-    email = f"patient_{uuid.uuid4().hex[:8]}@pitpulse.org"
+    email = f"{name_prefix}_{uuid.uuid4().hex[:8]}@pitpulse.org"
     password = "PatientPassword123!"
-    full_name = "Standard Patient"
+    full_name = f"Standard Patient {name_prefix}"
 
     reg_res = await async_client.post(
         "/api/v1/auth/register",
         json={"email": email, "password": password, "full_name": full_name},
     )
     assert reg_res.status_code == 201
+    dev_token = reg_res.json().get("dev_verification_token")
+    if dev_token:
+        v_res = await async_client.post(
+            "/api/v1/auth/verify-email",
+            json={"email": email, "token": dev_token},
+        )
+        assert v_res.status_code == 200
 
     login_res = await async_client.post(
         "/api/v1/auth/login",
@@ -59,7 +67,7 @@ async def create_and_login_patient(async_client: AsyncClient) -> dict:
 
 @pytest.mark.asyncio
 async def test_admin_can_create_doctor(async_client: AsyncClient, db_session: AsyncSession):
-    """1. Verify Admin can provision a Doctor account with metadata and temporary password."""
+    """1. Verify Admin can provision a Doctor account with metadata and activation token."""
     admin_token = await create_and_login_admin(async_client, db_session)
     doctor_email = f"doc_{uuid.uuid4().hex[:8]}@pitpulse.org"
     payload = {
@@ -84,14 +92,14 @@ async def test_admin_can_create_doctor(async_client: AsyncClient, db_session: As
     assert data["full_name"] == "Dr. Rajesh Varma"
     assert data["medical_license_number"] == "MCI-2026-9876"
     assert data["must_change_password"] is True
-    assert "temporary_password" in data
-    assert len(data["temporary_password"]) >= 12
+    assert "activation_token" in data
+    assert len(data["activation_token"]) >= 16
     assert "password_hash" not in data
 
 
 @pytest.mark.asyncio
 async def test_admin_can_create_asha(async_client: AsyncClient, db_session: AsyncSession):
-    """2. Verify Admin can provision an ASHA account with metadata and temporary password."""
+    """2. Verify Admin can provision an ASHA account with metadata and activation token."""
     admin_token = await create_and_login_admin(async_client, db_session)
     asha_email = f"asha_{uuid.uuid4().hex[:8]}@pitpulse.org"
     payload = {
@@ -116,7 +124,7 @@ async def test_admin_can_create_asha(async_client: AsyncClient, db_session: Asyn
     assert data["full_name"] == "Sunita Devi"
     assert data["worker_id_code"] == "ASHA-DELHI-042"
     assert data["must_change_password"] is True
-    assert "temporary_password" in data
+    assert "activation_token" in data
     assert "password_hash" not in data
 
 
@@ -148,19 +156,25 @@ async def test_doctor_and_asha_cannot_access_admin_endpoints(
     """5 & 6. Verify Doctor and ASHA users cannot call admin provisioning endpoints."""
     admin_token = await create_and_login_admin(async_client, db_session)
 
-    # Create doctor
+    # Create and activate doctor
     doc_email = f"doc_{uuid.uuid4().hex[:8]}@pitpulse.org"
     doc_create = await async_client.post(
         "/api/v1/admin/users/doctors",
         json={"email": doc_email, "full_name": "Dr. Valid"},
         headers={"Authorization": f"Bearer {admin_token}"},
     )
-    doc_temp_pw = doc_create.json()["temporary_password"]
+    act_token = doc_create.json()["activation_token"]
+    act_pw = "DoctorSecurePass123!"
+    act_res = await async_client.post(
+        "/api/v1/auth/activate-professional",
+        json={"token": act_token, "new_password": act_pw},
+    )
+    assert act_res.status_code == 200
 
     # Login doctor
     doc_login = await async_client.post(
         "/api/v1/auth/login",
-        json={"email": doc_email, "password": doc_temp_pw},
+        json={"email": doc_email, "password": act_pw},
     )
     doc_token = doc_login.json()["access_token"]
 
@@ -177,7 +191,7 @@ async def test_doctor_and_asha_cannot_access_admin_endpoints(
 async def test_doctor_and_asha_first_login_and_password_change(
     async_client: AsyncClient, db_session: AsyncSession
 ):
-    """9, 10, 11, 12. Verify Doctor login with temp pw, change password, must_change_password flag update, and old pw rejection."""
+    """9, 10, 11, 12. Verify Doctor activation, login, change password, and old pw rejection."""
     admin_token = await create_and_login_admin(async_client, db_session)
     doc_email = f"doc_activation_{uuid.uuid4().hex[:8]}@pitpulse.org"
     doc_create = await async_client.post(
@@ -185,43 +199,49 @@ async def test_doctor_and_asha_first_login_and_password_change(
         json={"email": doc_email, "full_name": "Dr. Activation"},
         headers={"Authorization": f"Bearer {admin_token}"},
     )
-    temp_pw = doc_create.json()["temporary_password"]
+    act_token = doc_create.json()["activation_token"]
 
-    # 1. Login with temporary password
+    # 1. Activate professional account
+    initial_pw = "DoctorInitialPass2026!"
+    act_res = await async_client.post(
+        "/api/v1/auth/activate-professional",
+        json={"token": act_token, "new_password": initial_pw},
+    )
+    assert act_res.status_code == 200
+    assert act_res.json()["user"]["is_active"] is True
+    assert act_res.json()["user"]["is_verified"] is True
+
+    # 2. Login with chosen password
     login_resp = await async_client.post(
         "/api/v1/auth/login",
-        json={"email": doc_email, "password": temp_pw},
+        json={"email": doc_email, "password": initial_pw},
     )
     assert login_resp.status_code == 200
     login_data = login_resp.json()
-    assert login_data["user"]["must_change_password"] is True
     access_token = login_data["access_token"]
 
-    # 2. Change password
+    # 3. Change password
     new_permanent_pw = "DoctorPermanentPass2026!"
     change_resp = await async_client.post(
         "/api/v1/auth/change-password",
-        json={"current_password": temp_pw, "new_password": new_permanent_pw},
+        json={"current_password": initial_pw, "new_password": new_permanent_pw},
         headers={"Authorization": f"Bearer {access_token}"},
     )
     assert change_resp.status_code == 200
-    change_data = change_resp.json()
-    assert change_data["user"]["must_change_password"] is False
 
-    # 3. Verify old temporary password is now rejected
+    # 4. Verify old password is now rejected
     old_login_resp = await async_client.post(
         "/api/v1/auth/login",
-        json={"email": doc_email, "password": temp_pw},
+        json={"email": doc_email, "password": initial_pw},
     )
     assert old_login_resp.status_code == 401
 
-    # 4. Verify login with new password succeeds
+    # 5. Verify login with new password succeeds
     new_login_resp = await async_client.post(
         "/api/v1/auth/login",
         json={"email": doc_email, "password": new_permanent_pw},
     )
     assert new_login_resp.status_code == 200
-    assert new_login_resp.json()["user"]["must_change_password"] is False
 
 
 @pytest.mark.asyncio
@@ -270,30 +290,11 @@ async def test_patient_profile_management_and_health_record(async_client: AsyncC
 @pytest.mark.asyncio
 async def test_patient_idor_access_control(async_client: AsyncClient):
     """14. Verify Patient A cannot access Patient B's medical profile (IDOR protection)."""
-    # Create Patient A
-    pA_email = f"patientA_{uuid.uuid4().hex[:8]}@pitpulse.org"
-    pw = "SecurePassword123!"
-    await async_client.post(
-        "/api/v1/auth/register",
-        json={"email": pA_email, "password": pw, "full_name": "Patient Alpha"},
-    )
-    pA_login = await async_client.post(
-        "/api/v1/auth/login",
-        json={"email": pA_email, "password": pw},
-    )
-    tokenA = pA_login.json()["access_token"]
+    pA = await create_and_login_patient(async_client, "patientA")
+    tokenA = pA["access_token"]
 
-    # Create Patient B
-    pB_email = f"patientB_{uuid.uuid4().hex[:8]}@pitpulse.org"
-    await async_client.post(
-        "/api/v1/auth/register",
-        json={"email": pB_email, "password": pw, "full_name": "Patient Beta"},
-    )
-    pB_login = await async_client.post(
-        "/api/v1/auth/login",
-        json={"email": pB_email, "password": pw},
-    )
-    tokenB = pB_login.json()["access_token"]
+    pB = await create_and_login_patient(async_client, "patientB")
+    tokenB = pB["access_token"]
 
     # Get Patient B's profile ID
     pB_me = await async_client.get(
@@ -335,7 +336,12 @@ async def test_admin_can_list_and_deactivate_professionals(
         headers={"Authorization": f"Bearer {admin_token}"},
     )
     doc_id = doc_res.json()["user_id"]
-    doc_pw = doc_res.json()["temporary_password"]
+    doc_act = doc_res.json()["activation_token"]
+    doc_pw = "DoctorPassword123!"
+    await async_client.post(
+        "/api/v1/auth/activate-professional",
+        json={"token": doc_act, "new_password": doc_pw},
+    )
 
     # Deactivate account
     deactivate_res = await async_client.patch(

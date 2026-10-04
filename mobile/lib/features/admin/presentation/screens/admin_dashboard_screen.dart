@@ -29,14 +29,14 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
     });
   }
 
-  void _showActivationCredentialModal(BuildContext context, String name, String email, String role, String tempPassword) {
+  void _showActivationCredentialModal(BuildContext context, String name, String email, String role, String token) {
     showDialog(
       context: context,
       barrierDismissible: false,
       builder: (ctx) => AlertDialog(
         title: Row(
           children: const [
-            Icon(Icons.vpn_key, color: Color(0xFF14B8A6)),
+            Icon(Icons.mark_email_read, color: Color(0xFF14B8A6)),
             SizedBox(width: 8),
             Text('Account Provisioned'),
           ],
@@ -45,7 +45,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('Professional $role account created in PostgreSQL:', style: const TextStyle(fontWeight: FontWeight.bold)),
+            Text('Professional $role account provisioned in PostgreSQL:', style: const TextStyle(fontWeight: FontWeight.bold)),
             const SizedBox(height: 8),
             Text('Name: $name'),
             Text('Email: $email'),
@@ -53,25 +53,25 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
             Container(
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: Colors.amber[900]?.withValues(alpha: 0.2),
+                color: const Color(0xFF14B8A6).withValues(alpha: 0.15),
                 borderRadius: BorderRadius.circular(8),
-                border: Border.all(color: Colors.amber[700]!),
+                border: Border.all(color: const Color(0xFF14B8A6)),
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text('Temporary Activation Password:', style: TextStyle(fontSize: 12, color: Colors.amber)),
+                  const Text('Account Activation Token:', style: TextStyle(fontSize: 12, color: Color(0xFF14B8A6))),
                   const SizedBox(height: 4),
                   SelectableText(
-                    tempPassword,
-                    style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, letterSpacing: 1.2),
+                    token,
+                    style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold, letterSpacing: 0.8),
                   ),
                 ],
               ),
             ),
             const SizedBox(height: 8),
             const Text(
-              'Share this temporary password securely with the provider. They will be prompted to set a permanent password upon first login.',
+              'An activation email has been dispatched. The provider will set their own permanent password upon first activation.',
               style: TextStyle(fontSize: 12, color: Colors.grey),
             ),
           ],
@@ -103,7 +103,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
           lastProv.fullName,
           lastProv.email,
           lastProv.role,
-          lastProv.temporaryPassword,
+          lastProv.activationToken.isNotEmpty ? lastProv.activationToken : lastProv.temporaryPassword,
         );
       });
     }
@@ -323,7 +323,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                             Text(prof.email, style: const TextStyle(fontSize: 12)),
                             if (prof.phone != null) Text('Phone: ${prof.phone}', style: const TextStyle(fontSize: 11, color: Colors.grey)),
                             if (prof.mustChangePassword)
-                              const Text('Status: Activation Pending (Temporary PW)', style: TextStyle(fontSize: 11, color: Colors.amber)),
+                              const Text('Status: Pending Activation', style: TextStyle(fontSize: 11, color: Colors.amber)),
                           ],
                         ),
                         trailing: Switch(

@@ -35,7 +35,8 @@ class DoctorProvisionResponse(BaseModel):
     full_name: str
     phone: Optional[str] = None
     role: RoleEnum = RoleEnum.DOCTOR
-    temporary_password: str
+    activation_token: Optional[str] = None
+    temporary_password: Optional[str] = None
     must_change_password: bool = True
     is_active: bool = True
     medical_license_number: Optional[str] = None
@@ -50,7 +51,8 @@ class AshaProvisionResponse(BaseModel):
     full_name: str
     phone: Optional[str] = None
     role: RoleEnum = RoleEnum.ASHA
-    temporary_password: str
+    activation_token: Optional[str] = None
+    temporary_password: Optional[str] = None
     must_change_password: bool = True
     is_active: bool = True
     worker_id_code: Optional[str] = None

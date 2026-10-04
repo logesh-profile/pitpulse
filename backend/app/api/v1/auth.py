@@ -5,13 +5,18 @@ from app.api.deps import get_current_user, require_admin, require_doctor
 from app.core.database import get_db
 from app.models.user import User
 from app.schemas.auth import (
+    ActivateProfessionalRequest,
     ChangePasswordRequest,
     LogoutRequest,
     RefreshTokenRequest,
+    ResendVerificationRequest,
     TokenResponse,
     UserLoginRequest,
     UserRegisterRequest,
+    UserRegisterResponse,
     UserResponse,
+    VerifyEmailRequest,
+    VerifyEmailResponse,
 )
 from app.services.auth_service import AuthService
 
@@ -20,17 +25,75 @@ router = APIRouter(prefix="/auth", tags=["Authentication & Identity"])
 
 @router.post(
     "/register",
-    response_model=UserResponse,
+    response_model=UserRegisterResponse,
     status_code=status.HTTP_201_CREATED,
     summary="Register a new patient user account",
-    description="Registers a real patient user in PostgreSQL. Only PATIENT role can be registered publicly.",
+    description="Registers a real patient user in PostgreSQL and sends an email verification token.",
 )
 async def register(
     req: UserRegisterRequest,
     db: AsyncSession = Depends(get_db),
-) -> UserResponse:
-    user = await AuthService.register_user(db=db, req=req)
-    return UserResponse.model_validate(user)
+) -> UserRegisterResponse:
+    user, dev_token = await AuthService.register_user(db=db, req=req)
+    return UserRegisterResponse(
+        message="Registration successful. Please verify your email to activate your account.",
+        user=UserResponse.model_validate(user),
+        dev_verification_token=dev_token,
+    )
+
+
+@router.post(
+    "/verify-email",
+    response_model=VerifyEmailResponse,
+    status_code=status.HTTP_200_OK,
+    summary="Verify patient email address",
+    description="Validates the cryptographically secure verification token and activates the account.",
+)
+async def verify_email(
+    req: VerifyEmailRequest,
+    db: AsyncSession = Depends(get_db),
+) -> VerifyEmailResponse:
+    await AuthService.verify_email(db=db, raw_token=req.token)
+    return VerifyEmailResponse(
+        message="Email verified successfully. You can now sign in to PitPulse.",
+        is_verified=True,
+    )
+
+
+@router.post(
+    "/resend-verification",
+    response_model=VerifyEmailResponse,
+    status_code=status.HTTP_200_OK,
+    summary="Resend verification email",
+    description="Generates and sends a fresh verification token for unverified accounts.",
+)
+async def resend_verification(
+    req: ResendVerificationRequest,
+    db: AsyncSession = Depends(get_db),
+) -> VerifyEmailResponse:
+    await AuthService.resend_verification(db=db, email=req.email)
+    return VerifyEmailResponse(
+        message="If an unverified account exists with that email, a fresh verification token has been sent.",
+        is_verified=False,
+    )
+
+
+@router.post(
+    "/activate-professional",
+    response_model=TokenResponse,
+    status_code=status.HTTP_200_OK,
+    summary="Activate provisioned Doctor or ASHA account",
+    description="Validates professional activation token, sets initial self-chosen password, and logs in.",
+)
+async def activate_professional(
+    req: ActivateProfessionalRequest,
+    db: AsyncSession = Depends(get_db),
+) -> TokenResponse:
+    return await AuthService.activate_professional(
+        db=db,
+        raw_token=req.token,
+        new_password=req.new_password,
+    )
 
 
 @router.post(

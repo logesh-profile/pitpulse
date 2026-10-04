@@ -15,6 +15,13 @@ import '../features/patients/data/datasources/patient_remote_data_source.dart';
 import '../features/patients/presentation/controllers/patient_controller.dart';
 import '../features/patients/presentation/screens/patient_dashboard_screen.dart';
 
+import '../features/asha/data/datasources/asha_remote_data_source.dart';
+import '../features/asha/presentation/controllers/asha_controller.dart';
+import '../features/doctor/data/datasources/doctor_remote_data_source.dart';
+import '../features/doctor/presentation/controllers/doctor_controller.dart';
+import '../features/pregnancy/data/datasources/pregnancy_remote_data_source.dart';
+import '../features/pregnancy/presentation/controllers/pregnancy_controller.dart';
+
 class PitPulseApp extends StatefulWidget {
   final ApiClient apiClient;
   final SecureStorageService? secureStorageService;
@@ -24,6 +31,9 @@ class PitPulseApp extends StatefulWidget {
   final PatientController? patientController;
   final AdminRemoteDataSource? adminRemoteDataSource;
   final AdminController? adminController;
+  final PregnancyController? pregnancyController;
+  final AshaController? ashaController;
+  final DoctorController? doctorController;
 
   const PitPulseApp({
     super.key,
@@ -35,6 +45,9 @@ class PitPulseApp extends StatefulWidget {
     this.patientController,
     this.adminRemoteDataSource,
     this.adminController,
+    this.pregnancyController,
+    this.ashaController,
+    this.doctorController,
   });
 
   @override
@@ -45,10 +58,15 @@ class _PitPulseAppState extends State<PitPulseApp> {
   late final AuthController _authController;
   late final PatientController _patientController;
   late final AdminController _adminController;
+  late final PregnancyController _pregnancyController;
+  late final AshaController _ashaController;
+  late final DoctorController _doctorController;
 
   @override
   void initState() {
     super.initState();
+    ApiClient.setSharedInstance(widget.apiClient);
+
     final storage = widget.secureStorageService ?? FlutterSecureStorageServiceImpl();
     final authDs = widget.authRemoteDataSource ?? AuthRemoteDataSourceImpl(apiClient: widget.apiClient);
     _authController = widget.authController ??
@@ -63,6 +81,15 @@ class _PitPulseAppState extends State<PitPulseApp> {
 
     final adminDs = widget.adminRemoteDataSource ?? AdminRemoteDataSourceImpl(apiClient: widget.apiClient);
     _adminController = widget.adminController ?? AdminController(remoteDataSource: adminDs);
+
+    final pregDs = PregnancyRemoteDataSource(apiClient: widget.apiClient);
+    _pregnancyController = widget.pregnancyController ?? PregnancyController(dataSource: pregDs);
+
+    final ashaDs = AshaRemoteDataSource(apiClient: widget.apiClient);
+    _ashaController = widget.ashaController ?? AshaController(remoteDataSource: ashaDs);
+
+    final docDs = DoctorRemoteDataSource(apiClient: widget.apiClient);
+    _doctorController = widget.doctorController ?? DoctorController(dataSource: docDs);
 
     // Check existing session on launch
     _authController.checkAuthSession();
@@ -93,16 +120,20 @@ class _PitPulseAppState extends State<PitPulseApp> {
       case 'DOCTOR':
         return DoctorDashboardScreen(
           authController: auth,
+          doctorController: _doctorController,
         );
       case 'ASHA':
         return AshaDashboardScreen(
           authController: auth,
+          ashaController: _ashaController,
         );
       case 'PATIENT':
       default:
         return PatientDashboardScreen(
           authController: auth,
           patientController: _patientController,
+          pregnancyController: _pregnancyController,
+          ashaController: _ashaController,
         );
     }
   }
