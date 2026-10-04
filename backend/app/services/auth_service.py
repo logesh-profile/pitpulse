@@ -181,3 +181,58 @@ class AuthService:
         if token_record and token_record.revoked_at is None:
             token_record.revoked_at = datetime.now(timezone.utc)
             await db.commit()
+
+    @staticmethod
+    async def change_password(
+        db: AsyncSession,
+        user: User,
+        current_password: str,
+        new_password: str,
+    ) -> TokenResponse:
+        """Verifies current password, sets new Argon2id hash, clears must_change_password flag, and issues new token."""
+        if not verify_password(current_password, user.password_hash):
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Current password verification failed. Please check your password and try again.",
+            )
+
+        if len(new_password) < 8:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="New password must be at least 8 characters long.",
+            )
+
+        # Hash new password with Argon2id
+        user.password_hash = hash_password(new_password)
+        user.must_change_password = False
+        user.updated_at = datetime.now(timezone.utc)
+
+        # Revoke all existing refresh tokens for this user
+        revoke_stmt = (
+            update(RefreshToken)
+            .where(RefreshToken.user_id == user.id, RefreshToken.revoked_at.is_(None))
+            .values(revoked_at=datetime.now(timezone.utc))
+        )
+        await db.execute(revoke_stmt)
+
+        # Create new token pair
+        access_token = create_access_token(user_id=user.id, role=user.role.value)
+        raw_refresh, token_hash, expires_at = create_refresh_token_pair(user_id=user.id)
+
+        new_db_refresh = RefreshToken(
+            user_id=user.id,
+            token_hash=token_hash,
+            expires_at=expires_at,
+        )
+        db.add(new_db_refresh)
+        await db.commit()
+        await db.refresh(user)
+
+        return TokenResponse(
+            access_token=access_token,
+            refresh_token=raw_refresh,
+            token_type="bearer",
+            expires_in=settings.JWT_ACCESS_EXPIRE_MINUTES * 60,
+            user=UserResponse.model_validate(user),
+        )
+

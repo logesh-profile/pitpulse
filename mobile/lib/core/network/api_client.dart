@@ -97,6 +97,48 @@ class ApiClient {
     }
   }
 
+  Future<Response<T>> put<T>(
+    String path, {
+    dynamic data,
+    Map<String, dynamic>? queryParameters,
+    Options? options,
+  }) async {
+    try {
+      final response = await _dio.put<T>(
+        path,
+        data: data,
+        queryParameters: queryParameters,
+        options: options,
+      );
+      return response;
+    } on DioException catch (e) {
+      throw _handleDioException(e);
+    } catch (e) {
+      throw UnknownFailure(e.toString());
+    }
+  }
+
+  Future<Response<T>> patch<T>(
+    String path, {
+    dynamic data,
+    Map<String, dynamic>? queryParameters,
+    Options? options,
+  }) async {
+    try {
+      final response = await _dio.patch<T>(
+        path,
+        data: data,
+        queryParameters: queryParameters,
+        options: options,
+      );
+      return response;
+    } on DioException catch (e) {
+      throw _handleDioException(e);
+    } catch (e) {
+      throw UnknownFailure(e.toString());
+    }
+  }
+
   Failure _handleDioException(DioException error) {
     switch (error.type) {
       case DioExceptionType.connectionTimeout:

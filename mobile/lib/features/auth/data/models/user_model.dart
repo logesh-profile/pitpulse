@@ -6,6 +6,7 @@ class UserModel {
   final String fullName;
   final String role;
   final bool isActive;
+  final bool mustChangePassword;
   final String createdAt;
 
   const UserModel({
@@ -15,6 +16,7 @@ class UserModel {
     required this.fullName,
     required this.role,
     required this.isActive,
+    this.mustChangePassword = false,
     required this.createdAt,
   });
 
@@ -26,6 +28,7 @@ class UserModel {
       fullName: json['full_name'] as String? ?? '',
       role: json['role'] as String? ?? 'PATIENT',
       isActive: json['is_active'] as bool? ?? true,
+      mustChangePassword: json['must_change_password'] as bool? ?? false,
       createdAt: json['created_at'] as String? ?? '',
     );
   }
@@ -38,6 +41,7 @@ class UserModel {
       'full_name': fullName,
       'role': role,
       'is_active': isActive,
+      'must_change_password': mustChangePassword,
       'created_at': createdAt,
     };
   }

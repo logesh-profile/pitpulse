@@ -57,6 +57,11 @@ class User(Base):
         default=True,
         nullable=False,
     )
+    must_change_password: Mapped[bool] = mapped_column(
+        Boolean,
+        default=False,
+        nullable=False,
+    )
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
         server_default=func.now(),
@@ -77,5 +82,23 @@ class User(Base):
     refresh_tokens: Mapped[List["RefreshToken"]] = relationship(
         "RefreshToken",
         back_populates="user",
+        cascade="all, delete-orphan",
+    )
+    doctor_profile: Mapped[Optional["DoctorProfile"]] = relationship(
+        "DoctorProfile",
+        back_populates="user",
+        uselist=False,
+        cascade="all, delete-orphan",
+    )
+    asha_profile: Mapped[Optional["AshaProfile"]] = relationship(
+        "AshaProfile",
+        back_populates="user",
+        uselist=False,
+        cascade="all, delete-orphan",
+    )
+    patient_profile: Mapped[Optional["PatientProfile"]] = relationship(
+        "PatientProfile",
+        back_populates="user",
+        uselist=False,
         cascade="all, delete-orphan",
     )

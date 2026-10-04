@@ -94,6 +94,29 @@ class FakeAuthRemoteDataSource implements AuthRemoteDataSource {
   Future<void> logout({required String refreshToken}) async {}
 
   @override
+  Future<TokenModel> changePassword({
+    required String currentPassword,
+    required String newPassword,
+  }) async {
+    if (shouldFail) throw const ServerFailure('Invalid current password');
+    return const TokenModel(
+      accessToken: 'activated-access-token',
+      refreshToken: 'activated-refresh-token',
+      tokenType: 'bearer',
+      expiresIn: 1800,
+      user: UserModel(
+        id: 'mock-uuid',
+        email: 'saved@pitpulse.org',
+        fullName: 'Saved User',
+        role: 'DOCTOR',
+        isActive: true,
+        mustChangePassword: false,
+        createdAt: '2026-10-04',
+      ),
+    );
+  }
+
+  @override
   Future<UserModel> getMe({required String accessToken}) async {
     return const UserModel(
       id: 'mock-uuid',

@@ -24,6 +24,11 @@ abstract class AuthRemoteDataSource {
     required String refreshToken,
   });
 
+  Future<TokenModel> changePassword({
+    required String currentPassword,
+    required String newPassword,
+  });
+
   Future<UserModel> getMe({
     required String accessToken,
   });
@@ -118,6 +123,30 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
         'refresh_token': refreshToken,
       },
     );
+  }
+
+  @override
+  Future<TokenModel> changePassword({
+    required String currentPassword,
+    required String newPassword,
+  }) async {
+    final response = await apiClient.post<Map<String, dynamic>>(
+      '/api/v1/auth/change-password',
+      data: {
+        'current_password': currentPassword,
+        'new_password': newPassword,
+      },
+    );
+
+    if (response.data != null) {
+      try {
+        return TokenModel.fromJson(response.data!);
+      } catch (e) {
+        throw ParsingFailure('Failed to parse password change response: $e');
+      }
+    } else {
+      throw const ParsingFailure('Empty response body from /auth/change-password endpoint.');
+    }
   }
 
   @override

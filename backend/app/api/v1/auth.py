@@ -5,6 +5,7 @@ from app.api.deps import get_current_user, require_admin, require_doctor
 from app.core.database import get_db
 from app.models.user import User
 from app.schemas.auth import (
+    ChangePasswordRequest,
     LogoutRequest,
     RefreshTokenRequest,
     TokenResponse,
@@ -72,6 +73,27 @@ async def logout(
 ):
     await AuthService.logout_user(db=db, raw_refresh_token=req.refresh_token)
     return {"message": "Logged out successfully."}
+
+
+@router.post(
+    "/change-password",
+    response_model=TokenResponse,
+    status_code=status.HTTP_200_OK,
+    summary="Change password and complete professional activation",
+    description="Verifies current password, updates Argon2id password hash, resets must_change_password flag, and issues fresh token pair.",
+)
+async def change_password(
+    req: ChangePasswordRequest,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+) -> TokenResponse:
+    return await AuthService.change_password(
+        db=db,
+        user=current_user,
+        current_password=req.current_password,
+        new_password=req.new_password,
+    )
+
 
 
 @router.get(

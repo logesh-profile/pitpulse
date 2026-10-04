@@ -134,6 +134,39 @@ class AuthController extends ChangeNotifier {
     }
   }
 
+  /// Changes current password and completes activation for professional accounts.
+  Future<bool> changePassword({
+    required String currentPassword,
+    required String newPassword,
+  }) async {
+    _status = AuthStatus.loading;
+    _errorMessage = null;
+    notifyListeners();
+
+    try {
+      final tokenData = await authRemoteDataSource.changePassword(
+        currentPassword: currentPassword,
+        newPassword: newPassword,
+      );
+
+      await secureStorageService.saveAccessToken(tokenData.accessToken);
+      await secureStorageService.saveRefreshToken(tokenData.refreshToken);
+
+      _accessToken = tokenData.accessToken;
+      _currentUser = tokenData.user;
+      apiClient.setAuthToken(tokenData.accessToken);
+      _status = AuthStatus.authenticated;
+      _errorMessage = null;
+      notifyListeners();
+      return true;
+    } catch (e) {
+      _status = AuthStatus.error;
+      _errorMessage = e is Failure ? e.message : e.toString();
+      notifyListeners();
+      return false;
+    }
+  }
+
   /// Real logout: revokes refresh session on backend and clears local secure storage.
   Future<void> logout() async {
     _status = AuthStatus.loading;

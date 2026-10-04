@@ -35,6 +35,13 @@ class LogoutRequest(BaseModel):
     refresh_token: str
 
 
+class ChangePasswordRequest(BaseModel):
+    model_config = {"extra": "forbid"}
+
+    current_password: str
+    new_password: str = Field(..., min_length=8, description="New password (minimum 8 characters)")
+
+
 class UserResponse(BaseModel):
     id: UUID
     email: EmailStr
@@ -42,6 +49,7 @@ class UserResponse(BaseModel):
     full_name: str
     role: RoleEnum
     is_active: bool
+    must_change_password: bool = False
     created_at: datetime
 
     model_config = {"from_attributes": True}
