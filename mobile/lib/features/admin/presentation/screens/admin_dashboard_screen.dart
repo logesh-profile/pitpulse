@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:pitpulse_mobile/features/auth/presentation/controllers/auth_controller.dart';
+import '../../../asha/presentation/controllers/asha_controller.dart';
 import '../controllers/admin_controller.dart';
+import 'admin_assignments_screen.dart';
 import 'create_asha_screen.dart';
 import 'create_doctor_screen.dart';
 
@@ -224,6 +226,25 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                         ),
                       ),
                     ],
+                  ),
+                  const SizedBox(height: 12),
+                  OutlinedButton.icon(
+                    key: const Key('admin_manage_assignments_button'),
+                    icon: const Icon(Icons.assignment_ind),
+                    label: const Text('Manage ASHA Patient Assignments'),
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: const Color(0xFF38BDF8),
+                      side: const BorderSide(color: Color(0xFF0284C7)),
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                    ),
+                    onPressed: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => AdminAssignmentsScreen(ashaController: AshaController()),
+                        ),
+                      );
+                    },
                   ),
                   const SizedBox(height: 20),
 

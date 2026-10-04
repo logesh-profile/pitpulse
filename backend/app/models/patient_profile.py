@@ -83,3 +83,15 @@ class PatientProfile(Base):
         cascade="all, delete-orphan",
         order_by="desc(Pregnancy.pregnancy_number)",
     )
+    asha_assignments: Mapped[list["AshaPatientAssignment"]] = relationship(
+        "AshaPatientAssignment",
+        back_populates="patient",
+        cascade="all, delete-orphan",
+        order_by="desc(AshaPatientAssignment.assigned_at)",
+    )
+    home_visits: Mapped[list["HomeVisit"]] = relationship(
+        "HomeVisit",
+        back_populates="patient",
+        cascade="all, delete-orphan",
+        order_by="desc(HomeVisit.visit_date)",
+    )

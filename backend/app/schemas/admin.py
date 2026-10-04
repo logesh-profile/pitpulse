@@ -76,3 +76,18 @@ class ProfessionalUserItem(BaseModel):
 class UserStatusUpdateRequest(BaseModel):
     model_config = ConfigDict(extra="forbid")
     is_active: bool
+
+
+class AshaWorkerItemResponse(BaseModel):
+    id: UUID
+    user_id: UUID
+    full_name: str
+    email: EmailStr
+    phone: Optional[str] = None
+    worker_id_code: Optional[str] = None
+    assigned_area: Optional[str] = None
+    primary_health_center: Optional[str] = None
+    user: Optional[Dict[str, Any]] = None
+    created_at: datetime
+    updated_at: datetime
+

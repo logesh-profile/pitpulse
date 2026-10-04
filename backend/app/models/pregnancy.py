@@ -89,3 +89,13 @@ class Pregnancy(Base):
         "PatientProfile",
         back_populates="pregnancies",
     )
+    home_visits: Mapped[list["HomeVisit"]] = relationship(
+        "HomeVisit",
+        back_populates="pregnancy",
+    )
+    vitals: Mapped[list["MaternalVitalRecord"]] = relationship(
+        "MaternalVitalRecord",
+        back_populates="pregnancy",
+        cascade="all, delete-orphan",
+        order_by="desc(MaternalVitalRecord.recorded_at)",
+    )

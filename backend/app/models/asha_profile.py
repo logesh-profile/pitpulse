@@ -51,3 +51,13 @@ class AshaProfile(Base):
 
     # Relationships
     user: Mapped["User"] = relationship("User", back_populates="asha_profile")
+    assignments: Mapped[list["AshaPatientAssignment"]] = relationship(
+        "AshaPatientAssignment",
+        back_populates="asha_worker",
+        cascade="all, delete-orphan",
+    )
+    home_visits: Mapped[list["HomeVisit"]] = relationship(
+        "HomeVisit",
+        back_populates="asha_worker",
+        cascade="all, delete-orphan",
+    )
