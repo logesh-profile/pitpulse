@@ -20,14 +20,14 @@ class AppConfig {
     }
 
     if (Platform.isAndroid) {
-      // 10.0.2.2 is the special Android Emulator alias to the host loopback interface (127.0.0.1)
-      return 'http://10.0.2.2:8000';
+      // Physical device Wi-Fi backend IP (fallback to emulator loopback if overridden)
+      return 'http://10.63.229.152:8000';
     }
 
     // Windows, macOS, Linux desktop
     return 'http://127.0.0.1:8000';
   }
 
-  static const int connectTimeoutMs = 5000;
-  static const int receiveTimeoutMs = 5000;
+  static const int connectTimeoutMs = 15000;
+  static const int receiveTimeoutMs = 15000;
 }
