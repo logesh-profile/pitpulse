@@ -11,13 +11,17 @@ from sqlalchemy.orm import selectinload
 from app.core.security import hash_password
 from app.models.asha_profile import AshaProfile
 from app.models.doctor_profile import DoctorProfile
+from app.models.health_record import HealthRecord
+from app.models.patient_profile import PatientProfile
 from app.models.user import RoleEnum, User
 from app.models.verification_token import TokenTypeEnum
 from app.schemas.admin import (
     AshaProvisionResponse,
     CreateAshaRequest,
     CreateDoctorRequest,
+    CreatePatientRequest,
     DoctorProvisionResponse,
+    PatientProvisionResponse,
     ProfessionalUserItem,
 )
 from app.services.email_service import EmailService
@@ -277,3 +281,101 @@ class AdminService:
         await db.commit()
         await db.refresh(user)
         return user
+
+    @staticmethod
+    async def create_patient(db: AsyncSession, req: CreatePatientRequest) -> PatientProvisionResponse:
+        """Admin provisions a new Patient account directly with health record anchor."""
+        email_clean = req.email.lower().strip()
+
+        # Check duplicate email
+        stmt = select(User).where(User.email == email_clean)
+        result = await db.execute(stmt)
+        if result.scalar_one_or_none():
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="An account with this email address already exists.",
+            )
+
+        # Check duplicate phone if provided
+        if req.phone:
+            phone_clean = req.phone.strip()
+            phone_stmt = select(User).where(User.phone == phone_clean)
+            phone_res = await db.execute(phone_stmt)
+            if phone_res.scalar_one_or_none():
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail="An account with this phone number already exists.",
+                )
+
+        pw = req.password if req.password else "logesh@360"
+        hashed_pw = hash_password(pw)
+
+        new_user = User(
+            email=email_clean,
+            phone=req.phone.strip() if req.phone else None,
+            full_name=req.full_name.strip(),
+            password_hash=hashed_pw,
+            role=RoleEnum.PATIENT,
+            is_active=True,
+            is_verified=True,
+            must_change_password=False,
+        )
+        db.add(new_user)
+        await db.flush()
+
+        patient_profile = PatientProfile(
+            user_id=new_user.id,
+            date_of_birth=req.date_of_birth,
+            sex=req.sex.strip() if req.sex else "FEMALE",
+            address=req.address.strip() if req.address else None,
+            village_locality=req.village_locality.strip() if req.village_locality else None,
+            emergency_contact_name=req.emergency_contact_name.strip() if req.emergency_contact_name else None,
+            emergency_contact_phone=req.emergency_contact_phone.strip() if req.emergency_contact_phone else None,
+            blood_group=req.blood_group.strip() if req.blood_group else None,
+            baseline_health_info=req.baseline_health_info.strip() if req.baseline_health_info else None,
+        )
+        db.add(patient_profile)
+        await db.flush()
+
+        hr_num = f"HR-{new_user.id.hex[:4].upper()}-{new_user.id.hex[4:8].upper()}"
+        health_record = HealthRecord(
+            patient_id=patient_profile.id,
+            record_number=hr_num,
+        )
+        db.add(health_record)
+        await db.commit()
+        await db.refresh(new_user)
+        await db.refresh(patient_profile)
+
+        return PatientProvisionResponse(
+            user_id=new_user.id,
+            patient_id=patient_profile.id,
+            email=new_user.email,
+            full_name=new_user.full_name,
+            phone=new_user.phone,
+            health_record_number=hr_num,
+            village_locality=patient_profile.village_locality,
+            blood_group=patient_profile.blood_group,
+            is_active=new_user.is_active,
+            created_at=new_user.created_at,
+        )
+
+    @staticmethod
+    async def delete_user(db: AsyncSession, user_id: uuid.UUID) -> None:
+        """Permanently removes a user account and associated child data."""
+        stmt = select(User).where(User.id == user_id)
+        result = await db.execute(stmt)
+        user = result.scalar_one_or_none()
+        if not user:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="User account not found.",
+            )
+        if user.role == RoleEnum.ADMIN:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="ADMIN account cannot be deleted.",
+            )
+        await db.delete(user)
+        await db.commit()
+

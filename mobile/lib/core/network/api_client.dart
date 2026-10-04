@@ -165,6 +165,27 @@ class ApiClient {
     }
   }
 
+  Future<Response<T>> delete<T>(
+    String path, {
+    dynamic data,
+    Map<String, dynamic>? queryParameters,
+    Options? options,
+  }) async {
+    try {
+      final response = await _dio.delete<T>(
+        path,
+        data: data,
+        queryParameters: queryParameters,
+        options: options,
+      );
+      return response;
+    } on DioException catch (e) {
+      throw _handleDioException(e);
+    } catch (e) {
+      throw UnknownFailure(e.toString());
+    }
+  }
+
   Failure _handleDioException(DioException error) {
     switch (error.type) {
       case DioExceptionType.connectionTimeout:

@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import date, datetime
 from typing import Any, Dict, Optional
 from uuid import UUID
 
@@ -80,6 +80,36 @@ class UserStatusUpdateRequest(BaseModel):
     is_active: bool
 
 
+class CreatePatientRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    email: EmailStr
+    full_name: str = Field(..., min_length=2, max_length=255)
+    phone: Optional[str] = Field(None, max_length=20)
+    password: Optional[str] = Field(None, min_length=6, max_length=100)
+    date_of_birth: Optional[date] = None
+    sex: Optional[str] = Field("FEMALE", max_length=20)
+    blood_group: Optional[str] = Field(None, max_length=10)
+    address: Optional[str] = None
+    village_locality: Optional[str] = Field(None, max_length=255)
+    emergency_contact_name: Optional[str] = Field(None, max_length=255)
+    emergency_contact_phone: Optional[str] = Field(None, max_length=20)
+    baseline_health_info: Optional[str] = None
+
+
+class PatientProvisionResponse(BaseModel):
+    user_id: UUID
+    patient_id: UUID
+    email: EmailStr
+    full_name: str
+    phone: Optional[str] = None
+    health_record_number: Optional[str] = None
+    village_locality: Optional[str] = None
+    blood_group: Optional[str] = None
+    is_active: bool = True
+    created_at: datetime
+
+
 class AshaWorkerItemResponse(BaseModel):
     id: UUID
     user_id: UUID
@@ -92,4 +122,5 @@ class AshaWorkerItemResponse(BaseModel):
     user: Optional[Dict[str, Any]] = None
     created_at: datetime
     updated_at: datetime
+
 

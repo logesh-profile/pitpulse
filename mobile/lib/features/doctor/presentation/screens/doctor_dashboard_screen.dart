@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:pitpulse_mobile/features/auth/presentation/controllers/auth_controller.dart';
-import '../controllers/doctor_controller.dart';
 import '../../data/models/doctor_models.dart';
+import '../controllers/doctor_controller.dart';
+import 'doctor_patient_detail_screen.dart';
 
 class DoctorDashboardScreen extends StatefulWidget {
   final AuthController authController;
@@ -239,85 +240,110 @@ class _DoctorDashboardScreenState extends State<DoctorDashboardScreen> with Sing
             margin: const EdgeInsets.only(bottom: 12),
             color: const Color(0xFF1E293B),
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-            child: Padding(
-              padding: const EdgeInsets.all(14.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      CircleAvatar(
-                        backgroundColor: primaryTeal.withValues(alpha: 0.2),
-                        child: const Icon(Icons.person, color: accentCyan),
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              p.fullName,
-                              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
-                            ),
-                            Text(
-                              p.email,
-                              style: TextStyle(color: Colors.grey[400], fontSize: 12),
-                            ),
-                            if (p.villageLocality != null)
+            clipBehavior: Clip.antiAlias,
+            child: InkWell(
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => DoctorPatientDetailScreen(
+                      patient: p,
+                      doctorController: _doctorController,
+                    ),
+                  ),
+                );
+              },
+              child: Padding(
+                padding: const EdgeInsets.all(14.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        CircleAvatar(
+                          backgroundColor: primaryTeal.withValues(alpha: 0.2),
+                          child: const Icon(Icons.person, color: accentCyan),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
                               Text(
-                                'Village: ${p.villageLocality}',
+                                p.fullName,
+                                style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                              ),
+                              Text(
+                                p.email,
                                 style: TextStyle(color: Colors.grey[400], fontSize: 12),
                               ),
-                          ],
-                        ),
-                      ),
-                      if (p.hasActivePregnancy)
-                        Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                          decoration: BoxDecoration(
-                            color: Colors.pink.withValues(alpha: 0.2),
-                            borderRadius: BorderRadius.circular(6),
-                            border: Border.all(color: Colors.pink[400]!),
+                              if (p.villageLocality != null)
+                                Text(
+                                  'Village: ${p.villageLocality}',
+                                  style: TextStyle(color: Colors.grey[400], fontSize: 12),
+                                ),
+                            ],
                           ),
+                        ),
+                        if (p.hasActivePregnancy)
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                            decoration: BoxDecoration(
+                              color: Colors.pink.withValues(alpha: 0.2),
+                              borderRadius: BorderRadius.circular(6),
+                              border: Border.all(color: Colors.pink[400]!),
+                            ),
+                            child: Text(
+                              'Pregnant • ${p.activePregnancyGaWeeks ?? 0}w',
+                              style: TextStyle(color: Colors.pink[200], fontSize: 11, fontWeight: FontWeight.bold),
+                            ),
+                          ),
+                      ],
+                    ),
+                    const Divider(height: 20, color: Colors.black38),
+                    Row(
+                      children: [
+                        Icon(Icons.assignment_ind, size: 16, color: p.assignedAshaName != null ? Colors.green[400] : Colors.amber[400]),
+                        const SizedBox(width: 6),
+                        Expanded(
                           child: Text(
-                            'Pregnant • ${p.activePregnancyGaWeeks ?? 0}w',
-                            style: TextStyle(color: Colors.pink[200], fontSize: 11, fontWeight: FontWeight.bold),
+                            p.assignedAshaName != null
+                                ? 'ASHA: ${p.assignedAshaName}'
+                                : 'No ASHA Assigned',
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: p.assignedAshaName != null ? Colors.green[300] : Colors.amber[300],
+                              fontWeight: FontWeight.w600,
+                            ),
+                            overflow: TextOverflow.ellipsis,
                           ),
                         ),
-                    ],
-                  ),
-                  const Divider(height: 20, color: Colors.black38),
-                  Row(
-                    children: [
-                      Icon(Icons.assignment_ind, size: 16, color: p.assignedAshaName != null ? Colors.green[400] : Colors.amber[400]),
-                      const SizedBox(width: 6),
-                      Text(
-                        p.assignedAshaName != null
-                            ? 'ASHA: ${p.assignedAshaName}'
-                            : 'No ASHA Assigned',
-                        style: TextStyle(
-                          fontSize: 12,
-                          color: p.assignedAshaName != null ? Colors.green[300] : Colors.amber[300],
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                      const Spacer(),
-                      if (showAssignButton)
-                        ElevatedButton.icon(
-                          onPressed: () => _showAssignAshaDialog(p),
-                          icon: Icon(p.assignedAshaName != null ? Icons.swap_horiz : Icons.person_add, size: 14),
-                          label: Text(p.assignedAshaName != null ? 'Reassign ASHA' : 'Assign ASHA', style: const TextStyle(fontSize: 12)),
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: p.assignedAshaName != null ? const Color(0xFF334155) : primaryTeal,
-                            foregroundColor: Colors.white,
-                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                            minimumSize: Size.zero,
+                        if (showAssignButton)
+                          ElevatedButton.icon(
+                            onPressed: () => _showAssignAshaDialog(p),
+                            icon: Icon(p.assignedAshaName != null ? Icons.swap_horiz : Icons.person_add, size: 14),
+                            label: Text(p.assignedAshaName != null ? 'Reassign' : 'Assign ASHA', style: const TextStyle(fontSize: 12)),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: p.assignedAshaName != null ? const Color(0xFF334155) : primaryTeal,
+                              foregroundColor: Colors.white,
+                              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                              minimumSize: Size.zero,
+                            ),
                           ),
-                        ),
-                    ],
-                  ),
-                ],
+                      ],
+                    ),
+                    const SizedBox(height: 8),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.end,
+                      children: const [
+                        Text('Tap to inspect full clinical history & vitals', style: TextStyle(fontSize: 11, color: accentCyan)),
+                        SizedBox(width: 4),
+                        Icon(Icons.arrow_forward_ios, size: 10, color: accentCyan),
+                      ],
+                    ),
+                  ],
+                ),
               ),
             ),
           );

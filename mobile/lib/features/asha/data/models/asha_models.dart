@@ -210,6 +210,8 @@ class MaternalVitalRecordModel {
     );
   }
 
+  bool get hasBp => systolicBp != null && diastolicBp != null;
+
   String get bpDisplay {
     if (systolicBp != null && diastolicBp != null) {
       return '$systolicBp / $diastolicBp mmHg';

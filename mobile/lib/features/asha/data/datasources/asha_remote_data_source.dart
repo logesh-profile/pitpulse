@@ -68,6 +68,22 @@ class AshaRemoteDataSource {
     return items.map((json) => MaternalVitalRecordModel.fromJson(json as Map<String, dynamic>)).toList();
   }
 
+  /// List home visits for authorized clinician (Doctor or Admin)
+  Future<List<HomeVisitModel>> getAuthorizedPatientHomeVisits(String patientId) async {
+    final response = await _apiClient.get('/api/v1/patients/$patientId/home-visits');
+    final data = response.data as Map<String, dynamic>;
+    final List<dynamic> items = data['items'] ?? [];
+    return items.map((json) => HomeVisitModel.fromJson(json as Map<String, dynamic>)).toList();
+  }
+
+  /// List vitals for authorized clinician (Doctor or Admin)
+  Future<List<MaternalVitalRecordModel>> getAuthorizedPatientVitals(String patientId) async {
+    final response = await _apiClient.get('/api/v1/patients/$patientId/vitals');
+    final data = response.data as Map<String, dynamic>;
+    final List<dynamic> items = data['items'] ?? [];
+    return items.map((json) => MaternalVitalRecordModel.fromJson(json as Map<String, dynamic>)).toList();
+  }
+
   /// Record vitals during a home visit
   Future<MaternalVitalRecordModel> recordVitals({
     required String patientId,

@@ -277,3 +277,65 @@ async def test_idor_protection_generic_pregnancy_and_profile_routes(async_client
     )
     assert preg_res.status_code == 403
     assert "not actively assigned" in preg_res.json()["detail"]
+
+
+@pytest.mark.asyncio
+async def test_admin_patient_creation_and_account_deletion(
+    async_client: AsyncClient,
+    db_session: AsyncSession,
+):
+    """5. Verify Admin can provision patients directly and delete user accounts cleanly."""
+    admin_token = await create_admin_token(async_client, db_session)
+
+    # 1. Admin provisions a patient
+    patient_email = f"admin_prov_pat_{uuid.uuid4().hex[:8]}@pitpulse.org"
+    prov_res = await async_client.post(
+        "/api/v1/admin/users/patients",
+        json={
+            "email": patient_email,
+            "full_name": "Admin Managed Patient",
+            "phone": f"+9198{uuid.uuid4().hex[:8]}",
+            "blood_group": "B+",
+            "village_locality": "Green Valley Sector 4",
+        },
+        headers={"Authorization": f"Bearer {admin_token}"},
+    )
+    assert prov_res.status_code == 201
+    prov_data = prov_res.json()
+    assert prov_data["email"] == patient_email
+    assert prov_data["health_record_number"].startswith("HR-")
+    assert prov_data["is_active"] is True
+    created_user_id = prov_data["user_id"]
+
+    # 2. Patient appears in admin patients list with health record number
+    list_res = await async_client.get(
+        "/api/v1/admin/patients",
+        headers={"Authorization": f"Bearer {admin_token}"},
+    )
+    assert list_res.status_code == 200
+    patients_list = list_res.json()
+    matched = [p for p in patients_list if p["user_id"] == created_user_id]
+    assert len(matched) == 1
+    assert matched[0]["health_record"]["record_number"] == prov_data["health_record_number"]
+
+    # 3. Patient can log in directly with default password
+    login_res = await async_client.post(
+        "/api/v1/auth/login",
+        json={"email": patient_email, "password": "logesh@360"},
+    )
+    assert login_res.status_code == 200
+
+    # 4. Admin deletes the user account
+    del_res = await async_client.delete(
+        f"/api/v1/admin/users/{created_user_id}",
+        headers={"Authorization": f"Bearer {admin_token}"},
+    )
+    assert del_res.status_code == 204
+
+    # 5. Deleted user cannot log in
+    relogin_res = await async_client.post(
+        "/api/v1/auth/login",
+        json={"email": patient_email, "password": "logesh@360"},
+    )
+    assert relogin_res.status_code == 401
+

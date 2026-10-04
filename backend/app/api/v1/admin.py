@@ -17,7 +17,9 @@ from app.schemas.admin import (
     AshaWorkerItemResponse,
     CreateAshaRequest,
     CreateDoctorRequest,
+    CreatePatientRequest,
     DoctorProvisionResponse,
+    PatientProvisionResponse,
     ProfessionalUserItem,
     UserStatusUpdateRequest,
 )
@@ -28,7 +30,7 @@ from app.schemas.assignment import (
     AshaAssignmentUpdateRequest,
 )
 from app.schemas.auth import UserResponse
-from app.schemas.patient import PatientProfileResponse
+from app.schemas.patient import HealthRecordResponse, PatientProfileResponse
 from app.services.admin_service import AdminService
 from app.services.assignment_service import AssignmentService
 from app.services.patient_service import PatientService
@@ -66,6 +68,21 @@ async def create_asha(
     return await AdminService.create_asha(db=db, req=req)
 
 
+@router.post(
+    "/users/patients",
+    response_model=PatientProvisionResponse,
+    status_code=status.HTTP_201_CREATED,
+    summary="Provision a new Patient account",
+    description="Admin-only endpoint to create Patient accounts with anchor health records.",
+)
+async def create_patient(
+    req: CreatePatientRequest,
+    db: AsyncSession = Depends(get_db),
+    admin_user: User = Depends(require_admin),
+) -> PatientProvisionResponse:
+    return await AdminService.create_patient(db=db, req=req)
+
+
 @router.get(
     "/users/professionals",
     response_model=List[ProfessionalUserItem],
@@ -95,6 +112,21 @@ async def update_user_status(
 ) -> UserResponse:
     user = await AdminService.update_user_status(db=db, user_id=user_id, is_active=req.is_active)
     return UserResponse.model_validate(user)
+
+
+@router.delete(
+    "/users/{user_id}",
+    status_code=status.HTTP_204_NO_CONTENT,
+    summary="Delete User Account",
+    description="Admin-only endpoint to permanently remove an account and its clinical/profile data.",
+)
+async def delete_user(
+    user_id: uuid.UUID,
+    db: AsyncSession = Depends(get_db),
+    admin_user: User = Depends(require_admin),
+) -> None:
+    await AdminService.delete_user(db=db, user_id=user_id)
+
 
 
 # ==========================================
@@ -195,7 +227,11 @@ async def list_patients_for_admin(
             emergency_contact_phone=p.emergency_contact_phone,
             blood_group=p.blood_group,
             baseline_health_info=p.baseline_health_info,
-            health_record=None,
+            health_record=HealthRecordResponse(
+                id=p.health_record.id,
+                record_number=p.health_record.record_number,
+                created_at=p.health_record.created_at,
+            ) if p.health_record else None,
             created_at=p.created_at,
             updated_at=p.updated_at,
         )

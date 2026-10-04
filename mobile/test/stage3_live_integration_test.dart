@@ -17,7 +17,7 @@ void main() {
     // 1. Authenticate as Admin
     final adminLogin = await authDataSource.login(
       email: 'admin@pitpulse.org',
-      password: 'Admin@PitPulse2026!',
+      password: 'logesh@360',
     );
     expect(adminLogin.user.role, 'ADMIN');
     client.setAuthToken(adminLogin.accessToken);

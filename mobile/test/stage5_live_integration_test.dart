@@ -33,7 +33,7 @@ void main() {
       // ==========================================
       final adminLogin = await authDataSource.login(
         email: 'admin@pitpulse.org',
-        password: 'Admin@PitPulse2026!',
+        password: 'logesh@360',
       );
       expect(adminLogin.accessToken.isNotEmpty, isTrue);
       apiClient.setAuthToken(adminLogin.accessToken);

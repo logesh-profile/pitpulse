@@ -287,6 +287,22 @@ class _AshaDashboardScreenState extends State<AshaDashboardScreen> {
                     ),
                     _buildModuleCard(
                       context,
+                      title: 'ASHA AI Field Intelligence',
+                      subtitle: 'On-device triage assistant, maternal risk scoring & clinical guidance',
+                      icon: Icons.auto_awesome,
+                      status: 'Coming Soon',
+                      badgeColor: Colors.purpleAccent,
+                      onTap: () {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text('ASHA AI Field Intelligence is in development for future field deployment.'),
+                            backgroundColor: Color(0xFF1E293B),
+                          ),
+                        );
+                      },
+                    ),
+                    _buildModuleCard(
+                      context,
                       title: 'Maternal & Child Immunization',
                       subtitle: 'Vaccination schedules and reminders',
                       icon: Icons.vaccines_outlined,
@@ -308,30 +324,34 @@ class _AshaDashboardScreenState extends State<AshaDashboardScreen> {
     required String subtitle,
     required IconData icon,
     required String status,
+    Color? badgeColor,
+    VoidCallback? onTap,
   }) {
     return Card(
       margin: const EdgeInsets.only(bottom: 12),
       color: const Color(0xFF1E293B),
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
       child: ListTile(
-        leading: Icon(icon, color: const Color(0xFF0284C7)),
+        leading: Icon(icon, color: badgeColor ?? const Color(0xFF0284C7)),
         title: Text(title, style: const TextStyle(fontWeight: FontWeight.bold)),
         subtitle: Text(subtitle, style: const TextStyle(fontSize: 12, color: Colors.grey)),
         trailing: Container(
           padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
           decoration: BoxDecoration(
-            color: Colors.black26,
+            color: badgeColor != null ? badgeColor.withValues(alpha: 0.15) : Colors.black26,
             borderRadius: BorderRadius.circular(4),
+            border: badgeColor != null ? Border.all(color: badgeColor) : null,
           ),
           child: Text(
             status,
             style: TextStyle(
               fontSize: 10,
-              color: status.contains('Active') ? const Color(0xFF0284C7) : Colors.grey,
-              fontWeight: status.contains('Active') ? FontWeight.bold : FontWeight.normal,
+              color: badgeColor ?? (status.contains('Active') ? const Color(0xFF0284C7) : Colors.grey),
+              fontWeight: (status.contains('Active') || badgeColor != null) ? FontWeight.bold : FontWeight.normal,
             ),
           ),
         ),
+        onTap: onTap,
       ),
     );
   }
