@@ -192,13 +192,14 @@ class GroundedSynthesizer:
                         )
                     )
 
+                notes_line = f'- **Clinical Note:** "{notes}"\n' if notes else ""
                 vital_text = (
                     f"🩺 **Your Latest Recorded Vitals Summary**\n"
                     f"*Recorded on: {recorded_at[:10] if recorded_at else 'Recent'} by {recorded_by}*\n\n"
                     f"- **Blood Pressure:** {bp_disp}\n"
                     f"- **Weight:** {f'{weight} kg' if weight else 'Not recorded'}\n"
                     f"- **Body Temperature:** {f'{temp} °C' if temp else 'Not recorded'}\n"
-                    f"{f'- **Clinical Note:** \"{notes}\"\n' if notes else ''}"
+                    f"{notes_line}"
                 )
 
             # Add Knowledge Base Educational Context
@@ -395,9 +396,10 @@ class GroundedSynthesizer:
                     entry += f"\n  *Follow-up:* ⚠️ {v.get('follow_up_notes') or 'Action recommended'}"
                 visit_entries.append(entry)
 
+            visits_text = "\n\n".join(visit_entries)
             reply_text = (
                 f"🏡 **ASHA Field Care & Home Visits Summary**\n\n"
-                f"{'\n\n'.join(visit_entries)}\n\n"
+                f"{visits_text}\n\n"
                 f"💡 Your ASHA worker coordinates closely with primary health centers to support your antenatal journey."
             )
             followups = [
