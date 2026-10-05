@@ -16,6 +16,7 @@ class LocalAgentState {
   List<String> extractedEntities = [];
   Map<String, dynamic> retrievedMedicalContext = {};
   Map<String, dynamic> retrievedAshaContext = {};
+  List<String> executedTools = [];
   bool isEmergency = false;
   String synthesizedResponse = '';
 
@@ -394,6 +395,7 @@ class LocalAgenticRagController {
     // LAYER 1: The Safety Override (Restricted Content Check)
     // =========================================================================
     if (_checkLayer1SafetyOverride(rawText)) {
+      state.executedTools.add('Tool_Layer1_Safety_Intercept');
       state.synthesizedResponse = lang == 'ta'
           ? 'என்னால் அதற்குப் பதிலளிக்க முடியாது.'
           : 'I cannot answer that.';
@@ -408,6 +410,7 @@ class LocalAgenticRagController {
     // override and route immediately to the General Health FAQ tool!
     final matchedFaqKey = _matchGeneralHealthFaq(rawText);
     if (matchedFaqKey != null) {
+      state.executedTools.add('Tool_General_Health_FAQ');
       state.primaryIntentId = 8; // GENERAL_MED_QA
       state.synthesizedResponse = toolGeneralHealthFaq(
         topicKey: matchedFaqKey,
@@ -421,6 +424,7 @@ class LocalAgenticRagController {
     // =========================================================================
     final chitchatCategory = _detectChitchatCategory(rawText, state.primaryIntentId);
     if (chitchatCategory != null) {
+      state.executedTools.add('Tool_Conversational_Chitchat');
       state.primaryIntentId = max(state.primaryIntentId, 10);
       state.synthesizedResponse = toolConversationalChitchat(
         category: chitchatCategory,
@@ -476,8 +480,13 @@ class LocalAgenticRagController {
     Map<String, dynamic>? medicalData;
     Map<String, dynamic>? ashaData;
 
+    if (isEmergency) {
+      state.executedTools.add('Tool_Emergency_Triage');
+    }
+
     // Trigger Tool_Maternal_Timeline_Lookup if diet or pregnancy progress query
     if (_isDietOrMilestoneQuery(rawText, state.primaryIntentId) || (milestoneMonth != null && _isFoodQuery(rawText))) {
+      state.executedTools.add('Tool_Maternal_Timeline_Lookup');
       medicalData = toolMaternalTimelineLookup(
         timelineMonths: finalMonth,
         language: lang,
@@ -487,11 +496,16 @@ class LocalAgenticRagController {
 
     // Trigger Tool_ASHA_Directory_Fetch if village detected or ASHA mentioned
     if (detectedVillage != null || _isAshaQuery(rawText, state.primaryIntentId)) {
+      state.executedTools.add('Tool_ASHA_Directory_Fetch');
       ashaData = toolAshaDirectoryFetch(
         villageName: detectedVillage ?? 'vellanur',
         language: lang,
       );
       state.retrievedAshaContext = ashaData;
+    }
+
+    if (state.executedTools.isEmpty) {
+      state.executedTools.add('Tool_Semantic_RAG_Fallback');
     }
 
     // Step 4: Output Assembly & TTS Synthesis

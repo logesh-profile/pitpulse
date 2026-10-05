@@ -39,6 +39,7 @@ class PatientAiEngine {
         sender: MessageSender.ai,
         timestamp: DateTime.now(),
         isTamil: isTa,
+        executedTools: agentState.executedTools,
         warning: agentState.isEmergency
             ? AiScreeningWarning(
                 severity: WarningSeverity.emergency,
@@ -97,6 +98,7 @@ class PatientAiEngine {
       sender: MessageSender.ai,
       timestamp: DateTime.now(),
       isTamil: isTa,
+      executedTools: agentState.executedTools,
       sources: const [
         AiSourceReference(
           type: AiSourceType.curatedKnowledgeBase,

@@ -15,6 +15,7 @@ class PatientAiMessage {
   final List<AiSourceReference> sources;
   final AiScreeningWarning? warning;
   final List<String> suggestedQuestions;
+  final List<String> executedTools;
   final bool isOfflineGenerated;
   final bool isTamil;
 
@@ -26,6 +27,7 @@ class PatientAiMessage {
     this.sources = const [],
     this.warning,
     this.suggestedQuestions = const [],
+    this.executedTools = const [],
     this.isOfflineGenerated = true,
     this.isTamil = false,
   });

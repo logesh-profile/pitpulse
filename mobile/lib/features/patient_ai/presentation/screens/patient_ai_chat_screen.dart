@@ -342,7 +342,7 @@ class _PatientAiChatScreenState extends State<PatientAiChatScreen> {
                   const SizedBox(width: 8),
                   const Expanded(
                     child: Text(
-                      'v2.0 Context-Aware Agentic RAG Controller • 100% Offline • Multi-Turn Voice',
+                      'PitPulse v1.0.2 • Stateful Agentic RAG Controller • 100% Offline Multi-Turn',
                       style: TextStyle(fontSize: 11, color: Color(0xFF10B981), fontWeight: FontWeight.bold),
                     ),
                   ),
@@ -528,6 +528,30 @@ class _PatientAiChatScreenState extends State<PatientAiChatScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
+                      // Agentic Tools Badge (if routed through tools)
+                      if (msg.executedTools.isNotEmpty) ...[
+                        Container(
+                          margin: const EdgeInsets.only(bottom: 8),
+                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                          decoration: BoxDecoration(
+                            color: accentCyan.withValues(alpha: 0.12),
+                            borderRadius: BorderRadius.circular(6),
+                            border: Border.all(color: accentCyan.withValues(alpha: 0.35)),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              const Icon(Icons.hub_rounded, size: 12, color: accentCyan),
+                              const SizedBox(width: 4),
+                              Text(
+                                'Agentic Tools: ${msg.executedTools.join(' → ')}',
+                                style: const TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: accentCyan),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+
                       // Formatted Response Text
                       Text(
                         msg.text,

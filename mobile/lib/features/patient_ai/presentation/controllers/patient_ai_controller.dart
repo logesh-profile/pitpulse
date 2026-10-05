@@ -55,7 +55,7 @@ class PatientAiController extends ChangeNotifier {
 
   void _initWelcomeMessage() {
     final patientName = _context.patientName;
-    String greeting = 'Hello $patientName! I am your **PitPulse Maternal AI Guide**.';
+    String greeting = 'Hello $patientName! I am your **PitPulse Maternal AI Guide (v1.0.2)**.';
 
     if (_context.hasActivePregnancy) {
       final preg = _context.activePregnancy!;
