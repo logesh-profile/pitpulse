@@ -15,17 +15,8 @@ class AppConfig {
       return _customBackendUrl;
     }
 
-    if (kIsWeb) {
-      return 'http://127.0.0.1:8000';
-    }
-
-    if (Platform.isAndroid) {
-      // Physical device Wi-Fi backend IP (fallback to emulator loopback if overridden)
-      return 'http://10.63.229.152:8000';
-    }
-
-    // Windows, macOS, Linux desktop
-    return 'http://127.0.0.1:8000';
+    // Default to production cloud backend on Render
+    return 'https://pitpulse-backend.onrender.com';
   }
 
   static const int connectTimeoutMs = 15000;
