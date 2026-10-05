@@ -3,6 +3,7 @@ services:
     name: pitpulse-backend
     env: docker
     plan: free
+    dockerContext: backend
     dockerfilePath: backend/Dockerfile
     envVars:
       - key: ENVIRONMENT
