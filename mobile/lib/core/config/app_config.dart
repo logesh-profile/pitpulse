@@ -1,6 +1,3 @@
-import 'dart:io';
-import 'package:flutter/foundation.dart';
-
 /// Application configuration management for environment, networking, and platform differences.
 class AppConfig {
   static const String appName = 'PitPulse';

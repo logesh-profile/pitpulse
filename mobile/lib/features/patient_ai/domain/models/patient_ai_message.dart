@@ -16,6 +16,7 @@ class PatientAiMessage {
   final AiScreeningWarning? warning;
   final List<String> suggestedQuestions;
   final bool isOfflineGenerated;
+  final bool isTamil;
 
   const PatientAiMessage({
     required this.id,
@@ -26,6 +27,7 @@ class PatientAiMessage {
     this.warning,
     this.suggestedQuestions = const [],
     this.isOfflineGenerated = true,
+    this.isTamil = false,
   });
 
   bool get isUser => sender == MessageSender.user;

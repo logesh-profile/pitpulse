@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import '../../data/local_speech_service.dart';
+import '../../data/local_tts_service.dart';
 import '../../domain/models/ai_screening_warning.dart';
 import '../../domain/models/patient_ai_context.dart';
 import '../../domain/models/patient_ai_message.dart';
@@ -32,10 +34,13 @@ class _PatientAiChatScreenState extends State<PatientAiChatScreen> {
   void initState() {
     super.initState();
     _controller = widget.controller ?? PatientAiController(context: widget.contextSnapshot);
+    LocalTtsService().initialize();
   }
 
   @override
   void dispose() {
+    LocalTtsService().stop();
+    LocalSpeechService().stopListening();
     _inputController.dispose();
     _scrollController.dispose();
     _focusNode.dispose();
@@ -64,6 +69,207 @@ class _PatientAiChatScreenState extends State<PatientAiChatScreen> {
     _controller.sendUserMessage(text);
     _inputController.clear();
     _scrollToBottom();
+  }
+
+  /// Voice Input Sheet with offline speech capture and instant Tamil/English query chips
+  void _showVoiceInputDialog() {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: const Color(0xFF0F172A),
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (ctx) {
+        return StatefulBuilder(
+          builder: (context, setSheetState) {
+            final isListening = LocalSpeechService().isListening;
+
+            return Padding(
+              padding: EdgeInsets.only(
+                bottom: MediaQuery.of(context).viewInsets.bottom + 20,
+                left: 20,
+                right: 20,
+                top: 20,
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Row(
+                        children: const [
+                          Icon(Icons.mic_rounded, color: Colors.amberAccent, size: 22),
+                          SizedBox(width: 8),
+                          Text(
+                            'Offline Voice Input / குரல் உள்ளீடு',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ],
+                      ),
+                      IconButton(
+                        icon: const Icon(Icons.close, color: Colors.grey),
+                        onPressed: () => Navigator.pop(ctx),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 12),
+                  const Text(
+                    'Speak in Tamil or English (uses native offline speech recognizer). Or tap a sample voice question below:',
+                    style: TextStyle(color: Colors.grey, fontSize: 13),
+                  ),
+                  const SizedBox(height: 20),
+
+                  // Mic Pulse Button
+                  Center(
+                    child: GestureDetector(
+                      onTap: () async {
+                        if (LocalSpeechService().isListening) {
+                          await LocalSpeechService().stopListening();
+                          setSheetState(() {});
+                        } else {
+                          await LocalSpeechService().startListening(
+                            onResult: (words) {
+                              setSheetState(() {});
+                              if (words.trim().isNotEmpty) {
+                                _inputController.text = words;
+                              }
+                            },
+                          );
+                          setSheetState(() {});
+                        }
+                      },
+                      child: Container(
+                        width: 72,
+                        height: 72,
+                        decoration: BoxDecoration(
+                          color: isListening ? Colors.redAccent : primaryTeal,
+                          shape: BoxShape.circle,
+                          boxShadow: [
+                            BoxShadow(
+                              color: (isListening ? Colors.redAccent : primaryTeal).withValues(alpha: 0.4),
+                              blurRadius: 16,
+                              spreadRadius: 4,
+                            ),
+                          ],
+                        ),
+                        child: Icon(
+                          isListening ? Icons.stop_rounded : Icons.mic_rounded,
+                          color: Colors.white,
+                          size: 36,
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  Center(
+                    child: Text(
+                      isListening ? '🎙️ Listening... (பேசுங்கள்)' : 'Tap mic to start speaking',
+                      style: TextStyle(
+                        color: isListening ? Colors.amberAccent : Colors.grey,
+                        fontSize: 13,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                  if (_inputController.text.isNotEmpty) ...[
+                    const SizedBox(height: 12),
+                    Container(
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: darkCardBg,
+                        borderRadius: BorderRadius.circular(10),
+                        border: Border.all(color: accentCyan.withValues(alpha: 0.4)),
+                      ),
+                      child: Text(
+                        '"${_inputController.text}"',
+                        style: const TextStyle(color: Colors.white, fontSize: 14),
+                      ),
+                    ),
+                    const SizedBox(height: 10),
+                    ElevatedButton.icon(
+                      onPressed: () {
+                        Navigator.pop(ctx);
+                        _handleSend();
+                      },
+                      icon: const Icon(Icons.send_rounded, size: 18),
+                      label: const Text('Send Recognized Voice Text'),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: primaryTeal,
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                      ),
+                    ),
+                  ],
+                  const SizedBox(height: 20),
+                  const Text(
+                    'Quick Maternal Voice Prompts (மாதிரிகள்):',
+                    style: TextStyle(color: Colors.white70, fontSize: 12, fontWeight: FontWeight.bold),
+                  ),
+                  const SizedBox(height: 10),
+                  Wrap(
+                    spacing: 8,
+                    runSpacing: 8,
+                    children: [
+                      _buildVoiceSampleChip(
+                        ctx,
+                        'Enaku moonu maasam aaguthu, naan enna saapadanum?',
+                        '🥗 3rd Month Diet (Tamil)',
+                      ),
+                      _buildVoiceSampleChip(
+                        ctx,
+                        'கர்ப்ப கால உணவு முறை என்ன?',
+                        '🥦 Pregnancy Diet Guide',
+                      ),
+                      _buildVoiceSampleChip(
+                        ctx,
+                        'எனக்கு இரத்தப்போக்கு ஏற்படுகிறது',
+                        '🚨 Bleeding Red Flag',
+                      ),
+                      _buildVoiceSampleChip(
+                        ctx,
+                        'என் இரத்த அழுத்தம் (BP) இயல்பாக உள்ளதா?',
+                        '🩺 BP & Vitals Check',
+                      ),
+                      _buildVoiceSampleChip(
+                        ctx,
+                        'டாக்டரிடம் நான் என்ன கேட்க வேண்டும்?',
+                        '📋 Doctor Prep',
+                      ),
+                      _buildVoiceSampleChip(
+                        ctx,
+                        'What should I eat during the 1st trimester?',
+                        '🥗 1st Trimester Diet (English)',
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
+
+  Widget _buildVoiceSampleChip(BuildContext ctx, String query, String label) {
+    return ActionChip(
+      avatar: const Icon(Icons.record_voice_over_rounded, size: 14, color: Colors.amberAccent),
+      label: Text(label, style: const TextStyle(fontSize: 11, color: Colors.white)),
+      backgroundColor: darkCardBg,
+      side: BorderSide(color: accentCyan.withValues(alpha: 0.3)),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      onPressed: () {
+        Navigator.pop(ctx);
+        _handleSend(query);
+      },
+    );
   }
 
   @override
@@ -100,39 +306,44 @@ class _PatientAiChatScreenState extends State<PatientAiChatScreen> {
             decoration: BoxDecoration(
               color: Colors.green.withValues(alpha: 0.15),
               borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: Colors.greenAccent.withValues(alpha: 0.4)),
+              border: Border.all(color: Colors.green.withValues(alpha: 0.5)),
             ),
-            child: const Row(
+            child: Row(
               mainAxisSize: MainAxisSize.min,
-              children: [
-                Icon(Icons.offline_bolt, size: 12, color: Colors.greenAccent),
+              children: const [
+                Icon(Icons.offline_bolt, color: Colors.greenAccent, size: 14),
                 SizedBox(width: 4),
-                Text('ON-DEVICE', style: TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: Colors.greenAccent)),
+                Text('ON-DEVICE', style: TextStyle(color: Colors.greenAccent, fontSize: 11, fontWeight: FontWeight.bold)),
               ],
             ),
-          ),
-          IconButton(
-            icon: const Icon(Icons.refresh, size: 20),
-            tooltip: 'Clear conversation',
-            onPressed: () => _controller.clearConversation(),
           ),
         ],
       ),
       body: SafeArea(
         child: Column(
           children: [
-            // Disclaimer Banner
+            // 100MB Architecture Badge Banner
             Container(
-              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-              color: const Color(0xFF0F172A),
-              child: const Row(
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+              decoration: const BoxDecoration(
+                color: Color(0xFF0F172A),
+                border: Border(bottom: BorderSide(color: Color(0xFF1E293B))),
+              ),
+              child: Row(
                 children: [
-                  Icon(Icons.info_outline, size: 14, color: Color(0xFF94A3B8)),
-                  SizedBox(width: 8),
-                  Expanded(
+                  Container(
+                    width: 7,
+                    height: 7,
+                    decoration: const BoxDecoration(
+                      color: Color(0xFF10B981),
+                      shape: BoxShape.circle,
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  const Expanded(
                     child: Text(
-                      'Informational guide grounded in your records. Not a substitute for clinical diagnosis.',
-                      style: TextStyle(fontSize: 11, color: Color(0xFF94A3B8)),
+                      '100MB Local Intent Classifier Architecture • Voice Input • Tamil/English TTS',
+                      style: TextStyle(fontSize: 11, color: Color(0xFF94A3B8), fontWeight: FontWeight.w500),
                     ),
                   ),
                 ],
@@ -146,7 +357,6 @@ class _PatientAiChatScreenState extends State<PatientAiChatScreen> {
                 builder: (context, _) {
                   final messages = _controller.messages;
                   final isTyping = _controller.isTyping;
-
                   _scrollToBottom();
 
                   return ListView.builder(
@@ -193,9 +403,9 @@ class _PatientAiChatScreenState extends State<PatientAiChatScreen> {
               },
             ),
 
-            // Bottom Input Bar
+            // Bottom Input Bar with Voice Mic & Text Input
             Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
               decoration: const BoxDecoration(
                 color: Color(0xFF0F172A),
                 border: Border(top: BorderSide(color: Color(0xFF334155))),
@@ -211,7 +421,7 @@ class _PatientAiChatScreenState extends State<PatientAiChatScreen> {
                       textInputAction: TextInputAction.send,
                       onSubmitted: (_) => _handleSend(),
                       decoration: InputDecoration(
-                        hintText: 'Ask about your pregnancy or vitals...',
+                        hintText: 'Type or speak in Tamil or English...',
                         hintStyle: const TextStyle(color: Colors.grey, fontSize: 13),
                         filled: true,
                         fillColor: darkCardBg,
@@ -224,6 +434,21 @@ class _PatientAiChatScreenState extends State<PatientAiChatScreen> {
                     ),
                   ),
                   const SizedBox(width: 8),
+
+                  // Voice Mic Button
+                  CircleAvatar(
+                    backgroundColor: Colors.amber[700],
+                    radius: 20,
+                    child: IconButton(
+                      key: const Key('patient_ai_voice_button'),
+                      icon: const Icon(Icons.mic_rounded, size: 20, color: Colors.white),
+                      tooltip: 'Voice Input / தமிழில் பேசுங்கள்',
+                      onPressed: _showVoiceInputDialog,
+                    ),
+                  ),
+                  const SizedBox(width: 6),
+
+                  // Send Button
                   CircleAvatar(
                     backgroundColor: primaryTeal,
                     radius: 20,
@@ -248,7 +473,6 @@ class _PatientAiChatScreenState extends State<PatientAiChatScreen> {
         padding: const EdgeInsets.only(bottom: 12, left: 40),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.end,
-          crossAxisAlignment: CrossAxisAlignment.end,
           children: [
             Flexible(
               child: Container(
@@ -268,33 +492,24 @@ class _PatientAiChatScreenState extends State<PatientAiChatScreen> {
                 ),
               ),
             ),
-            const SizedBox(width: 8),
-            const CircleAvatar(
-              radius: 12,
-              backgroundColor: Color(0xFF334155),
-              child: Icon(Icons.person, size: 14, color: Colors.white70),
-            ),
           ],
         ),
       );
     }
 
-    // AI Message
+    // AI Response Bubble
     return Padding(
-      padding: const EdgeInsets.only(bottom: 16, right: 24),
+      padding: const EdgeInsets.only(bottom: 14),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Container(
-                padding: const EdgeInsets.all(6),
-                decoration: BoxDecoration(
-                  color: accentCyan.withValues(alpha: 0.15),
-                  shape: BoxShape.circle,
-                ),
-                child: const Icon(Icons.auto_awesome, color: accentCyan, size: 16),
+              CircleAvatar(
+                radius: 14,
+                backgroundColor: accentCyan.withValues(alpha: 0.2),
+                child: const Icon(Icons.auto_awesome, size: 14, color: accentCyan),
               ),
               const SizedBox(width: 8),
               Expanded(
@@ -313,7 +528,7 @@ class _PatientAiChatScreenState extends State<PatientAiChatScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      // Formatted Text
+                      // Formatted Response Text
                       Text(
                         msg.text,
                         style: const TextStyle(color: Colors.white, fontSize: 14, height: 1.4),
@@ -324,6 +539,57 @@ class _PatientAiChatScreenState extends State<PatientAiChatScreen> {
                         const SizedBox(height: 12),
                         _buildWarningCard(msg.warning!),
                       ],
+
+                      // Offline TTS Voice Speaker Button
+                      const SizedBox(height: 12),
+                      ValueListenableBuilder<bool>(
+                        valueListenable: LocalTtsService().isPlayingNotifier,
+                        builder: (context, isPlaying, _) {
+                          final isThisPlaying = isPlaying && LocalTtsService().currentlySpeakingId == msg.id;
+
+                          return InkWell(
+                            onTap: () {
+                              LocalTtsService().speak(
+                                text: msg.text,
+                                messageId: msg.id,
+                                isTamil: msg.isTamil,
+                              );
+                            },
+                            borderRadius: BorderRadius.circular(16),
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                              decoration: BoxDecoration(
+                                color: isThisPlaying ? Colors.amber.withValues(alpha: 0.2) : const Color(0xFF0F172A),
+                                borderRadius: BorderRadius.circular(16),
+                                border: Border.all(
+                                  color: isThisPlaying ? Colors.amberAccent : const Color(0xFF334155),
+                                ),
+                              ),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Icon(
+                                    isThisPlaying ? Icons.stop_circle_rounded : Icons.volume_up_rounded,
+                                    size: 16,
+                                    color: isThisPlaying ? Colors.amberAccent : accentCyan,
+                                  ),
+                                  const SizedBox(width: 6),
+                                  Text(
+                                    isThisPlaying
+                                        ? (msg.isTamil ? 'நிறுத்து (Stop Audio)' : 'Stop Listening')
+                                        : (msg.isTamil ? '🔊 தமிழில் கேளுங்கள் (Listen in Tamil)' : '🔊 Read Aloud (TTS)'),
+                                    style: TextStyle(
+                                      fontSize: 11,
+                                      fontWeight: FontWeight.bold,
+                                      color: isThisPlaying ? Colors.amberAccent : Colors.white70,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          );
+                        },
+                      ),
 
                       // Source Cards (if present)
                       if (msg.sources.isNotEmpty) ...[
@@ -402,8 +668,10 @@ class _PatientAiChatScreenState extends State<PatientAiChatScreen> {
           const SizedBox(height: 4),
           Text(warning.message, style: const TextStyle(fontSize: 12, color: Colors.white70)),
           const SizedBox(height: 6),
-          Text('Recommended Action: ${warning.recommendedAction}',
-              style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: color)),
+          Text(
+            'Recommended Action: ${warning.recommendedAction}',
+            style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: color),
+          ),
         ],
       ),
     );
@@ -463,7 +731,10 @@ class _PatientAiChatScreenState extends State<PatientAiChatScreen> {
                   child: CircularProgressIndicator(strokeWidth: 2, color: accentCyan),
                 ),
                 SizedBox(width: 8),
-                Text('PitPulse AI analyzing your health records...', style: TextStyle(fontSize: 12, color: Colors.grey)),
+                Text(
+                  'PitPulse AI analyzing your health records...',
+                  style: TextStyle(fontSize: 12, color: Colors.grey),
+                ),
               ],
             ),
           ),

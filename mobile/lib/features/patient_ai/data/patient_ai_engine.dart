@@ -4,6 +4,7 @@ import '../domain/models/ai_source_reference.dart';
 import '../domain/models/patient_ai_context.dart';
 import '../domain/models/patient_ai_message.dart';
 import 'curated_maternal_knowledge_base.dart';
+import 'local_intent_classifier.dart';
 
 enum QueryIntent {
   pregnancyProgress,
@@ -17,104 +18,138 @@ enum QueryIntent {
 }
 
 class PatientAiEngine {
-  /// Evaluates user text and returns grounded, safe structured response
+  /// Evaluates user text and returns grounded, safe structured response using the 100MB Offline Classifier
   PatientAiMessage processQuery({
     required String userQuery,
     required PatientAiContext context,
   }) {
-    final queryLower = userQuery.toLowerCase().trim();
     final messageId = 'ai_${DateTime.now().millisecondsSinceEpoch}_${Random().nextInt(1000)}';
 
-    // 1. Safety Triage: Check for Emergency Red Flags
-    final redFlag = _detectRedFlag(queryLower);
-    if (redFlag != null) {
-      return _generateEmergencyResponse(messageId, redFlag);
+    // Run tiny edge intent classifier (100% Offline Logic Router)
+    final classification = LocalIntentClassifier.classify(userQuery);
+    final isTa = classification.isTamil;
+    final weeks = context.hasActivePregnancy ? context.activePregnancy!.gestationalAgeWeeks : 12;
+
+    // 1. Safety Triage: Immediate Emergency Red Flags
+    if (classification.intent == LocalIntent.emergencyRedAlert) {
+      final redFlagText = LocalIntentClassifier.getVerifiedResponse(
+        classification: classification,
+        gestationalWeeks: weeks,
+      );
+      return PatientAiMessage(
+        id: messageId,
+        text: redFlagText,
+        sender: MessageSender.ai,
+        timestamp: DateTime.now(),
+        isTamil: isTa,
+        warning: AiScreeningWarning(
+          severity: WarningSeverity.emergency,
+          title: isTa ? 'அவசர மருத்துவ எச்சரிக்கை' : 'Emergency Red Flag Alert',
+          message: isTa
+              ? 'கர்ப்ப காலத்தில் இந்த அறிகுறி தோன்றினால் உடனடியாக மருத்துவ ஆலோசனை பெற வேண்டும்.'
+              : 'This symptom requires immediate emergency obstetrical assessment.',
+          clinicalBasis: 'WHO / MoHFW Antenatal Danger Signs Protocol',
+          recommendedAction: isTa
+              ? 'உடனடியாக உங்கள் மருத்துவரை அல்லது மருத்துவமனையை தொடர்பு கொள்ளவும்.'
+              : 'Contact your obstetrician or hospital emergency triage immediately.',
+        ),
+        sources: const [
+          AiSourceReference(
+            type: AiSourceType.clinicalScreeningRule,
+            title: '100% Offline Emergency Protocol',
+            detail: 'WHO Antenatal Danger Signs & Tamil Nadu Health Manual',
+          ),
+        ],
+        suggestedQuestions: isTa
+            ? ['அவசர மருத்துவமனைக்கு என்ன எடுத்துச் செல்ல வேண்டும்?', 'ஆஷா பணியாளர் தொடர்பு எண்']
+            : ['What should I bring to the emergency maternity center?', 'Who is my assigned ASHA contact?'],
+      );
     }
 
-    // 2. Classify User Intent
-    final intent = _classifyIntent(queryLower);
+    // 2. Diet & Nutrition Query (e.g., "3rd month diet" / "கர்ப்ப கால உணவு" / "Enaku moonu maasam aaguthu, naan enna saapadanum?")
+    if (classification.intent == LocalIntent.dietQuery) {
+      final dietText = LocalIntentClassifier.getVerifiedResponse(
+        classification: classification,
+        gestationalWeeks: weeks,
+      );
+      return PatientAiMessage(
+        id: messageId,
+        text: dietText,
+        sender: MessageSender.ai,
+        timestamp: DateTime.now(),
+        isTamil: isTa,
+        sources: const [
+          AiSourceReference(
+            type: AiSourceType.curatedKnowledgeBase,
+            title: 'Tamil Nadu Maternal Nutrition Protocol',
+            detail: 'Dr. Muthulakshmi Reddy Maternity Scheme Guidelines & WHO Nutrition Standards',
+          ),
+        ],
+        suggestedQuestions: isTa
+            ? [
+                'அடுத்த வாரங்களில் என் குழந்தை எப்படி வளரும்?',
+                'என் இரத்த அழுத்த அளவு இயல்பாக உள்ளதா?',
+                'மருத்துவரிடம் கேட்க வேண்டிய கேள்விகள் என்ன?',
+              ]
+            : [
+                'How is my baby growing this month?',
+                'Explain my latest vitals & blood pressure',
+                'What questions should I ask my doctor?',
+              ],
+      );
+    }
 
-    // 3. Generate Grounded Response Based on Intent & Authenticated Data
+    final queryLower = userQuery.toLowerCase().trim();
+
+    // 3. Fallthrough for Context-Grounded Clinical Features
+    final intent = _classifyIntent(queryLower);
     switch (intent) {
       case QueryIntent.pregnancyProgress:
-        return _handlePregnancyProgress(messageId, queryLower, context);
-
+        return _handlePregnancyProgress(messageId, queryLower, context, isTa: isTa);
       case QueryIntent.vitalsExplanation:
-        return _handleVitalsExplanation(messageId, queryLower, context);
-
+        return _handleVitalsExplanation(messageId, queryLower, context, isTa: isTa);
       case QueryIntent.screeningWarning:
         return _handleScreeningWarning(messageId, queryLower, context);
-
       case QueryIntent.homeVisitsSummary:
-        return _handleHomeVisitsSummary(messageId, queryLower, context);
-
+        return _handleHomeVisitsSummary(messageId, queryLower, context, isTa: isTa);
       case QueryIntent.doctorPreparation:
-        return _handleDoctorPreparation(messageId, queryLower, context);
-
+        return _handleDoctorPreparation(messageId, queryLower, context, isTa: isTa);
       case QueryIntent.maternalEducation:
         return _handleMaternalEducation(messageId, queryLower, context);
-
       case QueryIntent.emergencyRedFlag:
-        // Already handled above
         return _handleMaternalEducation(messageId, queryLower, context);
-
       case QueryIntent.unsupportedGeneral:
-        return _handleUnsupportedQuery(messageId, userQuery, context);
+        return _handleUnsupportedQuery(messageId, userQuery, context, isTa: isTa);
     }
   }
 
-  /// Emergency red flag detection scanner
-  Map<String, dynamic>? _detectRedFlag(String query) {
-    for (final flag in CuratedMaternalKnowledgeBase.redFlags) {
-      final keywords = flag['keywords'] as List<String>;
-      if (keywords.any((kw) => query.contains(kw))) {
-        return flag;
-      }
-    }
-    return null;
-  }
-
-  /// Emergency response generator
-  PatientAiMessage _generateEmergencyResponse(String id, Map<String, dynamic> flag) {
-    final title = flag['title'] as String;
-    final message = flag['message'] as String;
-    final action = flag['action'] as String;
-
-    final responseText = '''
-🚨 **URGENT CLINICAL ATTENTION RECOMMENDED**
-
-**$title**
-$message
-
-**Recommended Immediate Action:**
-$action
-
-> PitPulse AI is strictly an informational assistant and cannot provide emergency diagnosis. Please reach out to your maternity center or call your local emergency medical service immediately.
-''';
-
+  /// 7. Unsupported / Out-of-Scope Handler
+  PatientAiMessage _handleUnsupportedQuery(String id, String userQuery, PatientAiContext ctx, {bool isTa = false}) {
     return PatientAiMessage(
       id: id,
-      text: responseText,
+      text: isTa
+          ? '''நான் உங்களின் **மகப்பேறு மற்றும் தாய்-சேய் நல சிறப்பு உதவியாளர்** (Maternal Health Assistant) ஆவேன். கர்ப்ப கால பராமரிப்பு, ஊட்டச்சத்து, குழந்தையின் வளர்ச்சி மற்றும் மருத்துவ ஆலோசனைகளுக்கு மட்டுமே என்னால் வழிகாட்ட முடியும்.'''
+          : '''I understand your question, but as a specialized **maternal health and pregnancy assistant**, I can only safely provide guidance regarding:
+
+1. 🤰 **Your actual pregnancy progress**, gestational week, and EDD.
+2. 🩺 **Your recorded vitals** (Blood Pressure, Weight, Temperature) and screening rules.
+3. 🏡 **Your ASHA worker home visits** and care history.
+4. 📋 **Preparing questions** for your doctor consultation.
+5. 🥗 **Evidence-based pregnancy wellness**, nutrition, and warning sign education.
+
+I cannot diagnose medical conditions, prescribe medications, or answer non-healthcare queries.
+
+Please consult your healthcare provider or obstetrician for direct clinical decisions.''',
       sender: MessageSender.ai,
       timestamp: DateTime.now(),
-      warning: AiScreeningWarning(
-        severity: WarningSeverity.emergency,
-        title: title,
-        message: message,
-        clinicalBasis: 'Urgent obstetrical screening rule',
-        recommendedAction: action,
-      ),
-      sources: const [
-        AiSourceReference(
-          type: AiSourceType.clinicalScreeningRule,
-          title: 'Emergency Triage Protocol',
-          detail: 'World Health Organization (WHO) & MoHFW Antenatal Danger Signs',
-        ),
-      ],
-      suggestedQuestions: const [
-        'What should I bring to the emergency maternity center?',
-        'Who is my assigned ASHA contact?',
-      ],
+      isTamil: isTa,
+      suggestedQuestions: isTa
+          ? ['குழந்தையின் வளர்ச்சி', 'என் இரத்த அழுத்தம் இயல்பாக உள்ளதா?', '3வது மாத உணவு முறை']
+          : [
+              'How is my baby growing this week?',
+              'Explain my recorded vitals',
+              'What should I ask my doctor?',
+            ],
     );
   }
 
@@ -143,17 +178,22 @@ $action
 
 
   /// 1. Pregnancy Progress Handler
-  PatientAiMessage _handlePregnancyProgress(String id, String query, PatientAiContext ctx) {
+  PatientAiMessage _handlePregnancyProgress(String id, String query, PatientAiContext ctx, {bool isTa = false}) {
     if (!ctx.hasActivePregnancy) {
       return PatientAiMessage(
         id: id,
-        text: 'You do not have an active pregnancy record registered in your account yet. You can register your pregnancy from your Health Dashboard by entering your Last Menstrual Period (LMP) date to automatically calculate your gestational age and Estimated Due Date (EDD).',
+        text: isTa
+            ? 'உங்கள் கணக்கில் இன்னும் கர்ப்ப பதிவு சேர்க்கப்படவில்லை. உங்கள் கடைசி மாதவிடாய் (LMP) தேதியை உள்ளிட்டு எளிதாக கர்ப்ப பதிவை தொடங்கலாம்.'
+            : 'You do not have an active pregnancy record registered in your account yet. You can register your pregnancy from your Health Dashboard by entering your Last Menstrual Period (LMP) date to automatically calculate your gestational age and Estimated Due Date (EDD).',
         sender: MessageSender.ai,
         timestamp: DateTime.now(),
-        suggestedQuestions: const [
-          'How do I register my pregnancy?',
-          'What is LMP and EDD?',
-        ],
+        isTamil: isTa,
+        suggestedQuestions: isTa
+            ? ['கர்ப்பத்தை எவ்வாறு பதிவு செய்வது?', 'LMP மற்றும் EDD என்றால் என்ன?']
+            : [
+                'How do I register my pregnancy?',
+                'What is LMP and EDD?',
+              ],
       );
     }
 
@@ -186,6 +226,7 @@ ${milestone['nutritionAdvice']}
       text: responseText,
       sender: MessageSender.ai,
       timestamp: DateTime.now(),
+      isTamil: isTa,
       sources: [
         AiSourceReference(
           type: AiSourceType.pregnancyRecord,
@@ -207,17 +248,22 @@ ${milestone['nutritionAdvice']}
   }
 
   /// 2. Vitals Explanation Handler
-  PatientAiMessage _handleVitalsExplanation(String id, String query, PatientAiContext ctx) {
+  PatientAiMessage _handleVitalsExplanation(String id, String query, PatientAiContext ctx, {bool isTa = false}) {
     if (!ctx.hasVitals) {
       return PatientAiMessage(
         id: id,
-        text: 'No vital signs have been recorded in your profile yet. When your assigned ASHA worker conducts a home visit or when you attend a clinical checkup, your Blood Pressure, Weight, and Temperature will be logged here.',
+        text: isTa
+            ? 'உங்கள் கணக்கில் இன்னும் முக்கிய உடல் குறிகாட்டிகள் (Vitals) பதிவு செய்யப்படவில்லை. உங்கள் ஆஷா பணியாளர் அல்லது மருத்துவர் பரிசோதிக்கும் போது இரத்த அழுத்தம், எடை ஆகியவை இங்கு காண்பிக்கப்படும்.'
+            : 'No vital signs have been recorded in your profile yet. When your assigned ASHA worker conducts a home visit or when you attend a clinical checkup, your Blood Pressure, Weight, and Temperature will be logged here.',
         sender: MessageSender.ai,
         timestamp: DateTime.now(),
-        suggestedQuestions: const [
-          'Who is my assigned ASHA worker?',
-          'What is normal blood pressure in pregnancy?',
-        ],
+        isTamil: isTa,
+        suggestedQuestions: isTa
+            ? ['எனக்கு நியமிக்கப்பட்ட ஆஷா பணியாளர் யார்?', 'கர்ப்ப காலத்தில் இயல்பான இரத்த அழுத்தம் என்ன?']
+            : [
+                'Who is my assigned ASHA worker?',
+                'What is normal blood pressure in pregnancy?',
+              ],
       );
     }
 
@@ -238,7 +284,7 @@ ${milestone['nutritionAdvice']}
       if (isHigh) {
         warning = AiScreeningWarning(
           severity: WarningSeverity.caution,
-          title: 'Elevated Blood Pressure Alert',
+          title: isTa ? 'உயர் இரத்த அழுத்த எச்சரிக்கை' : 'Elevated Blood Pressure Alert',
           message: 'Your recorded BP (${latest.bpDisplay}) is at or above the 140/90 threshold.',
           clinicalBasis: 'ACOG / WHO Antenatal Hypertensive Screening Criteria',
           recommendedAction: 'Contact your doctor or ASHA worker for clinical verification and monitoring.',
@@ -264,6 +310,7 @@ ${latest.notes != null && latest.notes!.isNotEmpty ? '\n*Clinical Note:* "${late
       text: responseText,
       sender: MessageSender.ai,
       timestamp: DateTime.now(),
+      isTamil: isTa,
       warning: warning,
       sources: [
         AiSourceReference(
@@ -362,18 +409,23 @@ Continue your scheduled antenatal visits and immediately report any unexpected s
   }
 
   /// 4. Home Visits Summary Handler
-  PatientAiMessage _handleHomeVisitsSummary(String id, String query, PatientAiContext ctx) {
+  PatientAiMessage _handleHomeVisitsSummary(String id, String query, PatientAiContext ctx, {bool isTa = false}) {
     if (!ctx.hasHomeVisits) {
       final ashaName = ctx.assignedAshaName ?? 'an ASHA worker';
       return PatientAiMessage(
         id: id,
-        text: 'You have no home visit records logged yet. Once $ashaName conducts a field visit in your locality, the visit notes, checkup purpose, and follow-up guidance will appear here.',
+        text: isTa
+            ? 'உங்கள் கணக்கில் ஆஷா பணியாளர் வீட்டு வருகை பதிவுகள் எதுவும் இன்னும் இல்லை. $ashaName உங்கள் பகுதிக்கு வந்து பரிசோதித்ததும் விவரங்கள் இங்கு தோன்றும்.'
+            : 'You have no home visit records logged yet. Once $ashaName conducts a field visit in your locality, the visit notes, checkup purpose, and follow-up guidance will appear here.',
         sender: MessageSender.ai,
         timestamp: DateTime.now(),
-        suggestedQuestions: const [
-          'What is the role of an ASHA worker?',
-          'How do I contact my healthcare provider?',
-        ],
+        isTamil: isTa,
+        suggestedQuestions: isTa
+            ? ['ஆஷா பணியாளரின் பணி என்ன?', 'மருத்துவரை எவ்வாறு தொடர்பு கொள்வது?']
+            : [
+                'What is the role of an ASHA worker?',
+                'How do I contact my healthcare provider?',
+              ],
       );
     }
 
@@ -396,6 +448,7 @@ ${latest.observations != null && latest.observations!.isNotEmpty ? '- **Observat
       text: responseText,
       sender: MessageSender.ai,
       timestamp: DateTime.now(),
+      isTamil: isTa,
       sources: [
         AiSourceReference(
           type: AiSourceType.ashaHomeVisit,
@@ -411,7 +464,7 @@ ${latest.observations != null && latest.observations!.isNotEmpty ? '- **Observat
   }
 
   /// 5. Doctor Preparation Handler
-  PatientAiMessage _handleDoctorPreparation(String id, String query, PatientAiContext ctx) {
+  PatientAiMessage _handleDoctorPreparation(String id, String query, PatientAiContext ctx, {bool isTa = false}) {
     final weeks = ctx.hasActivePregnancy ? ctx.activePregnancy!.gestationalAgeWeeks : 0;
     final questions = <String>[];
 
@@ -460,6 +513,7 @@ $questionsText
       text: responseText,
       sender: MessageSender.ai,
       timestamp: DateTime.now(),
+      isTamil: isTa,
       sources: [
         if (ctx.hasActivePregnancy)
           AiSourceReference(
@@ -550,33 +604,6 @@ $content
       suggestedQuestions: const [
         'How is my baby developing this week?',
         'What questions should I ask my doctor?',
-      ],
-    );
-  }
-
-  /// 7. Unsupported / Out-of-Scope Handler
-  PatientAiMessage _handleUnsupportedQuery(String id, String userQuery, PatientAiContext ctx) {
-    return PatientAiMessage(
-      id: id,
-      text: '''
-I understand your question, but as a specialized **maternal health and pregnancy assistant**, I can only safely provide guidance regarding:
-
-1. 🤰 **Your actual pregnancy progress**, gestational week, and EDD.
-2. 🩺 **Your recorded vitals** (Blood Pressure, Weight, Temperature) and screening rules.
-3. 🏡 **Your ASHA worker home visits** and care history.
-4. 📋 **Preparing questions** for your doctor consultation.
-5. 🥗 **Evidence-based pregnancy wellness**, nutrition, and warning sign education.
-
-I cannot diagnose medical conditions, prescribe medications, or answer non-healthcare queries.
-
-Please consult your healthcare provider or obstetrician for direct clinical decisions.
-''',
-      sender: MessageSender.ai,
-      timestamp: DateTime.now(),
-      suggestedQuestions: const [
-        'How is my baby growing this week?',
-        'Explain my recorded vitals',
-        'What should I ask my doctor?',
       ],
     );
   }
