@@ -1,4 +1,4 @@
-from typing import List, Union
+from typing import Any, List, Union
 from pydantic import field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
@@ -59,6 +59,10 @@ class Settings(BaseSettings):
         extra="ignore",
     )
 
+    def model_post_init(self, __context: Any) -> None:
+        if self.DATABASE_URL and ("127.0.0.1" in self.SYNC_DATABASE_URL and "127.0.0.1" not in self.DATABASE_URL):
+            self.SYNC_DATABASE_URL = self.DATABASE_URL.replace("postgresql+asyncpg://", "postgresql+psycopg2://")
 
 
 settings = Settings()
+

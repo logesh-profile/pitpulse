@@ -3,8 +3,7 @@ services:
     name: pitpulse-backend
     env: docker
     plan: free
-    dockerContext: backend
-    dockerfilePath: backend/Dockerfile
+    dockerfilePath: Dockerfile
     envVars:
       - key: ENVIRONMENT
         value: production
@@ -13,6 +12,10 @@ services:
       - key: JWT_SECRET_KEY
         generateValue: true
       - key: DATABASE_URL
+        fromDatabase:
+          name: pitpulse-db
+          property: connectionString
+      - key: SYNC_DATABASE_URL
         fromDatabase:
           name: pitpulse-db
           property: connectionString
