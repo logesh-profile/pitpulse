@@ -342,8 +342,8 @@ class _PatientAiChatScreenState extends State<PatientAiChatScreen> {
                   const SizedBox(width: 8),
                   const Expanded(
                     child: Text(
-                      '100MB Local Intent Classifier Architecture • Voice Input • Tamil/English TTS',
-                      style: TextStyle(fontSize: 11, color: Color(0xFF94A3B8), fontWeight: FontWeight.w500),
+                      'v2.0 Context-Aware Agentic RAG Controller • 100% Offline • Multi-Turn Voice',
+                      style: TextStyle(fontSize: 11, color: Color(0xFF10B981), fontWeight: FontWeight.bold),
                     ),
                   ),
                 ],
