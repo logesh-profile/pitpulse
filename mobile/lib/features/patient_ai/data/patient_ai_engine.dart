@@ -4,178 +4,117 @@ import '../domain/models/ai_source_reference.dart';
 import '../domain/models/patient_ai_context.dart';
 import '../domain/models/patient_ai_message.dart';
 import 'curated_maternal_knowledge_base.dart';
-import 'local_intent_classifier.dart';
-
-enum QueryIntent {
-  pregnancyProgress,
-  vitalsExplanation,
-  screeningWarning,
-  homeVisitsSummary,
-  doctorPreparation,
-  maternalEducation,
-  emergencyRedFlag,
-  unsupportedGeneral,
-}
+import 'local_agentic_rag_controller.dart';
 
 class PatientAiEngine {
-  /// Evaluates user text and returns grounded, safe structured response using the 100MB Offline Classifier
+  /// Evaluates user text and returns grounded, safe structured response using the Agentic RAG Controller
   PatientAiMessage processQuery({
     required String userQuery,
     required PatientAiContext context,
   }) {
     final messageId = 'ai_${DateTime.now().millisecondsSinceEpoch}_${Random().nextInt(1000)}';
-
-    // Run tiny edge intent classifier (100% Offline Logic Router)
-    final classification = LocalIntentClassifier.classify(userQuery);
-    final isTa = classification.isTamil;
     final weeks = context.hasActivePregnancy ? context.activePregnancy!.gestationalAgeWeeks : 12;
 
-    // 1. Safety Triage: Immediate Emergency Red Flags
-    if (classification.intent == LocalIntent.emergencyRedAlert) {
-      final redFlagText = LocalIntentClassifier.getVerifiedResponse(
-        classification: classification,
-        gestationalWeeks: weeks,
-      );
-      return PatientAiMessage(
-        id: messageId,
-        text: redFlagText,
-        sender: MessageSender.ai,
-        timestamp: DateTime.now(),
-        isTamil: isTa,
-        warning: AiScreeningWarning(
-          severity: WarningSeverity.emergency,
-          title: isTa ? 'அவசர மருத்துவ எச்சரிக்கை' : 'Emergency Red Flag Alert',
-          message: isTa
-              ? 'கர்ப்ப காலத்தில் இந்த அறிகுறி தோன்றினால் உடனடியாக மருத்துவ ஆலோசனை பெற வேண்டும்.'
-              : 'This symptom requires immediate emergency obstetrical assessment.',
-          clinicalBasis: 'WHO / MoHFW Antenatal Danger Signs Protocol',
-          recommendedAction: isTa
-              ? 'உடனடியாக உங்கள் மருத்துவரை அல்லது மருத்துவமனையை தொடர்பு கொள்ளவும்.'
-              : 'Contact your obstetrician or hospital emergency triage immediately.',
-        ),
-        sources: const [
-          AiSourceReference(
-            type: AiSourceType.clinicalScreeningRule,
-            title: '100% Offline Emergency Protocol',
-            detail: 'WHO Antenatal Danger Signs & Tamil Nadu Health Manual',
-          ),
-        ],
-        suggestedQuestions: isTa
-            ? ['அவசர மருத்துவமனைக்கு என்ன எடுத்துச் செல்ல வேண்டும்?', 'ஆஷா பணியாளர் தொடர்பு எண்']
-            : ['What should I bring to the emergency maternity center?', 'Who is my assigned ASHA contact?'],
-      );
-    }
+    // Execute Three-Layer Agentic RAG Evaluation
+    final agentState = LocalAgenticRagController.evaluate(
+      rawText: userQuery,
+      gestationalWeeks: weeks,
+    );
 
-    // 2. Diet & Nutrition Query (e.g., "3rd month diet" / "கர்ப்ப கால உணவு" / "Enaku moonu maasam aaguthu, naan enna saapadanum?")
-    if (classification.intent == LocalIntent.dietQuery) {
-      final dietText = LocalIntentClassifier.getVerifiedResponse(
-        classification: classification,
-        gestationalWeeks: weeks,
-      );
+    final isTa = agentState.language == 'ta';
+
+    final qLower = userQuery.toLowerCase().trim();
+
+    // 1. Layer 1 Safety Override OR Emergency Alert OR Layer 2 Chitchat
+    final isLayer1OrLayer2 = agentState.synthesizedResponse == 'I cannot answer that.' ||
+        agentState.synthesizedResponse == 'என்னால் அதற்குப் பதிலளிக்க முடியாது.' ||
+        agentState.primaryIntentId >= 10;
+
+    if (agentState.isEmergency || isLayer1OrLayer2) {
       return PatientAiMessage(
         id: messageId,
-        text: dietText,
+        text: agentState.synthesizedResponse,
         sender: MessageSender.ai,
         timestamp: DateTime.now(),
         isTamil: isTa,
-        sources: const [
+        warning: agentState.isEmergency
+            ? AiScreeningWarning(
+                severity: WarningSeverity.emergency,
+                title: isTa ? 'அவசர மருத்துவ எச்சரிக்கை' : 'Emergency Red Flag Alert',
+                message: isTa
+                    ? 'கர்ப்ப காலத்தில் இந்த அறிகுறி தோன்றினால் உடனடியாக மருத்துவ ஆலோசனை பெற வேண்டும்.'
+                    : 'This symptom requires immediate emergency obstetrical assessment.',
+                clinicalBasis: 'WHO / MoHFW Antenatal Danger Signs Protocol',
+                recommendedAction: isTa
+                    ? 'உடனடியாக 108 அழைக்கவும் அல்லது மருத்துவமனைக்கு செல்லவும்.'
+                    : 'Call 108 immediately or proceed to the nearest PHC / Hospital.',
+              )
+            : null,
+        sources: [
           AiSourceReference(
             type: AiSourceType.curatedKnowledgeBase,
-            title: 'Tamil Nadu Maternal Nutrition Protocol',
-            detail: 'Dr. Muthulakshmi Reddy Maternity Scheme Guidelines & WHO Nutrition Standards',
+            title: isTa ? 'உள்ளூர் தாய்-சேய் சுகாதார களஞ்சியம்' : 'Local Maternal Knowledge Matrix',
+            detail: isTa ? 'தமிழ்நாடு பொது சுகாதார வழிகாட்டி' : 'TN Health Dept & WHO Clinical Protocols',
           ),
         ],
         suggestedQuestions: isTa
             ? [
-                'அடுத்த வாரங்களில் என் குழந்தை எப்படி வளரும்?',
-                'என் இரத்த அழுத்த அளவு இயல்பாக உள்ளதா?',
-                'மருத்துவரிடம் கேட்க வேண்டிய கேள்விகள் என்ன?',
+                '3வது மாத கர்ப்ப கால உணவு முறை',
+                'வெள்ளனூர் ஆஷா பணியாளர் யார்?',
+                'டாக்டரிடம் கேட்க வேண்டிய கேள்விகள்',
               ]
             : [
-                'How is my baby growing this month?',
-                'Explain my latest vitals & blood pressure',
+                'I am 3 months pregnant, what should I eat?',
+                'Who is the ASHA worker for Vellanur?',
                 'What questions should I ask my doctor?',
               ],
       );
     }
 
-    final queryLower = userQuery.toLowerCase().trim();
-
-    // 3. Fallthrough for Context-Grounded Clinical Features
-    final intent = _classifyIntent(queryLower);
-    switch (intent) {
-      case QueryIntent.pregnancyProgress:
-        return _handlePregnancyProgress(messageId, queryLower, context, isTa: isTa);
-      case QueryIntent.vitalsExplanation:
-        return _handleVitalsExplanation(messageId, queryLower, context, isTa: isTa);
-      case QueryIntent.screeningWarning:
-        return _handleScreeningWarning(messageId, queryLower, context);
-      case QueryIntent.homeVisitsSummary:
-        return _handleHomeVisitsSummary(messageId, queryLower, context, isTa: isTa);
-      case QueryIntent.doctorPreparation:
-        return _handleDoctorPreparation(messageId, queryLower, context, isTa: isTa);
-      case QueryIntent.maternalEducation:
-        return _handleMaternalEducation(messageId, queryLower, context);
-      case QueryIntent.emergencyRedFlag:
-        return _handleMaternalEducation(messageId, queryLower, context);
-      case QueryIntent.unsupportedGeneral:
-        return _handleUnsupportedQuery(messageId, userQuery, context, isTa: isTa);
+    // 2. Personalized Context Handlers (Doctor Prep, Home Visits, Vitals, Milestones)
+    if (qLower.contains('doctor') || qLower.contains('consult') || qLower.contains('மருத்துவர்') || qLower.contains('டாக்டர்')) {
+      return _handleDoctorPreparation(messageId, qLower, context, isTa: isTa);
     }
-  }
+    if (qLower.contains('visit') || qLower.contains('history') || qLower.contains('checkup') || qLower.contains('வீட்டு வருகை')) {
+      return _handleHomeVisitsSummary(messageId, qLower, context, isTa: isTa);
+    }
+    if (qLower.contains('bp') || qLower.contains('blood pressure') || qLower.contains('vital') || qLower.contains('pulse') || qLower.contains('இரத்த அழுத்தம்')) {
+      return _handleVitalsExplanation(messageId, qLower, context, isTa: isTa);
+    }
+    if (qLower.contains('growth') || qLower.contains('progress') || qLower.contains('edd') || qLower.contains('due date') || qLower.contains('வளர்ச்சி') || (qLower.contains('week') && !qLower.contains('eat') && !qLower.contains('diet'))) {
+      return _handlePregnancyProgress(messageId, qLower, context, isTa: isTa);
+    }
+    if (qLower.contains('alert') || qLower.contains('danger') || qLower.contains('warning') || qLower.contains('எச்சரிக்கை')) {
+      return _handleScreeningWarning(messageId, qLower, context);
+    }
 
-  /// 7. Unsupported / Out-of-Scope Handler
-  PatientAiMessage _handleUnsupportedQuery(String id, String userQuery, PatientAiContext ctx, {bool isTa = false}) {
+    // 3. Agentic RAG Multi-Tool Response (Diet, ASHA Directory, General Care)
     return PatientAiMessage(
-      id: id,
-      text: isTa
-          ? '''நான் உங்களின் **மகப்பேறு மற்றும் தாய்-சேய் நல சிறப்பு உதவியாளர்** (Maternal Health Assistant) ஆவேன். கர்ப்ப கால பராமரிப்பு, ஊட்டச்சத்து, குழந்தையின் வளர்ச்சி மற்றும் மருத்துவ ஆலோசனைகளுக்கு மட்டுமே என்னால் வழிகாட்ட முடியும்.'''
-          : '''I understand your question, but as a specialized **maternal health and pregnancy assistant**, I can only safely provide guidance regarding:
-
-1. 🤰 **Your actual pregnancy progress**, gestational week, and EDD.
-2. 🩺 **Your recorded vitals** (Blood Pressure, Weight, Temperature) and screening rules.
-3. 🏡 **Your ASHA worker home visits** and care history.
-4. 📋 **Preparing questions** for your doctor consultation.
-5. 🥗 **Evidence-based pregnancy wellness**, nutrition, and warning sign education.
-
-I cannot diagnose medical conditions, prescribe medications, or answer non-healthcare queries.
-
-Please consult your healthcare provider or obstetrician for direct clinical decisions.''',
+      id: messageId,
+      text: agentState.synthesizedResponse,
       sender: MessageSender.ai,
       timestamp: DateTime.now(),
       isTamil: isTa,
+      sources: const [
+        AiSourceReference(
+          type: AiSourceType.curatedKnowledgeBase,
+          title: 'Local Maternal Knowledge Matrix',
+          detail: 'Tamil Nadu Health Dept & WHO Clinical Protocols',
+        ),
+      ],
       suggestedQuestions: isTa
-          ? ['குழந்தையின் வளர்ச்சி', 'என் இரத்த அழுத்தம் இயல்பாக உள்ளதா?', '3வது மாத உணவு முறை']
+          ? [
+              '3வது மாத கர்ப்ப கால உணவு முறை',
+              'வெள்ளனூர் ஆஷா பணியாளர் யார்?',
+              'டாக்டரிடம் கேட்க வேண்டிய கேள்விகள்',
+            ]
           : [
-              'How is my baby growing this week?',
-              'Explain my recorded vitals',
-              'What should I ask my doctor?',
+              'I am 3 months pregnant, what should I eat?',
+              'Who is the ASHA worker for Vellanur?',
+              'What questions should I ask my doctor?',
             ],
     );
   }
-
-  /// Classifies user input into domain intents with English & Tamil bilingual NLU
-  QueryIntent _classifyIntent(String q) {
-    if (q.contains('doctor') || q.contains('ask') || q.contains('consult') || q.contains('மருத்துவர்') || q.contains('டாக்டர்')) {
-      return QueryIntent.doctorPreparation;
-    }
-    if (q.contains('food') || q.contains('diet') || q.contains('eat') || q.contains('nutrition') || q.contains('nausea') || q.contains('vomit') || q.contains('morning sickness') || q.contains('exercise') || q.contains('sleep') || q.contains('iron') || q.contains('folic') || q.contains('calcium') || q.contains('supplement') || q.contains('water') || q.contains('cramp') || q.contains('heartburn') || q.contains('உணவு') || q.contains('சாப்பிடு') || q.contains('வாந்தி') || q.contains('மயக்கம்') || q.contains('இரும்பு') || q.contains('போலிக்')) {
-      return QueryIntent.maternalEducation;
-    }
-    if (q.contains('bp') || q.contains('blood pressure') || q.contains('vital') || q.contains('pulse') || q.contains('heart rate') || q.contains('temperature') || q.contains('weight') || q.contains('fever') || q.contains('பிபி') || q.contains('இரத்த அழுத்தம்') || q.contains('காய்ச்சல்')) {
-      return QueryIntent.vitalsExplanation;
-    }
-    if (q.contains('alert') || q.contains('screen') || q.contains('high risk') || q.contains('danger') || q.contains('warn') || q.contains('அபாயம்') || q.contains('எச்சரிக்கை')) {
-      return QueryIntent.screeningWarning;
-    }
-    if (q.contains('asha') || q.contains('home visit') || q.contains('worker') || q.contains('checkup') || q.contains('last visit') || q.contains('ஆஷா') || q.contains('வீட்டு வருகை')) {
-      return QueryIntent.homeVisitsSummary;
-    }
-    if (q.contains('week') || q.contains('due date') || q.contains('edd') || q.contains('trimester') || q.contains('gestat') || q.contains('baby') || q.contains('baby grow') || q.contains('fetus') || q.contains('how far') || q.contains('lmp') || q.contains('how big') || q.contains('pregnancy') || q.contains('மாதம்') || q.contains('வாரம்') || q.contains('குழந்தை')) {
-      return QueryIntent.pregnancyProgress;
-    }
-    return QueryIntent.unsupportedGeneral;
-  }
-
 
   /// 1. Pregnancy Progress Handler
   PatientAiMessage _handlePregnancyProgress(String id, String query, PatientAiContext ctx, {bool isTa = false}) {
@@ -530,80 +469,6 @@ $questionsText
       suggestedQuestions: [
         'How is my baby growing in Week $weeks?',
         'Explain my latest vitals',
-      ],
-    );
-  }
-
-  /// 6. Maternal Health Education Handler
-  PatientAiMessage _handleMaternalEducation(String id, String query, PatientAiContext ctx) {
-    String topicTitle = 'Maternal Health & Wellness';
-    String content = '';
-
-    if (query.contains('food') || query.contains('diet') || query.contains('eat') || query.contains('nutrition')) {
-      topicTitle = 'Healthy Nutrition During Pregnancy';
-      content = '''
-**Recommended Foods:**
-- **Proteins:** Eggs, lentils (dal), paneer, tofu, well-cooked lean poultry, and nuts for tissue growth.
-- **Iron-Rich Foods:** Spinach, jaggery, beetroot, fortified grains to support expanding maternal blood volume.
-- **Calcium:** Milk, yogurt, dark leafy greens for fetal bone and tooth development.
-- **Hydration:** Drink 8–10 glasses of water daily to maintain amniotic fluid and prevent urinary infections.
-
-**Foods to Strictly Avoid:**
-- Raw or undercooked meat, unpasteurized milk/cheese, raw sprouts, unwashed produce, and high-mercury fish.
-- Excess caffeine (> 200mg/day) and all alcohol or tobacco products.
-''';
-    } else if (query.contains('nausea') || query.contains('vomit') || query.contains('morning sickness')) {
-      topicTitle = 'Managing Morning Sickness & Nausea';
-      content = '''
-**Comfort Remedies:**
-- Eat small, frequent meals rather than large meals.
-- Keep plain crackers or dry toast by your bedside and eat a few before getting up.
-- Drink ginger tea or water with fresh lemon slices.
-- Avoid greasy, spicy, or strongly scented foods.
-- If vomiting prevents you from keeping fluids down for over 24 hours, consult your doctor to prevent dehydration.
-''';
-    } else if (query.contains('iron') || query.contains('folic') || query.contains('supplement') || query.contains('calcium')) {
-      topicTitle = 'Prenatal Supplementation Guidelines';
-      content = '''
-**Standard Maternal Supplements:**
-- **Folic Acid (400 mcg daily):** Crucial during the first trimester for neural tube and brain development.
-- **Iron Tablets:** Recommended from 2nd trimester to prevent maternal anemia and low birth weight. Take with vitamin C (orange/lemon juice) for better absorption; avoid taking with calcium/milk simultaneously.
-- **Calcium & Vitamin D:** Supports baby's skeletal mineralization.
-''';
-    } else {
-      topicTitle = 'General Maternal Health Guidelines';
-      content = '''
-**Core Healthy Pregnancy Habits:**
-1. **Sleep Position:** From the 2nd trimester onwards, sleep on your left side to optimize blood and nutrient flow to the placenta.
-2. **Light Physical Activity:** 20–30 minutes of daily walking or prenatal yoga (unless contraindicated by your doctor).
-3. **Regular Prenatal Visits:** Attend all scheduled doctor appointments and ASHA checkups.
-4. **Mental Wellness:** Practice calm breathing exercises and rest whenever you feel fatigued.
-''';
-    }
-
-    final responseText = '''
-📚 **$topicTitle**
-
-$content
-
-> Always follow the specific clinical diet and supplement plan prescribed by your doctor.
-''';
-
-    return PatientAiMessage(
-      id: id,
-      text: responseText,
-      sender: MessageSender.ai,
-      timestamp: DateTime.now(),
-      sources: const [
-        AiSourceReference(
-          type: AiSourceType.curatedKnowledgeBase,
-          title: 'Evidence-Based Maternal Health Guidelines',
-          detail: 'Standard Clinical Antenatal Nutrition & Lifestyle Protocols',
-        ),
-      ],
-      suggestedQuestions: const [
-        'How is my baby developing this week?',
-        'What questions should I ask my doctor?',
       ],
     );
   }

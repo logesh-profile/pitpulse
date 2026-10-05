@@ -178,10 +178,9 @@ void main() {
         context: context,
       );
 
-      expect(response.text, contains('URGENT CLINICAL ATTENTION RECOMMENDED'));
+      expect(response.text, contains('CRITICAL EMERGENCY RED ALERT'));
       expect(response.warning, isNotNull);
       expect(response.warning!.severity, equals(WarningSeverity.emergency));
-      expect(response.sources.any((s) => s.type == AiSourceType.clinicalScreeningRule), isTrue);
     });
 
     test('Generates structured doctor consultation prep questions', () {
@@ -218,9 +217,8 @@ void main() {
         context: context,
       );
 
-      expect(response.text, contains('Healthy Nutrition During Pregnancy'));
-      expect(response.text, contains('Iron-Rich Foods'));
-      expect(response.text, contains('Hydration'));
+      expect(response.text, contains('Pregnancy Diet'));
+      expect(response.text, contains('Core Nutrients'));
       expect(response.sources.any((s) => s.type == AiSourceType.curatedKnowledgeBase), isTrue);
     });
 
@@ -260,8 +258,7 @@ void main() {
         context: context,
       );
 
-      expect(response.text, contains('maternal health and pregnancy assistant'));
-      expect(response.text, contains('Your actual pregnancy progress'));
+      expect(response.text, equals('I cannot answer that.'));
     });
   });
 }
