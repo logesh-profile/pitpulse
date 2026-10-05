@@ -59,7 +59,7 @@ class AuthService:
             password_hash=hashed_pw,
             role=RoleEnum.PATIENT,
             is_active=True,
-            is_verified=False,
+            is_verified=True,
         )
 
         db.add(new_user)
@@ -105,12 +105,10 @@ class AuthService:
                 detail="User account has been deactivated. Please contact support.",
             )
 
-        # Check email verification
+        # Auto-verify on valid credentials so users are not blocked without SMTP
         if not user.is_verified:
-            raise HTTPException(
-                status_code=status.HTTP_403_FORBIDDEN,
-                detail="Email verification required. Please verify your email before logging in.",
-            )
+            user.is_verified = True
+            await db.commit()
 
         # Update last_login_at
         user.last_login_at = datetime.now(timezone.utc)

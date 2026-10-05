@@ -105,6 +105,7 @@ async def seed_custom_accounts():
                 existing_user.role = acc["role"]
                 existing_user.password_hash = pwd_hash
                 existing_user.is_active = True
+                existing_user.is_verified = True
                 existing_user.must_change_password = False
                 existing_user.full_name = acc["full_name"]
                 print(f"[SEED] Updated account: {email} -> Role: {acc['role'].value}")
@@ -116,6 +117,7 @@ async def seed_custom_accounts():
                     password_hash=pwd_hash,
                     role=acc["role"],
                     is_active=True,
+                    is_verified=True,
                     must_change_password=False,
                 )
                 session.add(user)

@@ -48,6 +48,17 @@ def run_migrations() -> None:
         print(f"[Startup] Alembic invocation note: {e}")
 
 
+def seed_initial_data() -> None:
+    print("[Startup] Ensuring initial custom accounts exist in database...")
+    try:
+        from app.scripts.seed_custom_accounts import seed_custom_accounts
+        import asyncio
+        asyncio.run(seed_custom_accounts())
+        print("[Startup] Account seeding completed.")
+    except Exception as e:
+        print(f"[Startup] Account seeding note: {e}")
+
+
 def start_server() -> None:
     port = int(os.getenv("PORT", "8000"))
     print(f"[Startup] Starting Uvicorn server on 0.0.0.0:{port}...")
@@ -59,4 +70,5 @@ if __name__ == "__main__":
     sync_url = get_sync_url()
     wait_for_db(sync_url)
     run_migrations()
+    seed_initial_data()
     start_server()
