@@ -1,6 +1,6 @@
 import uuid
 from datetime import datetime
-from typing import List
+from typing import List, Optional
 
 from fastapi import APIRouter, Depends, status
 from sqlalchemy import select
@@ -43,6 +43,96 @@ router = APIRouter(prefix="/asha", tags=["ASHA Field Healthcare Operations"])
 # 1. Assigned Patients Listing & Detail
 # ==========================================
 
+from app.utils.pregnancy_calculations import calculate_gestational_age
+
+
+def _build_asha_patient_item(
+    a: AshaPatientAssignment,
+    p: PatientProfile,
+    active_preg: Optional[Pregnancy],
+    vis_records: List[HomeVisit],
+    current_asha: User,
+    asha_prof: AshaProfile,
+) -> AshaPatientItemResponse:
+    # 1. Identity & Demographics
+    dob_dt = datetime.combine(p.date_of_birth, datetime.min.time()) if p.date_of_birth else None
+    age = None
+    if p.date_of_birth:
+        today = datetime.now().date()
+        age = today.year - p.date_of_birth.year - ((today.month, today.day) < (p.date_of_birth.month, p.date_of_birth.day))
+
+    emer_contact = None
+    if p.emergency_contact_phone:
+        emer_contact = f"{p.emergency_contact_name or 'Contact'}: {p.emergency_contact_phone}"
+
+    # 2. Pregnancy Metrics
+    ga_weeks = None
+    edd_dt = None
+    if active_preg:
+        try:
+            ga_weeks, _, _ = calculate_gestational_age(active_preg.lmp)
+        except Exception:
+            ga_weeks = None
+        if active_preg.edd:
+            edd_dt = datetime.combine(active_preg.edd, datetime.min.time())
+
+    # 3. Visits
+    last_vis_date = (
+        datetime.combine(vis_records[0].visit_date, datetime.min.time())
+        if vis_records
+        else None
+    )
+
+    # 4. Actionable Duties Checklist
+    duties: List[str] = []
+    if not vis_records:
+        duties.append("Conduct initial home visit & baseline health assessment")
+    elif last_vis_date and (datetime.now() - last_vis_date).days > 14:
+        duties.append("Conduct routine home visit (Overdue > 14 days)")
+
+    if active_preg:
+        duties.append("Record maternal vitals, blood pressure & weight")
+        if ga_weeks is not None:
+            if ga_weeks <= 14:
+                duties.append("Schedule ANC Visit 1 (First Trimester screening & folic acid distribution)")
+            elif 18 <= ga_weeks <= 24:
+                duties.append("Schedule ANC Visit 2 (Anatomy anomaly scan & fetal movement check)")
+            elif 28 <= ga_weeks <= 32:
+                duties.append("Schedule ANC Visit 3 (Third Trimester HB & BP screening)")
+            elif ga_weeks >= 36:
+                duties.append("Prepare Birth Plan, institutional delivery referral & emergency transport")
+
+    hr_num = p.health_record.record_number if p.health_record else None
+
+    return AshaPatientItemResponse(
+        id=a.id,
+        patient_id=p.id,
+        patient_name=p.user.full_name,
+        patient_email=p.user.email,
+        patient_phone=p.user.phone,
+        date_of_birth=dob_dt,
+        age=age,
+        blood_group=p.blood_group,
+        emergency_contact=emer_contact,
+        health_record_number=hr_num,
+        village_locality=p.village_locality,
+        has_active_pregnancy=active_preg is not None,
+        pregnancy_id=active_preg.id if active_preg else None,
+        pregnancy_number=active_preg.pregnancy_number if active_preg else None,
+        gestational_age_weeks=ga_weeks,
+        active_pregnancy_edd=edd_dt,
+        risk_level="NORMAL",
+        last_visit_date=last_vis_date,
+        total_visits=len(vis_records),
+        asha_worker_id=asha_prof.id,
+        asha_worker_name=current_asha.full_name,
+        status=a.status,
+        assigned_at=a.assigned_at,
+        notes=a.notes,
+        required_duties=duties,
+    )
+
+
 @router.get(
     "/me/patients",
     response_model=List[AshaPatientItemResponse],
@@ -54,13 +144,11 @@ async def get_my_assigned_patients(
     db: AsyncSession = Depends(get_db),
     current_asha: User = Depends(require_asha),
 ) -> List[AshaPatientItemResponse]:
-    # 1. Get ASHA profile
     stmt_prof = select(AshaProfile).where(AshaProfile.user_id == current_asha.id)
     asha_prof = (await db.execute(stmt_prof)).scalar_one_or_none()
     if not asha_prof:
         return []
 
-    # 2. Get active assignments with patient profile and user
     stmt = (
         select(AshaPatientAssignment)
         .where(
@@ -77,49 +165,20 @@ async def get_my_assigned_patients(
 
     items = []
     for a in assignments:
-        # Check active pregnancy
         stmt_preg = select(Pregnancy).where(
             Pregnancy.patient_id == a.patient.id,
             Pregnancy.status == PregnancyStatusEnum.ACTIVE,
         )
         active_preg = (await db.execute(stmt_preg)).scalar_one_or_none()
 
-        # Check visits count and latest visit
         stmt_vis = (
             select(HomeVisit)
             .where(HomeVisit.patient_id == a.patient.id)
             .order_by(HomeVisit.visit_date.desc())
         )
         vis_records = (await db.execute(stmt_vis)).scalars().all()
-        last_vis_date = (
-            datetime.combine(vis_records[0].visit_date, datetime.min.time())
-            if vis_records
-            else None
-        )
 
-        hr_num = a.patient.health_record.record_number if a.patient.health_record else None
-
-        items.append(
-            AshaPatientItemResponse(
-                id=a.id,
-                patient_id=a.patient.id,
-                patient_name=a.patient.user.full_name,
-                patient_email=a.patient.user.email,
-                patient_phone=a.patient.user.phone,
-                health_record_number=hr_num,
-                village_locality=a.patient.village_locality,
-                has_active_pregnancy=active_preg is not None,
-                pregnancy_id=active_preg.id if active_preg else None,
-                pregnancy_number=active_preg.pregnancy_number if active_preg else None,
-                last_visit_date=last_vis_date,
-                total_visits=len(vis_records),
-                asha_worker_id=asha_prof.id,
-                asha_worker_name=current_asha.full_name,
-                status=a.status,
-                assigned_at=a.assigned_at,
-                notes=a.notes,
-            )
-        )
+        items.append(_build_asha_patient_item(a, a.patient, active_preg, vis_records, current_asha, asha_prof))
 
     return items
 
@@ -159,47 +218,21 @@ async def get_assigned_patient_detail(
     )
     p = (await db.execute(stmt)).scalar_one()
 
-    # Check active pregnancy
     stmt_preg = select(Pregnancy).where(
         Pregnancy.patient_id == patient_id,
         Pregnancy.status == PregnancyStatusEnum.ACTIVE,
     )
     active_preg = (await db.execute(stmt_preg)).scalar_one_or_none()
 
-    # Check visits
     stmt_vis = (
         select(HomeVisit)
         .where(HomeVisit.patient_id == patient_id)
         .order_by(HomeVisit.visit_date.desc())
     )
     vis_records = (await db.execute(stmt_vis)).scalars().all()
-    last_vis_date = (
-        datetime.combine(vis_records[0].visit_date, datetime.min.time())
-        if vis_records
-        else None
-    )
 
-    hr_num = p.health_record.record_number if p.health_record else None
+    return _build_asha_patient_item(assignment, p, active_preg, vis_records, current_asha, asha_prof)
 
-    return AshaPatientItemResponse(
-        id=assignment.id,
-        patient_id=p.id,
-        patient_name=p.user.full_name,
-        patient_email=p.user.email,
-        patient_phone=p.user.phone,
-        health_record_number=hr_num,
-        village_locality=p.village_locality,
-        has_active_pregnancy=active_preg is not None,
-        pregnancy_id=active_preg.id if active_preg else None,
-        pregnancy_number=active_preg.pregnancy_number if active_preg else None,
-        last_visit_date=last_vis_date,
-        total_visits=len(vis_records),
-        asha_worker_id=asha_prof.id,
-        asha_worker_name=current_asha.full_name,
-        status=assignment.status,
-        assigned_at=assignment.assigned_at,
-        notes=assignment.notes,
-    )
 
 
 # ==========================================

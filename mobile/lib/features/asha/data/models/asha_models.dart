@@ -4,10 +4,18 @@ class AshaAssignmentModel {
   final String patientName;
   final String? patientEmail;
   final String? patientPhone;
+  final DateTime? dateOfBirth;
+  final int? age;
+  final String? bloodGroup;
+  final String? emergencyContact;
   final String? healthRecordNumber;
+  final String? villageLocality;
   final bool hasActivePregnancy;
   final String? pregnancyId;
   final int? pregnancyNumber;
+  final int? gestationalAgeWeeks;
+  final DateTime? activePregnancyEdd;
+  final String riskLevel;
   final DateTime? lastVisitDate;
   final int totalVisits;
   final String ashaWorkerId;
@@ -16,6 +24,7 @@ class AshaAssignmentModel {
   final DateTime assignedAt;
   final DateTime? unassignedAt;
   final String? notes;
+  final List<String> requiredDuties;
 
   const AshaAssignmentModel({
     required this.id,
@@ -23,10 +32,18 @@ class AshaAssignmentModel {
     required this.patientName,
     this.patientEmail,
     this.patientPhone,
+    this.dateOfBirth,
+    this.age,
+    this.bloodGroup,
+    this.emergencyContact,
     this.healthRecordNumber,
+    this.villageLocality,
     this.hasActivePregnancy = false,
     this.pregnancyId,
     this.pregnancyNumber,
+    this.gestationalAgeWeeks,
+    this.activePregnancyEdd,
+    this.riskLevel = 'NORMAL',
     this.lastVisitDate,
     this.totalVisits = 0,
     required this.ashaWorkerId,
@@ -35,6 +52,7 @@ class AshaAssignmentModel {
     required this.assignedAt,
     this.unassignedAt,
     this.notes,
+    this.requiredDuties = const [],
   });
 
   factory AshaAssignmentModel.fromJson(Map<String, dynamic> json) {
@@ -57,16 +75,30 @@ class AshaAssignmentModel {
       pregNum = json['active_pregnancy']['pregnancy_number'] as int?;
     }
 
+    final rawDuties = json['required_duties'];
+    List<String> duties = [];
+    if (rawDuties is List) {
+      duties = rawDuties.map((e) => e.toString()).toList();
+    }
+
     return AshaAssignmentModel(
       id: json['id'] as String,
       patientId: patientId,
       patientName: patientName,
       patientEmail: patientEmail,
       patientPhone: patientPhone,
+      dateOfBirth: json['date_of_birth'] != null ? DateTime.tryParse(json['date_of_birth'] as String) : null,
+      age: json['age'] as int?,
+      bloodGroup: json['blood_group'] as String?,
+      emergencyContact: json['emergency_contact'] as String?,
       healthRecordNumber: hrNum,
+      villageLocality: json['village_locality'] as String?,
       hasActivePregnancy: hasActivePreg,
       pregnancyId: pregId,
       pregnancyNumber: pregNum,
+      gestationalAgeWeeks: json['gestational_age_weeks'] as int?,
+      activePregnancyEdd: json['active_pregnancy_edd'] != null ? DateTime.tryParse(json['active_pregnancy_edd'] as String) : null,
+      riskLevel: json['risk_level'] as String? ?? 'NORMAL',
       lastVisitDate: json['last_visit_date'] != null
           ? DateTime.tryParse(json['last_visit_date'] as String)
           : null,
@@ -81,9 +113,11 @@ class AshaAssignmentModel {
           ? DateTime.tryParse(json['unassigned_at'] as String)
           : null,
       notes: json['notes'] as String?,
+      requiredDuties: duties,
     );
   }
 }
+
 
 class HomeVisitModel {
   final String id;

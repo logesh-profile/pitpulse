@@ -1,4 +1,4 @@
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Tuple
 from app.patient_ai.agent.planner import PatientIntent
 from app.patient_ai.domain.schemas import (
     AiScreeningFlag,

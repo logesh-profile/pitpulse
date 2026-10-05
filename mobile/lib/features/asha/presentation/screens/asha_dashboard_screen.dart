@@ -164,16 +164,16 @@ class _AshaDashboardScreenState extends State<AshaDashboardScreen> {
                     else
                       ...patients.map((p) {
                         return Card(
-                          margin: const EdgeInsets.only(bottom: 12),
+                          margin: const EdgeInsets.only(bottom: 14),
                           color: const Color(0xFF1E293B),
                           shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(10),
+                            borderRadius: BorderRadius.circular(12),
                             side: BorderSide(
-                              color: p.hasActivePregnancy ? const Color(0xFF14B8A6).withValues(alpha: 0.6) : Colors.transparent,
+                              color: p.hasActivePregnancy ? const Color(0xFF14B8A6).withValues(alpha: 0.6) : Colors.grey.withValues(alpha: 0.2),
                             ),
                           ),
                           child: InkWell(
-                            borderRadius: BorderRadius.circular(10),
+                            borderRadius: BorderRadius.circular(12),
                             onTap: () async {
                               await Navigator.push(
                                 context,
@@ -187,35 +187,47 @@ class _AshaDashboardScreenState extends State<AshaDashboardScreen> {
                               _ashaController.loadMyAssignedPatients();
                             },
                             child: Padding(
-                              padding: const EdgeInsets.all(14.0),
+                              padding: const EdgeInsets.all(16.0),
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
+                                  // Header: Name & Age Badge
                                   Row(
-                                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                     children: [
                                       Expanded(
-                                        child: Text(
-                                          p.patientName,
-                                          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
+                                        child: Column(
+                                          crossAxisAlignment: CrossAxisAlignment.start,
+                                          children: [
+                                            Text(
+                                              p.patientName,
+                                              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: Colors.white),
+                                            ),
+                                            const SizedBox(height: 2),
+                                            Text(
+                                              '${p.age != null ? "Age: ${p.age} yrs • " : ""}${p.villageLocality ?? "Village N/A"}${p.patientPhone != null ? " • 📞 ${p.patientPhone}" : ""}',
+                                              style: TextStyle(fontSize: 12, color: Colors.grey[400]),
+                                            ),
+                                          ],
                                         ),
                                       ),
                                       if (p.hasActivePregnancy)
                                         Container(
-                                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                                           decoration: BoxDecoration(
                                             color: const Color(0xFF14B8A6).withValues(alpha: 0.2),
-                                            borderRadius: BorderRadius.circular(4),
+                                            borderRadius: BorderRadius.circular(6),
                                             border: Border.all(color: const Color(0xFF14B8A6)),
                                           ),
-                                          child: const Text(
-                                            'PREGNANCY ACTIVE',
-                                            style: TextStyle(fontSize: 10, color: Color(0xFF14B8A6), fontWeight: FontWeight.bold),
+                                          child: Text(
+                                            p.gestationalAgeWeeks != null ? 'WK ${p.gestationalAgeWeeks} PREGNANT' : 'PREGNANT',
+                                            style: const TextStyle(fontSize: 10, color: Color(0xFF14B8A6), fontWeight: FontWeight.bold),
                                           ),
                                         ),
                                     ],
                                   ),
-                                  const Divider(height: 16),
+                                  const Divider(height: 20),
+
+                                  // Middle Info Grid
                                   Row(
                                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                     children: [
@@ -232,9 +244,9 @@ class _AshaDashboardScreenState extends State<AshaDashboardScreen> {
                                       Column(
                                         crossAxisAlignment: CrossAxisAlignment.start,
                                         children: [
-                                          const Text('HOME VISITS', style: TextStyle(fontSize: 10, color: Colors.grey)),
+                                          const Text('BLOOD GROUP', style: TextStyle(fontSize: 10, color: Colors.grey)),
                                           Text(
-                                            '${p.totalVisits} visit(s)',
+                                            p.bloodGroup ?? 'Not set',
                                             style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.white),
                                           ),
                                         ],
@@ -255,12 +267,59 @@ class _AshaDashboardScreenState extends State<AshaDashboardScreen> {
                                       ),
                                     ],
                                   ),
+
+                                  // Required ASHA Duties Section
+                                  if (p.requiredDuties.isNotEmpty) ...[
+                                    const SizedBox(height: 14),
+                                    Container(
+                                      padding: const EdgeInsets.all(10),
+                                      decoration: BoxDecoration(
+                                        color: const Color(0xFF0F172A),
+                                        borderRadius: BorderRadius.circular(8),
+                                        border: Border.all(color: const Color(0xFF334155)),
+                                      ),
+                                      child: Column(
+                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                        children: [
+                                          const Row(
+                                            children: [
+                                              Icon(Icons.assignment_turned_in, size: 14, color: Color(0xFF38BDF8)),
+                                              SizedBox(width: 6),
+                                              Text(
+                                                'ACTIONABLE DUTIES FOR ASHA:',
+                                                style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Color(0xFF38BDF8)),
+                                              ),
+                                            ],
+                                          ),
+                                          const SizedBox(height: 6),
+                                          ...p.requiredDuties.map(
+                                            (duty) => Padding(
+                                              padding: const EdgeInsets.only(bottom: 3.0),
+                                              child: Row(
+                                                crossAxisAlignment: CrossAxisAlignment.start,
+                                                children: [
+                                                  const Text('• ', style: TextStyle(color: Color(0xFF38BDF8), fontWeight: FontWeight.bold)),
+                                                  Expanded(
+                                                    child: Text(
+                                                      duty,
+                                                      style: const TextStyle(fontSize: 11, color: Colors.white70),
+                                                    ),
+                                                  ),
+                                                ],
+                                              ),
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  ],
                                 ],
                               ),
                             ),
                           ),
                         );
                       }),
+
 
                     const SizedBox(height: 20),
 

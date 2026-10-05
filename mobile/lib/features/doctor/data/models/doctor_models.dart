@@ -12,6 +12,10 @@ class DoctorPatientModel {
   final DateTime? activePregnancyEdd;
   final String? assignedAshaName;
   final String? assignedAshaId;
+  final DateTime? latestVisitDate;
+  final String? latestVisitNotes;
+  final String? latestVitalsSummary;
+  final String riskLevel;
   final DateTime createdAt;
 
   DoctorPatientModel({
@@ -28,6 +32,10 @@ class DoctorPatientModel {
     this.activePregnancyEdd,
     this.assignedAshaName,
     this.assignedAshaId,
+    this.latestVisitDate,
+    this.latestVisitNotes,
+    this.latestVitalsSummary,
+    this.riskLevel = 'NORMAL',
     required this.createdAt,
   });
 
@@ -48,10 +56,17 @@ class DoctorPatientModel {
           : null,
       assignedAshaName: json['assigned_asha_name'] as String?,
       assignedAshaId: json['assigned_asha_id'] as String?,
+      latestVisitDate: json['latest_visit_date'] != null
+          ? DateTime.tryParse(json['latest_visit_date'] as String)
+          : null,
+      latestVisitNotes: json['latest_visit_notes'] as String?,
+      latestVitalsSummary: json['latest_vitals_summary'] as String?,
+      riskLevel: json['risk_level'] as String? ?? 'NORMAL',
       createdAt: DateTime.parse(json['created_at'] as String),
     );
   }
 }
+
 
 class DoctorAshaModel {
   final String ashaId;

@@ -117,46 +117,47 @@ class CuratedMaternalKnowledgeBase {
   /// Emergency Red Flag Symptoms & Safe Escalation Protocol
   static const List<Map<String, dynamic>> redFlags = [
     {
-      'keywords': ['bleeding', 'vaginal bleeding', 'spotting heavy', 'discharge red', 'blood discharge', 'loss of blood'],
-      'title': 'Vaginal Bleeding Warning',
-      'message': 'Any active vaginal bleeding during pregnancy requires urgent medical assessment.',
-      'action': 'Contact your doctor immediately or proceed to the nearest maternity emergency center.',
+      'keywords': ['bleeding', 'vaginal bleeding', 'spotting heavy', 'discharge red', 'blood discharge', 'loss of blood', 'இரத்தம்', 'குருதி'],
+      'title': 'Vaginal Bleeding Warning / யோனி இரத்தப்போக்கு எச்சரிக்கை',
+      'message': 'Any active vaginal bleeding during pregnancy requires urgent medical assessment / கர்ப்ப காலத்தில் இரத்தக்கசிவு ஏற்பட்டால் உடனடியாக மருத்துவ உதவி பெற வேண்டும்.',
+      'action': 'Contact your doctor immediately or proceed to the nearest maternity emergency center / உடனடியாக உங்கள் மருத்துவரை அல்லது அவசர சிகிச்சை மையத்தை தொடர்பு கொள்ளவும்.',
     },
     {
-      'keywords': ['severe headache', 'blurry vision', 'blurred vision', 'flashing lights', 'spots in eyes'],
-      'title': 'Preeclampsia Warning Sign',
+      'keywords': ['severe headache', 'blurry vision', 'blurred vision', 'flashing lights', 'spots in eyes', 'கடும் தலைவலி', 'பார்வை மங்கல்'],
+      'title': 'Preeclampsia Warning Sign / உயர் இரத்த அழுத்த எச்சரிக்கை',
       'message': 'Severe headaches with visual disturbances can indicate elevated blood pressure or preeclampsia.',
       'action': 'Seek same-day medical attention and have your blood pressure and urine protein checked.',
     },
     {
-      'keywords': ['swelling face', 'sudden swelling', 'swollen hands', 'swollen eyes', 'puffy face'],
-      'title': 'Sudden Severe Edema Alert',
+      'keywords': ['swelling face', 'sudden swelling', 'swollen hands', 'swollen eyes', 'puffy face', 'முக வீக்கம்', 'கை வீக்கம்'],
+      'title': 'Sudden Severe Edema Alert / திடீர் வீக்க எச்சரிக்கை',
       'message': 'Sudden, rapid swelling in the face, eyes, or hands is a key clinical indicator that needs evaluation.',
       'action': 'Notify your doctor or ASHA worker promptly for blood pressure screening.',
     },
     {
-      'keywords': ['baby stopped moving', 'no kicks', 'reduced movement', 'less movement', 'fewer kicks'],
-      'title': 'Fetal Movement Concern',
+      'keywords': ['baby stopped moving', 'no kicks', 'reduced movement', 'less movement', 'fewer kicks', 'குழந்தை அசைவு இல்லை', 'அசைவு குறைவு'],
+      'title': 'Fetal Movement Concern / குழந்தை அசைவு பற்றிய எச்சரிக்கை',
       'message': 'A noticeable decrease or cessation in baby movements after 24 weeks requires immediate monitoring.',
       'action': 'Drink cold water, lie on your left side for 1 hour. If you feel fewer than 4-5 kicks, go to the maternity center for a fetal heart rate check.',
     },
     {
-      'keywords': ['severe abdominal pain', 'stomach pain severe', 'sharp pain right side', 'epigastric pain'],
-      'title': 'Severe Abdominal Pain Alert',
+      'keywords': ['severe abdominal pain', 'stomach pain severe', 'sharp pain right side', 'epigastric pain', 'கடும் வயிற்று வலி'],
+      'title': 'Severe Abdominal Pain Alert / கடும் வயிற்று வலி எச்சரிக்கை',
       'message': 'Sharp or persistent upper right abdominal pain can indicate liver/placental involvement.',
       'action': 'Seek urgent clinical evaluation at your healthcare facility.',
     },
     {
-      'keywords': ['high fever', 'chills', 'fever over 38', 'shivering with fever'],
-      'title': 'Maternal Fever Alert',
+      'keywords': ['high fever', 'chills', 'fever over 38', 'shivering with fever', 'கடும் காய்ச்சல்', 'குளிர் காய்ச்சல்'],
+      'title': 'Maternal Fever Alert / காய்ச்சல் எச்சரிக்கை',
       'message': 'Maternal body temperatures above 38°C (100.4°F) can affect fetal development and require diagnosis.',
       'action': 'Consult your doctor promptly to identify and safely treat the underlying infection.',
     },
     {
-      'keywords': ['water broke', 'leaking fluid', 'amniotic fluid', 'gush of water'],
-      'title': 'Possible Rupture of Membranes',
+      'keywords': ['water broke', 'leaking fluid', 'amniotic fluid', 'gush of water', 'பனிக்குட நீர்'],
+      'title': 'Possible Rupture of Membranes / பனிக்குட நீர் உடைப்பு',
       'message': 'A continuous trickle or sudden gush of clear fluid indicates your water may have broken.',
       'action': 'Note the color and time, avoid inserting anything into the vagina, and head to your delivery hospital.',
     },
   ];
+
 }

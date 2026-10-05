@@ -118,28 +118,29 @@ $action
     );
   }
 
-  /// Classifies user input into domain intents
+  /// Classifies user input into domain intents with English & Tamil bilingual NLU
   QueryIntent _classifyIntent(String q) {
-    if (q.contains('doctor') && (q.contains('ask') || q.contains('question') || q.contains('prep') || q.contains('visit') || q.contains('consult'))) {
+    if (q.contains('doctor') || q.contains('ask') || q.contains('consult') || q.contains('மருத்துவர்') || q.contains('டாக்டர்')) {
       return QueryIntent.doctorPreparation;
     }
-    if (q.contains('food') || q.contains('diet') || q.contains('eat') || q.contains('nutrition') || q.contains('nausea') || q.contains('vomit') || q.contains('morning sickness') || q.contains('exercise') || q.contains('sleep') || q.contains('iron') || q.contains('folic') || q.contains('calcium') || q.contains('supplement') || q.contains('water') || q.contains('cramp') || q.contains('heartburn')) {
+    if (q.contains('food') || q.contains('diet') || q.contains('eat') || q.contains('nutrition') || q.contains('nausea') || q.contains('vomit') || q.contains('morning sickness') || q.contains('exercise') || q.contains('sleep') || q.contains('iron') || q.contains('folic') || q.contains('calcium') || q.contains('supplement') || q.contains('water') || q.contains('cramp') || q.contains('heartburn') || q.contains('உணவு') || q.contains('சாப்பிடு') || q.contains('வாந்தி') || q.contains('மயக்கம்') || q.contains('இரும்பு') || q.contains('போலிக்')) {
       return QueryIntent.maternalEducation;
     }
-    if (q.contains('bp') || q.contains('blood pressure') || q.contains('vital') || q.contains('pulse') || q.contains('heart rate') || q.contains('temperature') || q.contains('weight') || q.contains('fever')) {
+    if (q.contains('bp') || q.contains('blood pressure') || q.contains('vital') || q.contains('pulse') || q.contains('heart rate') || q.contains('temperature') || q.contains('weight') || q.contains('fever') || q.contains('பிபி') || q.contains('இரத்த அழுத்தம்') || q.contains('காய்ச்சல்')) {
       return QueryIntent.vitalsExplanation;
     }
-    if (q.contains('alert') || q.contains('screen') || q.contains('high risk') || q.contains('danger') || q.contains('warn')) {
+    if (q.contains('alert') || q.contains('screen') || q.contains('high risk') || q.contains('danger') || q.contains('warn') || q.contains('அபாயம்') || q.contains('எச்சரிக்கை')) {
       return QueryIntent.screeningWarning;
     }
-    if (q.contains('asha') || q.contains('home visit') || q.contains('worker') || q.contains('checkup') || q.contains('last visit')) {
+    if (q.contains('asha') || q.contains('home visit') || q.contains('worker') || q.contains('checkup') || q.contains('last visit') || q.contains('ஆஷா') || q.contains('வீட்டு வருகை')) {
       return QueryIntent.homeVisitsSummary;
     }
-    if (q.contains('week') || q.contains('due date') || q.contains('edd') || q.contains('trimester') || q.contains('gestat') || q.contains('baby') || q.contains('baby grow') || q.contains('fetus') || q.contains('how far') || q.contains('lmp') || q.contains('how big') || q.contains('pregnancy')) {
+    if (q.contains('week') || q.contains('due date') || q.contains('edd') || q.contains('trimester') || q.contains('gestat') || q.contains('baby') || q.contains('baby grow') || q.contains('fetus') || q.contains('how far') || q.contains('lmp') || q.contains('how big') || q.contains('pregnancy') || q.contains('மாதம்') || q.contains('வாரம்') || q.contains('குழந்தை')) {
       return QueryIntent.pregnancyProgress;
     }
     return QueryIntent.unsupportedGeneral;
   }
+
 
   /// 1. Pregnancy Progress Handler
   PatientAiMessage _handlePregnancyProgress(String id, String query, PatientAiContext ctx) {

@@ -13,6 +13,8 @@ from app.models.asha_patient_assignment import (
 )
 from app.models.asha_profile import AshaProfile
 from app.models.doctor_profile import DoctorProfile
+from app.models.home_visit import HomeVisit
+from app.models.maternal_vital_record import MaternalVitalRecord
 from app.models.patient_profile import PatientProfile
 from app.models.pregnancy import Pregnancy, PregnancyStatusEnum
 from app.models.user import RoleEnum, User
@@ -83,6 +85,39 @@ class DoctorService:
                 assigned_name = active_assign.asha_worker.user.full_name
                 assigned_id = active_assign.asha_worker.id
 
+            # Query latest home visit
+            stmt_v = (
+                select(HomeVisit)
+                .where(HomeVisit.patient_id == p.id)
+                .order_by(HomeVisit.visit_date.desc())
+                .limit(1)
+            )
+            v_res = (await db.execute(stmt_v)).scalar_one_or_none()
+            latest_vis_dt = datetime.combine(v_res.visit_date, datetime.min.time()) if v_res else None
+            latest_vis_notes = v_res.observations if v_res else None
+
+            vitals_sum = None
+            risk_lvl = "NORMAL"
+            if active_preg:
+                stmt_vit = (
+                    select(MaternalVitalRecord)
+                    .where(MaternalVitalRecord.pregnancy_id == active_preg.id)
+                    .order_by(MaternalVitalRecord.recorded_at.desc())
+                    .limit(1)
+                )
+                vit_res = (await db.execute(stmt_vit)).scalar_one_or_none()
+                if vit_res:
+                    parts = []
+                    if vit_res.systolic_bp and vit_res.diastolic_bp:
+                        parts.append(f"BP: {vit_res.systolic_bp}/{vit_res.diastolic_bp} mmHg")
+                        if vit_res.systolic_bp >= 140 or vit_res.diastolic_bp >= 90:
+                            risk_lvl = "HIGH"
+                    if vit_res.weight_kg:
+                        parts.append(f"Weight: {vit_res.weight_kg} kg")
+                    if vit_res.temperature_c:
+                        parts.append(f"Temp: {vit_res.temperature_c} °C")
+                    vitals_sum = ", ".join(parts) if parts else None
+
             items.append(
                 DoctorPatientItem(
                     patient_id=p.id,
@@ -98,11 +133,16 @@ class DoctorService:
                     active_pregnancy_edd=edd_date,
                     assigned_asha_name=assigned_name,
                     assigned_asha_id=assigned_id,
+                    latest_visit_date=latest_vis_dt,
+                    latest_visit_notes=latest_vis_notes,
+                    latest_vitals_summary=vitals_sum,
+                    risk_level=risk_lvl,
                     created_at=p.created_at,
                 )
             )
 
         return DoctorPatientRosterResponse(items=items, total=len(items))
+
 
     @staticmethod
     async def get_available_ashas(

@@ -333,6 +333,52 @@ class _DoctorDashboardScreenState extends State<DoctorDashboardScreen> with Sing
                           ),
                       ],
                     ),
+                    if (p.latestVitalsSummary != null || p.latestVisitNotes != null) ...[
+                      const SizedBox(height: 8),
+                      Container(
+                        padding: const EdgeInsets.all(8),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFF0F172A),
+                          borderRadius: BorderRadius.circular(6),
+                          border: Border.all(color: const Color(0xFF334155)),
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            if (p.latestVitalsSummary != null)
+                              Row(
+                                children: [
+                                  const Icon(Icons.favorite, size: 12, color: Color(0xFFF43F5E)),
+                                  const SizedBox(width: 4),
+                                  Expanded(
+                                    child: Text(
+                                      'Latest Vitals: ${p.latestVitalsSummary}',
+                                      style: const TextStyle(fontSize: 11, color: Colors.white),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            if (p.latestVisitNotes != null) ...[
+                              const SizedBox(height: 2),
+                              Row(
+                                children: [
+                                  const Icon(Icons.notes, size: 12, color: Colors.grey),
+                                  const SizedBox(width: 4),
+                                  Expanded(
+                                    child: Text(
+                                      'ASHA Observations: ${p.latestVisitNotes}',
+                                      style: const TextStyle(fontSize: 11, color: Colors.grey),
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ],
+                          ],
+                        ),
+                      ),
+                    ],
                     const SizedBox(height: 8),
                     Row(
                       mainAxisAlignment: MainAxisAlignment.end,

@@ -66,11 +66,18 @@ class AshaPatientItemResponse(BaseModel):
     patient_name: str
     patient_email: Optional[str] = None
     patient_phone: Optional[str] = None
+    date_of_birth: Optional[datetime] = None
+    age: Optional[int] = None
+    blood_group: Optional[str] = None
+    emergency_contact: Optional[str] = None
     health_record_number: Optional[str] = None
     village_locality: Optional[str] = None
     has_active_pregnancy: bool = False
     pregnancy_id: Optional[uuid.UUID] = None
     pregnancy_number: Optional[int] = None
+    gestational_age_weeks: Optional[int] = None
+    active_pregnancy_edd: Optional[datetime] = None
+    risk_level: str = "NORMAL"
     last_visit_date: Optional[datetime] = None
     total_visits: int = 0
     asha_worker_id: uuid.UUID
@@ -78,4 +85,6 @@ class AshaPatientItemResponse(BaseModel):
     status: AssignmentStatusEnum = AssignmentStatusEnum.ACTIVE
     assigned_at: datetime
     notes: Optional[str] = None
+    required_duties: list[str] = Field(default_factory=list)
+
 

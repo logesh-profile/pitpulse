@@ -21,7 +21,12 @@ class DoctorPatientItem(BaseModel):
     active_pregnancy_edd: Optional[date] = None
     assigned_asha_name: Optional[str] = None
     assigned_asha_id: Optional[UUID] = None
+    latest_visit_date: Optional[datetime] = None
+    latest_visit_notes: Optional[str] = None
+    latest_vitals_summary: Optional[str] = None
+    risk_level: str = "NORMAL"
     created_at: datetime
+
 
 
 class DoctorPatientRosterResponse(BaseModel):
