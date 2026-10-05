@@ -21,5 +21,4 @@ services:
 databases:
   - name: pitpulse-db
     databaseName: pitpulse_db
-    user: postgres
     plan: free
