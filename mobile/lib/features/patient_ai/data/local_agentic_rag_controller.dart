@@ -1,16 +1,17 @@
-// 100% Offline Local Agentic RAG Controller
+// 100% Offline Fully Functional Local Agentic RAG Controller (Context-Aware)
 // Built for rural maternal and general health in Tamil Nadu.
-// Adheres strictly to the Three-Layer Processing Hierarchy:
-// Layer 1: Safety Override (Restricted Content) -> "I cannot answer that."
-// Layer 2: Universal Conversational Flexibility (Chitchat) -> Warm, polite response
-// Layer 3: Target Semantic Retrieval (Medical Agentic RAG) -> Multi-tool SQLite execution
+// Adheres strictly to:
+// 1. Chat History & Context Stitching Engine (multi-turn memory & semantic keyword fallbacks)
+// 2. Three-Layer Processing Hierarchy (Safety Override -> Chitchat/General QA -> Target Semantic RAG)
+// 3. Multi-Tool SQLite Matrix Execution (Emergency, Maternal Timeline, ASHA Directory, General Health FAQ)
 
 import 'dart:math';
 
-/// Structural Interface Contract for the Local Agent State
+/// Structural Interface Contract for the Local Agent State (Context-Aware)
 class LocalAgentState {
   final String rawText;
   final String language;
+  final List<String> chatHistory; // Keeps track of past user turns
   int primaryIntentId;
   List<String> extractedEntities = [];
   Map<String, dynamic> retrievedMedicalContext = {};
@@ -21,6 +22,7 @@ class LocalAgentState {
   LocalAgentState({
     required this.rawText,
     required this.language,
+    required this.chatHistory,
     this.primaryIntentId = -1,
   });
 }
@@ -28,7 +30,7 @@ class LocalAgentState {
 /// The Local Relational Database Matrix (health_knowledge.db)
 /// Operates 100% in-memory/on-device with zero network latency.
 class LocalHealthKnowledgeDatabase {
-  // Layer 1: Restricted Content Keywords & Phrases
+  // Layer 1: Restricted Content Keywords & Phrases (Safety Override)
   static const List<String> restrictedPatternsEn = [
     'bypass clinical testing',
     'buy illegal tablets',
@@ -64,6 +66,102 @@ class LocalHealthKnowledgeDatabase {
     'வீட்டிலேயே கருக்கலைப்பு',
     'தானாக கருவை அழிக்க',
   ];
+
+  // Layer 2: General Health FAQ Table (Handles unexpected freeform wellness topics like stress, sleep, etc.)
+  static const Map<String, Map<String, dynamic>> generalHealthFaq = {
+    'stress': {
+      'keywords': ['stress', 'tension', 'anxiety', 'worried', 'worry', 'panic', 'depress', 'கவலை', 'மன அழுத்தம்', 'பயம்', 'பதற்றம்', 'மன உளைச்சல்'],
+      'en': '''🧘‍♀️ **Maternal Stress & Emotional Wellness Guide**
+
+Pregnancy can bring emotional changes and stress. Here are evidence-based steps to manage anxiety safely:
+1. 🌬️ **Deep Breathing & Relaxation:** Sit comfortably, inhale slowly through your nose for 4 seconds, hold for 2 seconds, and exhale gently for 6 seconds. Repeat for 5–10 minutes.
+2. 💧 **Hydration & Gentle Movement:** Drink a tall glass of fresh water and take a slow 15-minute walk in fresh air.
+3. 🛌 **Adequate Rest:** Sleep on your left side with pillow support between your knees to relieve pelvic pressure.
+4. 📞 **Talk to Your ASHA Worker / Doctor:** Emotional well-being is vital for baby's health. Discuss persistent anxiety with your local Village Health Nurse or doctor.''',
+      'ta': '''🧘‍♀️ **கர்ப்ப கால மன அழுத்தம் & மன அமைதிக்கான வழிகாட்டல்**
+
+கர்ப்ப காலத்தில் ஏற்படும் ஹார்மோன் மாற்றங்களால் மன அழுத்தமும் பதற்றமும் ஏற்படுவது இயல்பானது. இதனை கட்டுப்படுத்த:
+1. 🌬️ **ஆழ்ந்த மூச்சுப் பயிற்சி:** அமைதியான இடத்தில் அமர்ந்து, 4 நொடிகள் மூச்சை மெதுவாக உள்ளிழுத்து, 6 நொடிகள் மெதுவாக வெளிவிடவும் (5-10 நிமிடங்கள்).
+2. 💧 **நீர்ச்சத்து & நடைப்பயிற்சி:** ஒரு டம்ளர் குளிர்ந்த நீர் குடித்துவிட்டு, 15 நிமிடங்கள் நிதானமாக நடைப்பயிற்சி செய்யவும்.
+3. 🛌 **இடதுபுற ஓய்வு:** தூங்கும் போது இடது பக்கமாக ஒருக்களித்து படுத்து தலையணை ஆதரவை பயன்படுத்தவும்.
+4. 📞 **ஆஷா பணியாளரிடம் பகிருங்கள்:** உங்கள் கவலைகள் மற்றும் பயங்களை உங்கள் பகுதி ஆஷா பணியாளர் அல்லது ஆரம்ப சுகாதார நிலைய மருத்துவரிடம் தயங்காமல் தெரிவிக்கவும்.''',
+    },
+    'sleep': {
+      'keywords': ['sleep', 'insomnia', 'cant sleep', 'night sleep', 'தூக்கம்', 'தூக்கமின்மை', 'உறக்கம்'],
+      'en': '''🛌 **Pregnancy Sleep & Rest Guidelines**
+
+1. **Sleep Position:** Always sleep on your left side to optimize blood and oxygen flow to the placenta.
+2. **Support Pillows:** Place a pillow between your knees and another supporting your belly/lower back.
+3. **Bedtime Routine:** Avoid mobile screens 1 hour before sleep; drink a warm cup of milk.
+4. **Daytime Naps:** Take a brief 30-minute afternoon rest to reduce maternal fatigue.''',
+      'ta': '''🛌 **கர்ப்ப கால உறக்கம் மற்றும் ஓய்வு வழிகாட்டல்**
+
+1. **தூங்கும் நிலை:** நஞ்சுக்கொடிக்கு ரத்த ஓட்டம் சீராக செல்ல எப்போதும் இடது பக்கமாக ஒருக்களித்து படுக்கவும்.
+2. **தலையணை ஆதரவு:** கால்களுக்கு நடுவிலும், வயிற்றுக்கு ஆதரவாகவும் சிறிய தலையணைகளை வைக்கவும்.
+3. **தூக்கத்திற்கு முன்:** படுக்கைக்கு செல்லும் 1 மணி நேரத்திற்கு முன் செல்போன் பார்ப்பதை தவிர்க்கவும்; மிதமான சூடான பால் குடிக்கலாம்.
+4. **மதிய ஓய்வு:** பகலில் 30 நிமிடங்கள் சிறிய ஓய்வு எடுப்பது உடலுக்கு புத்துணர்ச்சி தரும்.''',
+    },
+    'fatigue': {
+      'keywords': ['fatigue', 'exhausted', 'weak', 'weakness', 'tiredness', 'energy', 'சோர்வு', 'அயர்வு', 'பலவீனம்'],
+      'en': '''⚡ **Managing Pregnancy Fatigue & Low Energy**
+
+1. **Check Iron Intake:** Ensure you take your prescribed daily Iron & Folic Acid (IFA) tablets after meals.
+2. **Iron-Rich Foods:** Eat spinach, moringa leaves, dates, pomegranate, and boiled eggs.
+3. **Hydration:** Dehydration is a primary cause of maternal fatigue. Drink 2.5–3 liters of water daily.
+4. **Rest:** Listen to your body and take short resting breaks throughout the day.''',
+      'ta': '''⚡ **கர்ப்ப கால சோர்வை சமாளிக்கும் வழிகள்**
+
+1. **இரும்புச்சத்து மாத்திரைகள்:** மருத்துவர் பரிந்துரைத்த இரும்புச்சத்து மற்றும் போலிக் அமில மாத்திரைகளை தவறாமல் உட்கொள்ளவும்.
+2. **சத்தான உணவுகள்:** முருங்கைக்கீரை, பேரீச்சம்பழம், மாதுளை, சுண்டல், அவித்த முட்டை ஆகியவற்றை உணவில் சேர்க்கவும்.
+3. **நீர்ச்சத்து:** உடலில் நீர் குறையாமல் இருக்க தினமும் 8-10 டம்ளர் தண்ணீர், இளநீர் அல்லது மோர் குடிக்கவும்.
+4. **ஓய்வு:** உடல் சோர்வாக இருக்கும் போது வேலைகளை குறைத்து போதிய ஓய்வெடுக்கவும்.''',
+    },
+    'headache': {
+      'keywords': ['headache', 'head pain', 'தலைவலி', 'தலை பாரம்'],
+      'en': '''🤕 **Pregnancy Headache & Relief Guidance**
+
+1. **Rest in a Quiet, Dark Room:** Lie down with a cool, damp cloth on your forehead.
+2. **Hydrate Immediately:** Drink 2 large glasses of water; dehydration commonly causes headaches.
+3. **Never Self-Medicate:** Avoid taking painkiller tablets without consulting your doctor.
+4. ⚠️ **Critical Warning:** If headache is severe with blurred vision or face swelling, get your Blood Pressure checked immediately at the PHC (sign of preeclampsia).''',
+      'ta': '''🤕 **கர்ப்ப கால தலைவலி நிவாரண வழிகாட்டல்**
+
+1. **அமைதியான ஓய்வு:** வெளிச்சம் குறைந்த அமைதியான அறையில் படுத்து நெற்றியில் குளிர்ந்த துணியை வைக்கவும்.
+2. **உடனே தண்ணீர் குடிக்கவும்:** நீர்ச்சத்து குறைபாட்டால் தலைவலி வரலாம், 2 டம்ளர் தண்ணீர் குடிக்கவும்.
+3. **சுய மருத்துவம் வேண்டாம்:** மருத்துவர் அனுமதி இல்லாமல் எந்த வலி நிவாரணி மாத்திரைகளையும் சாப்பிடக் கூடாது.
+4. ⚠️ **எச்சரிக்கை:** தலைவலியுடன் கண் மங்கலாக தெரிவது அல்லது முகத்தில் வீக்கம் இருந்தால், உடனடியாக ஆரம்ப சுகாதார நிலையத்திற்கு சென்று இரத்த அழுத்தத்தை (BP) பரிசோதிக்கவும்.''',
+    },
+    'nausea': {
+      'keywords': ['nausea', 'vomit', 'vomiting', 'morning sickness', 'வாந்தி', 'மயக்கம்', 'குமட்டல்'],
+      'en': '''🍋 **Managing Nausea & Morning Sickness**
+
+1. **Small Frequent Meals:** Never leave your stomach empty. Eat a light meal every 2–3 hours.
+2. **Bedside Crackers:** Eat a dry biscuit or rusk before getting out of bed in the morning.
+3. **Ginger & Lemon:** Sip warm ginger tea or fresh lemon water to soothe stomach acidity.
+4. **Avoid Triggers:** Stay away from strong cooking odors, oily fried foods, and heavy spices.''',
+      'ta': '''🍋 **கர்ப்ப கால வாந்தி & மயக்கத்திற்கான தீர்வுகள்**
+
+1. **சிறிய இடைவெளியில் உணவு:** வெறும் வயிற்றில் இருக்க வேண்டாம்; 2-3 மணி நேரத்திற்கு ஒரு முறை சிறிது சத்தான உணவு சாப்பிடவும்.
+2. **காலையில் பிஸ்கட்:** காலையில் படுக்கையை விட்டு எழுந்திருக்கும் முன் ஒரு உலர் பிஸ்கட் அல்லது ரஸ்க் சாப்பிடவும்.
+3. **இஞ்சி & எலுமிச்சை:** இஞ்சி டீ அல்லது எலுமிச்சை சாறு அருந்துவது வாந்தி உணர்வை கட்டுப்படுத்தும்.
+4. **கார உணவுகள் தவிர்த்தல்:** அதிக எண்ணெய், மசாலா மற்றும் வாசனை மிகுந்த உணவுகளை தவிர்க்கவும்.''',
+    },
+    'fever_cold': {
+      'keywords': ['fever', 'cold', 'cough', 'flu', 'காய்ச்சல்', 'இருமல்', 'சளி'],
+      'en': '''🌡️ **Cold, Cough & Fever Precautions**
+
+1. **Warm Saline Gargle:** Gargle with warm salt water for throat irritation.
+2. **Steam Inhalation:** Inhale plain steam for 5–10 minutes to clear nasal congestion.
+3. **Rest & Fluids:** Drink warm water, clear soups, and keep yourself warm.
+4. ⚠️ **Doctor Consultation:** If your temperature exceeds 100°F (37.8°C), visit your PHC doctor immediately. Do not consume over-the-counter antibiotics.''',
+      'ta': '''🌡️ **சளி, இருமல் மற்றும் காய்ச்சல் முன்னெச்சரிக்கைகள்**
+
+1. **உப்பு நீர் கொப்பளிப்பு:** தொண்டை கரகரப்பிற்கு வெதுவெதுப்பான உப்பு நீரில் வாய் கொப்பளிக்கவும்.
+2. **நீராவி பிடித்தல்:** மூக்கடைப்பிற்கு 5-10 நிமிடங்கள் சாதாரண நீராவி பிடிக்கவும்.
+3. **சூடான திரவங்கள்:** மிதமான சுடுதண்ணீர், சூப் குடித்து நன்கு ஓய்வெடுக்கவும்.
+4. ⚠️ **மருத்துவரை அணுகவும்:** உடல் வெப்பநிலை 100°F க்கு மேல் இருந்தால் உடனே ஆரம்ப சுகாதார நிலைய மருத்துவரிடம் ஆலோசனை பெறவும். சுய மருத்துவம் செய்ய வேண்டாம்.''',
+    },
+  };
 
   // Layer 3: ASHA Directory Table
   static const List<Map<String, dynamic>> ashaDirectory = [
@@ -275,11 +373,12 @@ The symptoms you described indicate a potential obstetrical danger sign that req
   };
 }
 
-/// Central Agentic Orchestration Layer
+/// Central Agentic Orchestration Layer with Multi-Turn Context Stitching
 class LocalAgenticRagController {
-  /// Evaluates patient input using the Three-Layer Processing Hierarchy
+  /// Evaluates patient input using the Three-Layer Processing Hierarchy with Chat History
   static LocalAgentState evaluate({
     required String rawText,
+    List<String> chatHistory = const [],
     int? primaryIntentId,
     int gestationalWeeks = 12,
   }) {
@@ -287,6 +386,7 @@ class LocalAgenticRagController {
     final state = LocalAgentState(
       rawText: rawText,
       language: lang,
+      chatHistory: chatHistory,
       primaryIntentId: primaryIntentId ?? _estimateIntentId(rawText),
     );
 
@@ -297,6 +397,22 @@ class LocalAgenticRagController {
       state.synthesizedResponse = lang == 'ta'
           ? 'என்னால் அதற்குப் பதிலளிக்க முடியாது.'
           : 'I cannot answer that.';
+      return state;
+    }
+
+    // =========================================================================
+    // CONTEXT STITCHING ENGINE: Semantic Health Keywords Override
+    // =========================================================================
+    // If the classifier defaulted to a generic greeting or fallback, but the text
+    // contains high-value health terms (stress, sleep, fatigue, headache, nausea),
+    // override and route immediately to the General Health FAQ tool!
+    final matchedFaqKey = _matchGeneralHealthFaq(rawText);
+    if (matchedFaqKey != null) {
+      state.primaryIntentId = 8; // GENERAL_MED_QA
+      state.synthesizedResponse = toolGeneralHealthFaq(
+        topicKey: matchedFaqKey,
+        language: lang,
+      );
       return state;
     }
 
@@ -320,15 +436,40 @@ class LocalAgenticRagController {
     final isEmergency = toolEmergencyTriage(rawText);
     state.isEmergency = isEmergency;
 
-    // Step 2: Entity Scraping (Milestones & Village Names)
-    final milestoneMonth = _extractMilestoneMonth(rawText) ?? ((gestationalWeeks / 4.3).clamp(1, 9).round());
-    final detectedVillage = _extractVillageEntity(rawText);
+    // Step 2: Multi-Turn History Stitching (Entity Scraping across Turns)
+    // Carry over village or milestone month from chatHistory if not in current turn
+    String? detectedVillage = _extractVillageEntity(rawText);
+    int? milestoneMonth = _extractMilestoneMonth(rawText);
+
+    if (detectedVillage == null && chatHistory.isNotEmpty) {
+      for (final pastMsg in chatHistory.reversed) {
+        final found = _extractVillageEntity(pastMsg);
+        if (found != null) {
+          detectedVillage = found;
+          state.extractedEntities.add('Stitched Village: $detectedVillage');
+          break;
+        }
+      }
+    }
+
+    if (milestoneMonth == null && chatHistory.isNotEmpty) {
+      for (final pastMsg in chatHistory.reversed) {
+        final found = _extractMilestoneMonth(pastMsg);
+        if (found != null) {
+          milestoneMonth = found;
+          state.extractedEntities.add('Stitched Milestone: Month $milestoneMonth');
+          break;
+        }
+      }
+    }
+
+    final finalMonth = milestoneMonth ?? ((gestationalWeeks / 4.3).clamp(1, 9).round());
 
     if (detectedVillage != null) {
       state.extractedEntities.add('Village: $detectedVillage');
     }
-    if (_hasMilestoneQuery(rawText)) {
-      state.extractedEntities.add('Milestone: Month $milestoneMonth');
+    if (_hasMilestoneQuery(rawText) || milestoneMonth != null) {
+      state.extractedEntities.add('Milestone: Month $finalMonth');
     }
 
     // Step 3: Tool Execution (Parallel / Sequential Multi-Tool Pipeline)
@@ -336,9 +477,9 @@ class LocalAgenticRagController {
     Map<String, dynamic>? ashaData;
 
     // Trigger Tool_Maternal_Timeline_Lookup if diet or pregnancy progress query
-    if (_isDietOrMilestoneQuery(rawText, state.primaryIntentId)) {
+    if (_isDietOrMilestoneQuery(rawText, state.primaryIntentId) || (milestoneMonth != null && _isFoodQuery(rawText))) {
       medicalData = toolMaternalTimelineLookup(
-        timelineMonths: milestoneMonth,
+        timelineMonths: finalMonth,
         language: lang,
       );
       state.retrievedMedicalContext = medicalData;
@@ -359,7 +500,7 @@ class LocalAgenticRagController {
       isEmergency: isEmergency,
       medicalData: medicalData,
       ashaData: ashaData,
-      month: milestoneMonth,
+      month: finalMonth,
       language: lang,
     );
 
@@ -551,6 +692,21 @@ class LocalAgenticRagController {
     return isTa ? entry['ta']! : entry['en']!;
   }
 
+  /// Tool 5: General Health FAQ Tool (Handles Freeform Wellness Questions)
+  static String toolGeneralHealthFaq({
+    required String topicKey,
+    required String language,
+  }) {
+    final isTa = language == 'ta';
+    final faq = LocalHealthKnowledgeDatabase.generalHealthFaq[topicKey];
+    if (faq == null) {
+      return isTa
+          ? 'உங்கள் ஆரோக்கிய சந்தேகங்களுக்கு உங்கள் பகுதி ஆஷா பணியாளர் அல்லது ஆரம்ப சுகாதார நிலைய மருத்துவரை அணுகவும்.'
+          : 'For medical questions, please consult your assigned ASHA worker or local Primary Health Centre (PHC) doctor.';
+    }
+    return isTa ? faq['ta'] as String : faq['en'] as String;
+  }
+
   // ===========================================================================
   // INTERNAL HELPERS & AGENTIC LOGIC
   // ===========================================================================
@@ -568,11 +724,25 @@ class LocalAgenticRagController {
     return false;
   }
 
+  /// Matches text against General Health FAQ keywords (e.g. stress, sleep, fatigue)
+  static String? _matchGeneralHealthFaq(String text) {
+    final lower = text.toLowerCase();
+
+    for (final entry in LocalHealthKnowledgeDatabase.generalHealthFaq.entries) {
+      final keywords = (entry.value['keywords'] as List<dynamic>).cast<String>();
+      for (final kw in keywords) {
+        if (lower.contains(kw)) {
+          return entry.key;
+        }
+      }
+    }
+    return null;
+  }
+
   /// Detects casual small talk categories (Layer 2)
   static String? _detectChitchatCategory(String text, int primaryIntentId) {
     final lower = text.toLowerCase().trim();
 
-    // Small talk greetings: "hi", "hello", "hello hello", "vanakkam"
     final helloPatterns = [
       'hello',
       'hi',
@@ -584,7 +754,6 @@ class LocalAgenticRagController {
       'good evening',
     ];
 
-    // Status greetings: "how are you", "nalla irukkeengala"
     final statusPatterns = [
       'how are you',
       'how r u',
@@ -596,7 +765,6 @@ class LocalAgenticRagController {
       'eppadi irukkeenga',
     ];
 
-    // Thanks greetings: "thank you", "thanks bro", "nandri"
     final thanksPatterns = [
       'thank you',
       'thanks',
@@ -607,7 +775,6 @@ class LocalAgenticRagController {
       'ரொம்ப நன்றி',
     ];
 
-    // Bye patterns
     final byePatterns = [
       'bye',
       'goodbye',
@@ -634,7 +801,6 @@ class LocalAgenticRagController {
     // 4. Exact or near-exact Hello Check
     final isHelloMatch = helloPatterns.any((p) => lower == p || lower.startsWith('$p '));
 
-    // Only classify as chitchat hello if it doesn't also contain health keywords
     final hasHealthKeywords = lower.contains('eat') ||
         lower.contains('diet') ||
         lower.contains('food') ||
@@ -645,9 +811,14 @@ class LocalAgenticRagController {
         lower.contains('doctor') ||
         lower.contains('asha') ||
         lower.contains('vellanur') ||
+        lower.contains('stress') ||
+        lower.contains('tension') ||
+        lower.contains('sleep') ||
+        lower.contains('fatigue') ||
         lower.contains('உணவு') ||
         lower.contains('மாதம்') ||
-        lower.contains('வலி');
+        lower.contains('வலி') ||
+        lower.contains('கவலை');
 
     if (isHelloMatch && !hasHealthKeywords) {
       return 'GREETING_HELLO';
@@ -664,7 +835,6 @@ class LocalAgenticRagController {
   static int? _extractMilestoneMonth(String text) {
     final lower = text.toLowerCase();
 
-    // Regex patterns for "3 months", "3rd month", "month 3", "3 மாசம்"
     final regDigit = RegExp(r'(\d+)\s*(?:st|nd|rd|th)?\s*(?:month|months|மாதம்|மாசம்|maasam|masam)');
     final match = regDigit.firstMatch(lower);
     if (match != null) {
@@ -672,7 +842,6 @@ class LocalAgenticRagController {
       if (val != null && val >= 1 && val <= 9) return val;
     }
 
-    // Word patterns
     if (lower.contains('first month') || lower.contains('1st month') || lower.contains('oru maasam') || lower.contains('1 மாசம்')) return 1;
     if (lower.contains('second month') || lower.contains('2nd month') || lower.contains('rendu maasam') || lower.contains('2 மாசம்')) return 2;
     if (lower.contains('third month') || lower.contains('3rd month') || lower.contains('3 months') || lower.contains('moonu maasam') || lower.contains('3 மாசம்') || lower.contains('3வது மாதம்')) return 3;
@@ -711,10 +880,9 @@ class LocalAgenticRagController {
         lower.contains('வாரம்');
   }
 
-  static bool _isDietOrMilestoneQuery(String text, int intentId) {
+  static bool _isFoodQuery(String text) {
     final lower = text.toLowerCase();
-    return intentId == 1 ||
-        lower.contains('eat') ||
+    return lower.contains('eat') ||
         lower.contains('diet') ||
         lower.contains('food') ||
         lower.contains('nutrition') ||
@@ -722,7 +890,13 @@ class LocalAgenticRagController {
         lower.contains('sappad') ||
         lower.contains('உணவு') ||
         lower.contains('சாப்பிட') ||
-        lower.contains('பத்தியம்') ||
+        lower.contains('பத்தியம்');
+  }
+
+  static bool _isDietOrMilestoneQuery(String text, int intentId) {
+    final lower = text.toLowerCase();
+    return intentId == 1 ||
+        _isFoodQuery(lower) ||
         lower.contains('month') ||
         lower.contains('மாதம்');
   }
@@ -734,6 +908,7 @@ class LocalAgenticRagController {
         lower.contains('vhn') ||
         lower.contains('nurse') ||
         lower.contains('worker') ||
+        lower.contains('health worker') ||
         lower.contains('village') ||
         lower.contains('ஆஷா') ||
         lower.contains('செவிலியர்') ||
@@ -751,16 +926,15 @@ class LocalAgenticRagController {
     if (lower.contains('week') || lower.contains('edd') || lower.contains('due date') || lower.contains('gestat') || lower.contains('growth') || lower.contains('lmp') || lower.contains('baby') || lower.contains('வாரம்') || lower.contains('வளர்ச்சி')) return 5;
     if (lower.contains('alert') || lower.contains('warning') || lower.contains('danger') || lower.contains('screening') || lower.contains('அபாயம்') || lower.contains('எச்சரிக்கை')) return 6;
     if (lower.contains('visit') || lower.contains('history') || lower.contains('வருகை')) return 7;
+    if (_matchGeneralHealthFaq(lower) != null) return 8; // GENERAL_MED_QA
     return 10; // Casual / Chitchat
   }
 
   static String _detectLanguage(String text) {
-    // Check for Tamil Unicode range (0x0B80 - 0x0BFF)
     final tamilRegExp = RegExp(r'[\u0B80-\u0BFF]');
     if (tamilRegExp.hasMatch(text)) return 'ta';
 
-    // Tanglish transliteration detection
-    final tanglishRegExp = RegExp(r'\b(enaku|enakku|naan|enna|saapadanum|sappadu|iruku|illai|maasam|aaguthu|panradhu|romba|nalla|vanakkam|nandri)\b', caseSensitive: false);
+    final tanglishRegExp = RegExp(r'\b(enaku|enakku|naan|enna|saapadanum|sappadu|iruku|illai|maasam|aaguthu|panradhu|romba|nalla|vanakkam|nandri|kavala|bayam)\b', caseSensitive: false);
     if (tanglishRegExp.hasMatch(text)) return 'ta';
 
     return 'en';

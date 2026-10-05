@@ -93,10 +93,20 @@ class PatientAiController extends ChangeNotifier {
     // 2. Subtle micro-delay for conversational rhythm
     await Future.delayed(const Duration(milliseconds: 350));
 
-    // 3. Process query through on-device engine
+    // 3. Extract last 3 user turns for Context Stitching
+    final userHistory = _messages
+        .where((m) => m.sender == MessageSender.user && m.text != trimmed)
+        .map((m) => m.text)
+        .toList();
+    final recentHistory = userHistory.length > 3
+        ? userHistory.sublist(userHistory.length - 3)
+        : userHistory;
+
+    // 4. Process query through context-aware on-device engine
     final aiResponse = _engine.processQuery(
       userQuery: trimmed,
       context: _context,
+      chatHistory: recentHistory,
     );
 
     _isTyping = false;

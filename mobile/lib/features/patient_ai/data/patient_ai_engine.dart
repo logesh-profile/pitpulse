@@ -11,13 +11,15 @@ class PatientAiEngine {
   PatientAiMessage processQuery({
     required String userQuery,
     required PatientAiContext context,
+    List<String> chatHistory = const [],
   }) {
     final messageId = 'ai_${DateTime.now().millisecondsSinceEpoch}_${Random().nextInt(1000)}';
     final weeks = context.hasActivePregnancy ? context.activePregnancy!.gestationalAgeWeeks : 12;
 
-    // Execute Three-Layer Agentic RAG Evaluation
+    // Execute Three-Layer Agentic RAG Evaluation with Chat History
     final agentState = LocalAgenticRagController.evaluate(
       rawText: userQuery,
+      chatHistory: chatHistory,
       gestationalWeeks: weeks,
     );
 
