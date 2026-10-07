@@ -3,7 +3,7 @@ import uuid
 from datetime import datetime
 from typing import List, Optional
 
-from sqlalchemy import Boolean, DateTime, Enum, String, func
+from sqlalchemy import Boolean, DateTime, Enum, Integer, String, func
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
@@ -60,6 +60,19 @@ class User(Base):
     is_verified: Mapped[bool] = mapped_column(
         Boolean,
         default=False,
+        nullable=False,
+    )
+    age: Mapped[Optional[int]] = mapped_column(
+        Integer,
+        nullable=True,
+    )
+    gender: Mapped[Optional[str]] = mapped_column(
+        String(50),
+        nullable=True,
+    )
+    is_profile_completed: Mapped[bool] = mapped_column(
+        Boolean,
+        default=True,
         nullable=False,
     )
     must_change_password: Mapped[bool] = mapped_column(

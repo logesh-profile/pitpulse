@@ -7,6 +7,7 @@ from app.models.user import User
 from app.schemas.auth import (
     ActivateProfessionalRequest,
     ChangePasswordRequest,
+    CompleteProfileRequest,
     LogoutRequest,
     RefreshTokenRequest,
     ResendVerificationRequest,
@@ -15,6 +16,7 @@ from app.schemas.auth import (
     UserRegisterRequest,
     UserRegisterResponse,
     UserResponse,
+    VerifyCodeRequest,
     VerifyEmailRequest,
     VerifyEmailResponse,
 )
@@ -28,17 +30,72 @@ router = APIRouter(prefix="/auth", tags=["Authentication & Identity"])
     response_model=UserRegisterResponse,
     status_code=status.HTTP_201_CREATED,
     summary="Register a new patient user account",
-    description="Registers a real patient user in PostgreSQL and sends an email verification token.",
+    description="Registers a real patient user in PostgreSQL and sends an email verification code.",
 )
 async def register(
     req: UserRegisterRequest,
     db: AsyncSession = Depends(get_db),
 ) -> UserRegisterResponse:
-    user, dev_token = await AuthService.register_user(db=db, req=req)
+    user, dev_code = await AuthService.register_user(db=db, req=req)
     return UserRegisterResponse(
-        message="Registration successful. Please verify your email to activate your account.",
+        message="Registration successful. A 6-digit verification code has been sent to your Gmail.",
         user=UserResponse.model_validate(user),
-        dev_verification_token=dev_token,
+        dev_verification_token=dev_code,
+        dev_verification_code=dev_code,
+    )
+
+
+@router.post(
+    "/verify-code",
+    response_model=TokenResponse,
+    status_code=status.HTTP_200_OK,
+    summary="Verify 6-digit code and authenticate",
+    description="Validates the 6-digit code sent to Gmail, activates the patient account, and logs in.",
+)
+async def verify_code(
+    req: VerifyCodeRequest,
+    db: AsyncSession = Depends(get_db),
+) -> TokenResponse:
+    return await AuthService.verify_email_code(
+        db=db,
+        email=req.email,
+        code=req.code,
+    )
+
+
+@router.post(
+    "/resend-code",
+    status_code=status.HTTP_200_OK,
+    summary="Resend 6-digit verification code",
+    description="Generates and dispatches a fresh 6-digit verification code to the given Gmail.",
+)
+async def resend_code(
+    req: ResendVerificationRequest,
+    db: AsyncSession = Depends(get_db),
+):
+    code = await AuthService.resend_verification_code(db=db, email=req.email)
+    return {
+        "message": "A fresh 6-digit verification code has been dispatched to your Gmail.",
+        "dev_verification_code": code,
+    }
+
+
+@router.post(
+    "/complete-profile",
+    response_model=UserResponse,
+    status_code=status.HTTP_200_OK,
+    summary="Complete professional onboarding profile",
+    description="Allows provisioned Doctor or ASHA worker to submit personal details (Name, Age, Gender, etc.) on first login.",
+)
+async def complete_profile(
+    req: CompleteProfileRequest,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+) -> UserResponse:
+    return await AuthService.complete_onboarding_profile(
+        db=db,
+        user=current_user,
+        req=req,
     )
 
 

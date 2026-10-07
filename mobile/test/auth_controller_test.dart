@@ -127,6 +127,42 @@ class FakeAuthRemoteDataSource implements AuthRemoteDataSource {
       createdAt: '2026-10-04',
     );
   }
+
+  @override
+  Future<TokenModel> verifyCode({required String email, required String code}) async {
+    if (shouldFail) throw const ServerFailure('Invalid verification code');
+    return TokenModel(
+      accessToken: 'verified-access-token',
+      refreshToken: 'verified-refresh-token',
+      tokenType: 'bearer',
+      expiresIn: 1800,
+      user: UserModel(
+        id: 'mock-uuid',
+        email: email,
+        fullName: 'Verified User',
+        role: 'PATIENT',
+        isActive: true,
+        isVerified: true,
+        createdAt: '2026-10-04',
+      ),
+    );
+  }
+
+  @override
+  Future<void> resendCode({required String email}) async {}
+
+  @override
+  Future<UserModel> completeProfile({required Map<String, dynamic> profileData}) async {
+    return const UserModel(
+      id: 'mock-uuid',
+      email: 'saved@pitpulse.org',
+      fullName: 'Completed User',
+      role: 'DOCTOR',
+      isActive: true,
+      isProfileCompleted: true,
+      createdAt: '2026-10-04',
+    );
+  }
 }
 
 void main() {

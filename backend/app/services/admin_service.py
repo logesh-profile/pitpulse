@@ -67,9 +67,9 @@ class AdminService:
                     detail="An account with this phone number already exists.",
                 )
 
-        # Initial random password hash to prevent empty login
-        dummy_seed_pw = generate_secure_temporary_password()
-        hashed_pw = hash_password(dummy_seed_pw)
+        # Initial password (custom or secure generated)
+        temp_pw = req.password if req.password else generate_secure_temporary_password()
+        hashed_pw = hash_password(temp_pw)
 
         new_user = User(
             email=email_clean,
@@ -78,8 +78,9 @@ class AdminService:
             password_hash=hashed_pw,
             role=RoleEnum.DOCTOR,
             is_active=True,
-            is_verified=False,
-            must_change_password=True,
+            is_verified=True,
+            is_profile_completed=False,
+            must_change_password=False,
         )
         db.add(new_user)
         await db.flush()
@@ -119,8 +120,8 @@ class AdminService:
             phone=new_user.phone,
             role=RoleEnum.DOCTOR,
             activation_token=activation_token,
-            temporary_password=None,
-            must_change_password=True,
+            temporary_password=temp_pw,
+            must_change_password=False,
             is_active=True,
             medical_license_number=doc_profile.medical_license_number,
             specialization=doc_profile.specialization,
@@ -153,8 +154,8 @@ class AdminService:
                     detail="An account with this phone number already exists.",
                 )
 
-        dummy_seed_pw = generate_secure_temporary_password()
-        hashed_pw = hash_password(dummy_seed_pw)
+        temp_pw = req.password if req.password else generate_secure_temporary_password()
+        hashed_pw = hash_password(temp_pw)
 
         new_user = User(
             email=email_clean,
@@ -163,8 +164,9 @@ class AdminService:
             password_hash=hashed_pw,
             role=RoleEnum.ASHA,
             is_active=True,
-            is_verified=False,
-            must_change_password=True,
+            is_verified=True,
+            is_profile_completed=False,
+            must_change_password=False,
         )
         db.add(new_user)
         await db.flush()
@@ -204,8 +206,8 @@ class AdminService:
             phone=new_user.phone,
             role=RoleEnum.ASHA,
             activation_token=activation_token,
-            temporary_password=None,
-            must_change_password=True,
+            temporary_password=temp_pw,
+            must_change_password=False,
             is_active=True,
             worker_id_code=asha_prof.worker_id_code,
             assigned_area=asha_prof.assigned_area,

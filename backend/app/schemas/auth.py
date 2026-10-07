@@ -50,6 +50,9 @@ class UserResponse(BaseModel):
     role: RoleEnum
     is_active: bool
     is_verified: bool = False
+    age: Optional[int] = None
+    gender: Optional[str] = None
+    is_profile_completed: bool = True
     must_change_password: bool = False
     created_at: datetime
 
@@ -65,15 +68,33 @@ class TokenResponse(BaseModel):
 
 
 class VerifyEmailRequest(BaseModel):
-    token: str = Field(..., min_length=16, description="Email verification token")
+    token: str = Field(..., min_length=4, description="Email verification token or code")
+
+
+class VerifyCodeRequest(BaseModel):
+    email: EmailStr
+    code: str = Field(..., min_length=4, max_length=10, description="6-digit verification code")
 
 
 class ResendVerificationRequest(BaseModel):
     email: EmailStr
 
 
+class CompleteProfileRequest(BaseModel):
+    full_name: Optional[str] = None
+    age: Optional[int] = None
+    gender: Optional[str] = None
+    phone: Optional[str] = None
+    specialization: Optional[str] = None
+    facility_name: Optional[str] = None
+    medical_license_number: Optional[str] = None
+    assigned_area: Optional[str] = None
+    primary_health_center: Optional[str] = None
+    worker_id_code: Optional[str] = None
+
+
 class ActivateProfessionalRequest(BaseModel):
-    token: str = Field(..., min_length=16, description="Professional activation token")
+    token: str = Field(..., min_length=4, description="Professional activation token")
     new_password: str = Field(..., min_length=8, description="Chosen password (minimum 8 characters)")
 
 
@@ -81,8 +102,10 @@ class UserRegisterResponse(BaseModel):
     message: str
     user: UserResponse
     dev_verification_token: Optional[str] = None
+    dev_verification_code: Optional[str] = None
 
 
 class VerifyEmailResponse(BaseModel):
     message: str
     is_verified: bool
+    tokens: Optional[TokenResponse] = None

@@ -11,6 +11,15 @@ abstract class AuthRemoteDataSource {
     String? phone,
   });
 
+  Future<TokenModel> verifyCode({
+    required String email,
+    required String code,
+  });
+
+  Future<void> resendCode({
+    required String email,
+  });
+
   Future<TokenModel> login({
     required String email,
     required String password,
@@ -27,6 +36,10 @@ abstract class AuthRemoteDataSource {
   Future<TokenModel> changePassword({
     required String currentPassword,
     required String newPassword,
+  });
+
+  Future<UserModel> completeProfile({
+    required Map<String, dynamic> profileData,
   });
 
   Future<UserModel> getMe({
@@ -58,13 +71,50 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
 
     if (response.data != null) {
       try {
-        return UserModel.fromJson(response.data!);
+        final userJson = response.data!['user'] as Map<String, dynamic>? ?? response.data!;
+        return UserModel.fromJson(userJson);
       } catch (e) {
         throw ParsingFailure('Failed to parse registration response: $e');
       }
     } else {
       throw const ParsingFailure('Empty response body from registration endpoint.');
     }
+  }
+
+  @override
+  Future<TokenModel> verifyCode({
+    required String email,
+    required String code,
+  }) async {
+    final response = await apiClient.post<Map<String, dynamic>>(
+      '/api/v1/auth/verify-code',
+      data: {
+        'email': email.trim(),
+        'code': code.trim(),
+      },
+    );
+
+    if (response.data != null) {
+      try {
+        return TokenModel.fromJson(response.data!);
+      } catch (e) {
+        throw ParsingFailure('Failed to parse verification response: $e');
+      }
+    } else {
+      throw const ParsingFailure('Empty response body from /auth/verify-code endpoint.');
+    }
+  }
+
+  @override
+  Future<void> resendCode({
+    required String email,
+  }) async {
+    await apiClient.post<Map<String, dynamic>>(
+      '/api/v1/auth/resend-code',
+      data: {
+        'email': email.trim(),
+      },
+    );
   }
 
   @override
@@ -106,7 +156,7 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
       try {
         return TokenModel.fromJson(response.data!);
       } catch (e) {
-        throw ParsingFailure('Failed to parse token refresh response: $e');
+        throw ParsingFailure('Failed to parse refresh response: $e');
       }
     } else {
       throw const ParsingFailure('Empty response body from refresh endpoint.');
@@ -146,6 +196,26 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
       }
     } else {
       throw const ParsingFailure('Empty response body from /auth/change-password endpoint.');
+    }
+  }
+
+  @override
+  Future<UserModel> completeProfile({
+    required Map<String, dynamic> profileData,
+  }) async {
+    final response = await apiClient.post<Map<String, dynamic>>(
+      '/api/v1/auth/complete-profile',
+      data: profileData,
+    );
+
+    if (response.data != null) {
+      try {
+        return UserModel.fromJson(response.data!);
+      } catch (e) {
+        throw ParsingFailure('Failed to parse profile completion response: $e');
+      }
+    } else {
+      throw const ParsingFailure('Empty response body from /auth/complete-profile endpoint.');
     }
   }
 

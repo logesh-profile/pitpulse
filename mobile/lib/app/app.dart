@@ -19,7 +19,9 @@ import '../features/asha/data/datasources/asha_remote_data_source.dart';
 import '../features/asha/presentation/controllers/asha_controller.dart';
 import '../features/doctor/data/datasources/doctor_remote_data_source.dart';
 import '../features/doctor/presentation/controllers/doctor_controller.dart';
+import '../core/theme/maatra_theme.dart';
 import '../features/common/presentation/screens/maatra_ribbon_reveal_screen.dart';
+import '../features/auth/presentation/screens/professional_onboarding_screen.dart';
 import '../features/pregnancy/data/datasources/pregnancy_remote_data_source.dart';
 import '../features/pregnancy/presentation/controllers/pregnancy_controller.dart';
 
@@ -109,12 +111,22 @@ class _PitPulseAppState extends State<PitPulseApp> {
       return LoginScreen(authController: auth);
     }
 
-    // First login mandatory password change
+    // 1. First login mandatory password change
     if (user.mustChangePassword) {
       return ChangePasswordScreen(authController: auth);
     }
 
-    // Harmonious Ribbon Loop Reveal Screen after login
+    // 2. Doctor or ASHA first-time login: Personal details onboarding
+    if ((user.role == 'DOCTOR' || user.role == 'ASHA') && !user.isProfileCompleted) {
+      return ProfessionalOnboardingScreen(
+        authController: auth,
+        onCompleted: () {
+          if (mounted) setState(() {});
+        },
+      );
+    }
+
+    // 3. Harmonious Ribbon Loop Reveal Screen after login
     if (!_hasShownReveal) {
       return MaatraRibbonRevealScreen(
         onCompleted: () {
@@ -127,7 +139,7 @@ class _PitPulseAppState extends State<PitPulseApp> {
       );
     }
 
-    // Role-specific routing
+    // 4. Role-specific routing
     switch (user.role) {
       case 'ADMIN':
         return AdminDashboardScreen(
@@ -163,29 +175,9 @@ class _PitPulseAppState extends State<PitPulseApp> {
         return MaterialApp(
           title: AppConfig.appName,
           debugShowCheckedModeBanner: false,
-          theme: ThemeData(
-            useMaterial3: true,
-            colorScheme: ColorScheme.fromSeed(
-              seedColor: const Color(0xFF0D9488), // Medical teal
-              brightness: Brightness.light,
-            ),
-            appBarTheme: const AppBarTheme(
-              centerTitle: true,
-              elevation: 0,
-            ),
-          ),
-          darkTheme: ThemeData(
-            useMaterial3: true,
-            colorScheme: ColorScheme.fromSeed(
-              seedColor: const Color(0xFF0D9488),
-              brightness: Brightness.dark,
-            ),
-            appBarTheme: const AppBarTheme(
-              centerTitle: true,
-              elevation: 0,
-            ),
-          ),
-          themeMode: ThemeMode.system,
+          theme: MaatraTheme.darkTheme,
+          darkTheme: MaatraTheme.darkTheme,
+          themeMode: ThemeMode.dark,
           home: _resolveHomeScreen(_authController),
         );
       },

@@ -14,10 +14,12 @@ from app.core.security import (
     hash_token,
     verify_password,
 )
+from app.models.patient_profile import PatientProfile
 from app.models.refresh_token import RefreshToken
 from app.models.user import RoleEnum, User
 from app.models.verification_token import TokenTypeEnum
 from app.schemas.auth import (
+    CompleteProfileRequest,
     TokenResponse,
     UserLoginRequest,
     UserRegisterRequest,
@@ -59,24 +61,29 @@ class AuthService:
             password_hash=hashed_pw,
             role=RoleEnum.PATIENT,
             is_active=True,
-            is_verified=True,
+            is_verified=False,
+            is_profile_completed=True,
         )
 
         db.add(new_user)
         await db.flush()
 
-        # Generate verification token
-        raw_token = await EmailService.create_verification_token(
+        patient_profile = PatientProfile(user_id=new_user.id)
+        db.add(patient_profile)
+        await db.flush()
+
+        # Generate 6-digit numeric verification code
+        raw_token = await EmailService.create_verification_code(
             db=db,
             user_id=new_user.id,
             token_type=TokenTypeEnum.EMAIL_VERIFICATION,
-            expire_hours=24,
+            expire_minutes=15,
         )
 
         await db.commit()
         await db.refresh(new_user)
 
-        # Dispatch verification email
+        # Dispatch verification email with code
         await EmailService.send_verification_email(email=new_user.email, token=raw_token)
 
         return new_user, raw_token
@@ -105,10 +112,11 @@ class AuthService:
                 detail="User account has been deactivated. Please contact support.",
             )
 
-        # Auto-verify on valid credentials so users are not blocked without SMTP
-        if not user.is_verified:
-            user.is_verified = True
-            await db.commit()
+        if user.role == RoleEnum.PATIENT and not user.is_verified:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Please verify your Gmail with the 6-digit verification code before logging in.",
+            )
 
         # Update last_login_at
         user.last_login_at = datetime.now(timezone.utc)
@@ -193,9 +201,133 @@ class AuthService:
             token_type=TokenTypeEnum.EMAIL_VERIFICATION,
             expire_hours=24,
         )
+    @staticmethod
+    async def verify_email_code(
+        db: AsyncSession,
+        email: str,
+        code: str,
+    ) -> TokenResponse:
+        """Validates 6-digit email verification code, activates account, and issues auth tokens."""
+        stmt = select(User).where(User.email == email.lower().strip())
+        res = await db.execute(stmt)
+        user = res.scalar_one_or_none()
+        if not user:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Account with this email does not exist.",
+            )
+
+        token_record = await EmailService.verify_and_consume_token(
+            db=db,
+            raw_token=code.strip(),
+            expected_type=TokenTypeEnum.EMAIL_VERIFICATION,
+        )
+        if not token_record or token_record.user_id != user.id:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Invalid or expired verification code.",
+            )
+
+        user.is_verified = True
+        user.is_active = True
+        user.updated_at = datetime.now(timezone.utc)
+        user.last_login_at = datetime.now(timezone.utc)
+
+        # Issue JWT tokens directly so user is logged in
+        access_token = create_access_token(user_id=user.id, role=user.role.value)
+        raw_refresh, token_hash, expires_at = create_refresh_token_pair(user_id=user.id)
+
+        refresh_entity = RefreshToken(
+            user_id=user.id,
+            token_hash=token_hash,
+            expires_at=expires_at,
+        )
+        db.add(refresh_entity)
         await db.commit()
-        await EmailService.send_verification_email(email=user.email, token=raw_token)
-        return raw_token
+        await db.refresh(user)
+
+        return TokenResponse(
+            access_token=access_token,
+            refresh_token=raw_refresh,
+            token_type="bearer",
+            expires_in=settings.JWT_ACCESS_EXPIRE_MINUTES * 60,
+            user=UserResponse.model_validate(user),
+        )
+
+    @staticmethod
+    async def resend_verification_code(
+        db: AsyncSession,
+        email: str,
+    ) -> str:
+        """Dispatches a fresh 6-digit verification code to the given email."""
+        stmt = select(User).where(User.email == email.lower().strip())
+        res = await db.execute(stmt)
+        user = res.scalar_one_or_none()
+        if not user:
+            return "123456"
+
+        raw_code = await EmailService.create_verification_code(
+            db=db,
+            user_id=user.id,
+            token_type=TokenTypeEnum.EMAIL_VERIFICATION,
+            expire_minutes=15,
+        )
+        await db.commit()
+        await EmailService.send_verification_email(email=user.email, token=raw_code)
+        return raw_code
+
+    @staticmethod
+    async def complete_onboarding_profile(
+        db: AsyncSession,
+        user: User,
+        req: CompleteProfileRequest,
+    ) -> UserResponse:
+        """Saves personal details for Doctor / ASHA first-time login."""
+        if req.full_name and req.full_name.strip():
+            user.full_name = req.full_name.strip()
+        if req.age is not None:
+            user.age = req.age
+        if req.gender and req.gender.strip():
+            user.gender = req.gender.strip()
+        if req.phone and req.phone.strip():
+            user.phone = req.phone.strip()
+
+        user.is_profile_completed = True
+        user.updated_at = datetime.now(timezone.utc)
+
+        if user.role == RoleEnum.DOCTOR:
+            from app.models.doctor_profile import DoctorProfile
+            doc_stmt = select(DoctorProfile).where(DoctorProfile.user_id == user.id)
+            doc_res = await db.execute(doc_stmt)
+            doc_prof = doc_res.scalar_one_or_none()
+            if not doc_prof:
+                doc_prof = DoctorProfile(user_id=user.id)
+                db.add(doc_prof)
+            if req.specialization:
+                doc_prof.specialization = req.specialization.strip()
+            if req.facility_name:
+                doc_prof.facility_name = req.facility_name.strip()
+            if req.medical_license_number:
+                doc_prof.medical_license_number = req.medical_license_number.strip()
+
+        elif user.role == RoleEnum.ASHA:
+            from app.models.asha_profile import AshaProfile
+            asha_stmt = select(AshaProfile).where(AshaProfile.user_id == user.id)
+            asha_res = await db.execute(asha_stmt)
+            asha_prof = asha_res.scalar_one_or_none()
+            if not asha_prof:
+                asha_prof = AshaProfile(user_id=user.id)
+                db.add(asha_prof)
+            if req.assigned_area:
+                asha_prof.assigned_area = req.assigned_area.strip()
+            if req.primary_health_center:
+                asha_prof.primary_health_center = req.primary_health_center.strip()
+            if req.worker_id_code:
+                asha_prof.worker_id_code = req.worker_id_code.strip()
+
+        await db.commit()
+        await db.refresh(user)
+        return UserResponse.model_validate(user)
 
     @staticmethod
     async def activate_professional(

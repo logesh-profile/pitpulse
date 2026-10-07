@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
+import '../../../../core/theme/maatra_theme.dart';
 import '../controllers/auth_controller.dart';
+import 'gmail_verification_screen.dart';
 import 'register_screen.dart';
 
 class LoginScreen extends StatefulWidget {
@@ -43,13 +46,27 @@ class _LoginScreenState extends State<LoginScreen> {
 
   Future<void> _submitLogin() async {
     if (!_formKey.currentState!.validate()) return;
-
     FocusScope.of(context).unfocus();
 
-    await widget.authController.login(
+    final success = await widget.authController.login(
       email: _emailController.text.trim(),
       password: _passwordController.text,
     );
+
+    if (!success && mounted) {
+      final err = widget.authController.errorMessage ?? '';
+      if (err.contains('verify your Gmail') || err.contains('verification code')) {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (_) => GmailVerificationScreen(
+              authController: widget.authController,
+              email: _emailController.text.trim(),
+            ),
+          ),
+        );
+      }
+    }
   }
 
   void _saveUrlConfig() {
@@ -60,248 +77,312 @@ class _LoginScreenState extends State<LoginScreen> {
         _showUrlConfig = false;
       });
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Backend host updated to: $newUrl')),
+        SnackBar(
+          backgroundColor: MaatraTheme.primaryAmethyst,
+          content: Text('Backend host updated to: $newUrl', style: GoogleFonts.plusJakartaSans(color: Colors.white)),
+        ),
       );
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
     final isLoading = widget.authController.status == AuthStatus.loading;
     final errorMessage = widget.authController.errorMessage;
 
     return Scaffold(
+      backgroundColor: MaatraTheme.bgDark,
       appBar: AppBar(
-        title: const Text('PitPulse Healthcare'),
+        backgroundColor: MaatraTheme.bgDark,
+        elevation: 0,
         actions: [
           IconButton(
-            icon: Icon(_showUrlConfig ? Icons.close : Icons.settings_ethernet),
+            icon: Icon(
+              _showUrlConfig ? Icons.close_rounded : Icons.tune_rounded,
+              color: MaatraTheme.textSecondary,
+              size: 20,
+            ),
             tooltip: 'Configure Backend Host',
-            onPressed: () {
-              setState(() {
-                _showUrlConfig = !_showUrlConfig;
-              });
-            },
+            onPressed: () => setState(() => _showUrlConfig = !_showUrlConfig),
           ),
         ],
       ),
       body: SafeArea(
         child: Center(
           child: SingleChildScrollView(
-            padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 16.0),
+            padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 12.0),
             child: Form(
               key: _formKey,
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  // URL configuration drawer
+                  // URL config drawer
                   if (_showUrlConfig) ...[
-                    _buildUrlConfigCard(theme),
-                    const SizedBox(height: 16),
-                  ],
-
-                  // Header icon & title
-                  Center(
-                    child: Container(
+                    Container(
+                      margin: const EdgeInsets.only(bottom: 24),
                       padding: const EdgeInsets.all(16),
                       decoration: BoxDecoration(
-                        color: theme.colorScheme.primary.withValues(alpha: 0.1),
-                        shape: BoxShape.circle,
+                        color: MaatraTheme.cardDark,
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(color: MaatraTheme.primaryAmethyst.withValues(alpha: 0.3)),
                       ),
-                      child: Icon(
-                        Icons.medical_services_rounded,
-                        size: 48,
-                        color: theme.colorScheme.primary,
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          Text(
+                            'SERVER CONNECTION SETTINGS',
+                            style: GoogleFonts.plusJakartaSans(
+                              color: MaatraTheme.accentLilac,
+                              fontSize: 12,
+                              fontWeight: FontWeight.w700,
+                              letterSpacing: 1.1,
+                            ),
+                          ),
+                          const SizedBox(height: 12),
+                          TextField(
+                            controller: _urlController,
+                            style: GoogleFonts.plusJakartaSans(color: MaatraTheme.textPrimary, fontSize: 13),
+                            decoration: const InputDecoration(
+                              labelText: 'Base API URL',
+                              prefixIcon: Icon(Icons.dns_outlined, color: MaatraTheme.textSecondary),
+                            ),
+                          ),
+                          const SizedBox(height: 12),
+                          ElevatedButton(
+                            onPressed: _saveUrlConfig,
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: MaatraTheme.primaryAmethyst,
+                              padding: const EdgeInsets.symmetric(vertical: 12),
+                            ),
+                            child: const Text('Update Server URL'),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+
+                  // MAATRA Trefoil Knot Logo
+                  Center(
+                    child: Container(
+                      width: 76,
+                      height: 76,
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: MaatraTheme.surfaceDark,
+                        borderRadius: BorderRadius.circular(22),
+                        border: Border.all(color: MaatraTheme.primaryAmethyst.withValues(alpha: 0.35), width: 1.5),
+                        boxShadow: [
+                          BoxShadow(
+                            color: MaatraTheme.primaryAmethyst.withValues(alpha: 0.25),
+                            blurRadius: 28,
+                            spreadRadius: 2,
+                          ),
+                        ],
+                      ),
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(12),
+                        child: Image.asset(
+                          'assets/images/maatra_logo.png',
+                          fit: BoxFit.contain,
+                          errorBuilder: (context, error, stackTrace) => const Icon(
+                            Icons.all_inclusive_rounded,
+                            size: 38,
+                            color: MaatraTheme.accentLilac,
+                          ),
+                        ),
                       ),
                     ),
                   ),
-                  const SizedBox(height: 16),
+                  const SizedBox(height: 20),
+
                   Text(
-                    'Welcome Back',
-                    style: theme.textTheme.headlineSmall?.copyWith(
-                      fontWeight: FontWeight.bold,
-                    ),
+                    'MAATRA',
                     textAlign: TextAlign.center,
+                    style: GoogleFonts.plusJakartaSans(
+                      color: MaatraTheme.textPrimary,
+                      fontSize: 28,
+                      fontWeight: FontWeight.w900,
+                      letterSpacing: 2.0,
+                    ),
                   ),
                   const SizedBox(height: 6),
                   Text(
-                    'Sign in with your registered PitPulse credentials',
-                    style: theme.textTheme.bodyMedium?.copyWith(
-                      color: Colors.grey[600],
-                    ),
+                    'Healthcare Intelligence & Maternal Continuum',
                     textAlign: TextAlign.center,
+                    style: GoogleFonts.plusJakartaSans(
+                      color: MaatraTheme.textSecondary,
+                      fontSize: 13,
+                      fontWeight: FontWeight.w500,
+                    ),
                   ),
-                  const SizedBox(height: 24),
+                  const SizedBox(height: 32),
 
                   // Error message banner
                   if (errorMessage != null && errorMessage.isNotEmpty) ...[
                     Container(
-                      padding: const EdgeInsets.all(12),
+                      padding: const EdgeInsets.all(14),
                       decoration: BoxDecoration(
-                        color: Colors.red[50],
-                        borderRadius: BorderRadius.circular(8),
-                        border: Border.all(color: Colors.red[300]!),
+                        color: MaatraTheme.crimsonAlert.withValues(alpha: 0.12),
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: MaatraTheme.crimsonAlert.withValues(alpha: 0.4)),
                       ),
                       child: Row(
                         children: [
-                          Icon(Icons.error_outline, color: Colors.red[700], size: 20),
-                          const SizedBox(width: 8),
+                          const Icon(Icons.error_outline_rounded, color: MaatraTheme.crimsonAlert, size: 18),
+                          const SizedBox(width: 10),
                           Expanded(
                             child: Text(
                               errorMessage,
-                              style: TextStyle(color: Colors.red[900], fontSize: 13),
+                              style: GoogleFonts.plusJakartaSans(
+                                color: MaatraTheme.crimsonAlert,
+                                fontSize: 13,
+                                fontWeight: FontWeight.w500,
+                              ),
                             ),
                           ),
                         ],
                       ),
                     ),
-                    const SizedBox(height: 16),
+                    const SizedBox(height: 20),
                   ],
 
-                  // Email Input Field
+                  // Email / Gmail Input
                   TextFormField(
                     key: const Key('login_email_field'),
                     controller: _emailController,
                     keyboardType: TextInputType.emailAddress,
+                    style: GoogleFonts.plusJakartaSans(color: MaatraTheme.textPrimary),
                     decoration: const InputDecoration(
-                      labelText: 'Email Address',
-                      hintText: 'name@pitpulse.org',
-                      prefixIcon: Icon(Icons.email_outlined),
-                      border: OutlineInputBorder(),
+                      labelText: 'Gmail / Email Address',
+                      hintText: 'admin123@gmail.com, doctor, or patient',
+                      prefixIcon: Icon(Icons.mail_outline_rounded, color: MaatraTheme.textSecondary),
                     ),
-                    validator: (value) {
-                      if (value == null || value.trim().isEmpty) {
-                        return 'Please enter your email address.';
-                      }
-                      if (!value.contains('@') || !value.contains('.')) {
-                        return 'Please enter a valid email address.';
-                      }
+                    validator: (v) {
+                      if (v == null || v.trim().isEmpty) return 'Please enter your email address.';
+                      if (!v.contains('@')) return 'Please enter a valid email address.';
                       return null;
                     },
                   ),
                   const SizedBox(height: 16),
 
-                  // Password Input Field
+                  // Password Input
                   TextFormField(
                     key: const Key('login_password_field'),
                     controller: _passwordController,
                     obscureText: _obscurePassword,
+                    style: GoogleFonts.plusJakartaSans(color: MaatraTheme.textPrimary),
                     decoration: InputDecoration(
                       labelText: 'Password',
-                      prefixIcon: const Icon(Icons.lock_outline),
-                      border: const OutlineInputBorder(),
+                      prefixIcon: const Icon(Icons.lock_outline_rounded, color: MaatraTheme.textSecondary),
                       suffixIcon: IconButton(
                         icon: Icon(
-                          _obscurePassword ? Icons.visibility_off : Icons.visibility,
+                          _obscurePassword ? Icons.visibility_outlined : Icons.visibility_off_outlined,
+                          color: MaatraTheme.textSecondary,
                         ),
-                        onPressed: () {
-                          setState(() {
-                            _obscurePassword = !_obscurePassword;
-                          });
-                        },
+                        onPressed: () => setState(() => _obscurePassword = !_obscurePassword),
                       ),
                     ),
-                    validator: (value) {
-                      if (value == null || value.isEmpty) {
-                        return 'Please enter your password.';
-                      }
+                    validator: (v) {
+                      if (v == null || v.isEmpty) return 'Please enter your password.';
                       return null;
                     },
                   ),
-                  const SizedBox(height: 24),
+                  const SizedBox(height: 28),
 
-                  // Login Button
-                  ElevatedButton(
-                    key: const Key('login_submit_button'),
-                    onPressed: isLoading ? null : _submitLogin,
-                    style: ElevatedButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(vertical: 14),
-                      backgroundColor: theme.colorScheme.primary,
-                      foregroundColor: Colors.white,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(8),
+                  // Sign In Button with Amethyst Gradient
+                  Container(
+                    height: 54,
+                    decoration: BoxDecoration(
+                      gradient: const LinearGradient(
+                        colors: [MaatraTheme.deepAmethyst, MaatraTheme.primaryAmethyst],
                       ),
+                      borderRadius: BorderRadius.circular(14),
+                      boxShadow: [
+                        BoxShadow(
+                          color: MaatraTheme.primaryAmethyst.withValues(alpha: 0.35),
+                          blurRadius: 18,
+                          offset: const Offset(0, 4),
+                        ),
+                      ],
                     ),
-                    child: isLoading
-                        ? const SizedBox(
-                            width: 20,
-                            height: 20,
-                            child: CircularProgressIndicator(
-                              strokeWidth: 2,
-                              color: Colors.white,
-                            ),
-                          )
-                        : const Text(
-                            'Sign In',
-                            style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-                          ),
-                  ),
-                  const SizedBox(height: 20),
-
-                  // Register Navigation Link
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      const Text("Don't have an account?"),
-                      TextButton(
-                        key: const Key('nav_to_register_button'),
-                        onPressed: isLoading
-                            ? null
-                            : () {
-                                Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                    builder: (_) => RegisterScreen(
-                                      authController: widget.authController,
-                                    ),
-                                  ),
-                                );
-                              },
-                        child: const Text('Register Here'),
+                    child: ElevatedButton(
+                      key: const Key('login_submit_button'),
+                      onPressed: isLoading ? null : _submitLogin,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.transparent,
+                        shadowColor: Colors.transparent,
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
                       ),
+                      child: isLoading
+                          ? const SizedBox(
+                              width: 22,
+                              height: 22,
+                              child: CircularProgressIndicator(strokeWidth: 2.2, color: Colors.white),
+                            )
+                          : Text(
+                              'Sign In to MAATRA',
+                              style: GoogleFonts.plusJakartaSans(
+                                color: Colors.white,
+                                fontSize: 16,
+                                fontWeight: FontWeight.w700,
+                              ),
+                            ),
+                    ),
+                  ),
+                  const SizedBox(height: 28),
+
+                  // Divider
+                  Row(
+                    children: [
+                      const Expanded(child: Divider(color: MaatraTheme.borderMuted)),
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 16),
+                        child: Text(
+                          'OR',
+                          style: GoogleFonts.plusJakartaSans(
+                            color: MaatraTheme.textTertiary,
+                            fontSize: 12,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ),
+                      const Expanded(child: Divider(color: MaatraTheme.borderMuted)),
                     ],
                   ),
+                  const SizedBox(height: 24),
+
+                  // Create Patient Account Button
+                  OutlinedButton.icon(
+                    key: const Key('nav_to_register_button'),
+                    onPressed: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => RegisterScreen(authController: widget.authController),
+                        ),
+                      );
+                    },
+                    style: OutlinedButton.styleFrom(
+                      side: const BorderSide(color: MaatraTheme.borderMuted),
+                      padding: const EdgeInsets.symmetric(vertical: 16),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                    ),
+                    icon: const Icon(Icons.person_add_alt_1_rounded, color: MaatraTheme.accentLilac, size: 20),
+                    label: Text(
+                      'Patient? Register with Gmail',
+                      style: GoogleFonts.plusJakartaSans(
+                        color: MaatraTheme.textPrimary,
+                        fontSize: 15,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+
+                  const SizedBox(height: 36),
                 ],
               ),
             ),
           ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildUrlConfigCard(ThemeData theme) {
-    return Card(
-      elevation: 2,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-      child: Padding(
-        padding: const EdgeInsets.all(14.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'Backend Host Settings',
-              style: theme.textTheme.titleSmall?.copyWith(fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 6),
-            TextField(
-              controller: _urlController,
-              decoration: const InputDecoration(
-                labelText: 'Base API URL',
-                isDense: true,
-                border: OutlineInputBorder(),
-              ),
-            ),
-            const SizedBox(height: 8),
-            Align(
-              alignment: Alignment.centerRight,
-              child: ElevatedButton(
-                onPressed: _saveUrlConfig,
-                child: const Text('Apply'),
-              ),
-            ),
-          ],
         ),
       ),
     );

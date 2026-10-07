@@ -66,6 +66,14 @@ def create_application() -> FastAPI:
             "docs": "/docs" if settings.DEBUG else "disabled",
         }
 
+    @app.on_event("startup")
+    async def on_startup():
+        try:
+            from app.scripts.seed_admin import seed_initial_admin
+            await seed_initial_admin()
+        except Exception:
+            pass
+
     return app
 
 

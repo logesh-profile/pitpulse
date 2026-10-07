@@ -123,14 +123,14 @@ class PatientAiEngine {
                 '• உடல் வெப்பநிலை: **$tempStr**\n'
                 '• உடல் எடை: **$weightStr**\n'
                 '• பதிவு செய்யப்பட்ட நாள்: ${v.recordedAt.day}/${v.recordedAt.month}/${v.recordedAt.year}\n'
-                '• பதிவு செய்தவர்: ${v.recordedByName ?? "சுகாதார பணியாளர்"}\n\n'
+                '• பதிவு செய்தவர்: ${v.recordedByName.isNotEmpty ? v.recordedByName : "சுகாதார பணியாளர்"}\n\n'
                 'உங்கள் இரத்த அழுத்தம் குறித்த சந்தேகங்களுக்கு உங்கள் மருத்துவரை அணுகவும்.'
             : '📋 **Your Latest Recorded Vitals:**\n\n'
                 '• Blood Pressure (BP): **$bpStr**\n'
                 '• Temperature: **$tempStr**\n'
                 '• Weight: **$weightStr**\n'
                 '• Recorded On: ${v.recordedAt.day}/${v.recordedAt.month}/${v.recordedAt.year}\n'
-                '• Recorded By: ${v.recordedByName ?? "Healthcare Worker"}\n\n'
+                '• Recorded By: ${v.recordedByName.isNotEmpty ? v.recordedByName : "Healthcare Worker"}\n\n'
                 'These vitals are logged in your authenticated MAATRA clinical file.';
       } else {
         reply = isTa

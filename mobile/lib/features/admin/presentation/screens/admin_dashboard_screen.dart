@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
-import 'package:pitpulse_mobile/features/auth/presentation/controllers/auth_controller.dart';
-import '../../../patients/data/models/patient_profile_model.dart';
+import 'package:google_fonts/google_fonts.dart';
+import '../../../../core/theme/maatra_theme.dart';
 import '../../data/models/professional_user_model.dart';
-import '../controllers/admin_controller.dart';
+import '../../presentation/controllers/admin_controller.dart';
+import '../../../auth/presentation/controllers/auth_controller.dart';
 import 'create_asha_screen.dart';
 import 'create_doctor_screen.dart';
-import 'create_patient_screen.dart';
 
 class AdminDashboardScreen extends StatefulWidget {
   final AuthController authController;
@@ -28,7 +28,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 3, vsync: this);
+    _tabController = TabController(length: 2, vsync: this);
     WidgetsBinding.instance.addPostFrameCallback((_) {
       widget.adminController.loadAll();
     });
@@ -46,63 +46,100 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
       context: context,
       barrierDismissible: false,
       builder: (ctx) => AlertDialog(
-        backgroundColor: const Color(0xFF1E293B),
+        backgroundColor: MaatraTheme.surfaceDark,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16),
+          side: const BorderSide(color: MaatraTheme.borderDark),
+        ),
         title: Row(
-          children: const [
-            Icon(Icons.mark_email_read, color: Color(0xFF14B8A6)),
-            SizedBox(width: 8),
-            Text('Account Provisioned', style: TextStyle(color: Colors.white)),
+          children: [
+            const Icon(Icons.mark_email_read_rounded, color: MaatraTheme.accentLilac),
+            const SizedBox(width: 10),
+            Text(
+              'Account Provisioned',
+              style: GoogleFonts.plusJakartaSans(
+                color: MaatraTheme.textPrimary,
+                fontWeight: FontWeight.w700,
+                fontSize: 18,
+              ),
+            ),
           ],
         ),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('Professional $role account provisioned:',
-                style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.white)),
-            const SizedBox(height: 8),
-            Text('Name: $name', style: const TextStyle(color: Colors.white70)),
-            Text('Email: $email', style: const TextStyle(color: Colors.white70)),
-            const SizedBox(height: 12),
+            Text(
+              'Professional $role provisioned successfully:',
+              style: GoogleFonts.plusJakartaSans(
+                fontWeight: FontWeight.w600,
+                color: MaatraTheme.textPrimary,
+                fontSize: 14,
+              ),
+            ),
+            const SizedBox(height: 10),
+            Text(
+              'Gmail: $email',
+              style: GoogleFonts.plusJakartaSans(color: MaatraTheme.accentLilac, fontWeight: FontWeight.w600),
+            ),
+            if (name.isNotEmpty && name != email) ...[
+              const SizedBox(height: 4),
+              Text(
+                'Identifier: $name',
+                style: GoogleFonts.plusJakartaSans(color: MaatraTheme.textSecondary, fontSize: 13),
+              ),
+            ],
+            const SizedBox(height: 14),
             Container(
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: const Color(0xFF14B8A6).withValues(alpha: 0.15),
-                borderRadius: BorderRadius.circular(8),
-                border: Border.all(color: const Color(0xFF14B8A6)),
+                color: MaatraTheme.primaryAmethyst.withValues(alpha: 0.12),
+                borderRadius: BorderRadius.circular(10),
+                border: Border.all(color: MaatraTheme.primaryAmethyst.withValues(alpha: 0.3)),
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text('Account Activation Token:',
-                      style: TextStyle(fontSize: 12, color: Color(0xFF14B8A6))),
-                  const SizedBox(height: 4),
+                  Text(
+                    'Temporary Access Token / Password:',
+                    style: GoogleFonts.plusJakartaSans(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w600,
+                      color: MaatraTheme.accentLilac,
+                    ),
+                  ),
+                  const SizedBox(height: 6),
                   SelectableText(
                     token,
-                    style: const TextStyle(
-                        fontSize: 13, fontWeight: FontWeight.bold, letterSpacing: 0.8, color: Colors.white),
+                    style: GoogleFonts.jetBrainsMono(
+                      fontSize: 13,
+                      fontWeight: FontWeight.bold,
+                      letterSpacing: 0.8,
+                      color: Colors.white,
+                    ),
                   ),
                 ],
               ),
             ),
-            const SizedBox(height: 8),
-            const Text(
-              'An activation email has been dispatched. The provider will set their permanent password upon first activation.',
-              style: TextStyle(fontSize: 12, color: Colors.grey),
+            const SizedBox(height: 12),
+            Text(
+              'The professional will sign in with this Gmail and complete their personal profile (Name, Age, Gender, Phone, Specialization) upon first login.',
+              style: GoogleFonts.plusJakartaSans(fontSize: 12, color: MaatraTheme.textTertiary, height: 1.4),
             ),
           ],
         ),
         actions: [
           ElevatedButton(
             style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFF14B8A6),
+              backgroundColor: MaatraTheme.primaryAmethyst,
               foregroundColor: Colors.white,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
             ),
             onPressed: () {
               widget.adminController.clearLastProvisioned();
               Navigator.pop(ctx);
             },
-            child: const Text('Dismiss'),
+            child: Text('Done', style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w600)),
           ),
         ],
       ),
@@ -113,27 +150,35 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        backgroundColor: const Color(0xFF1E293B),
+        backgroundColor: MaatraTheme.surfaceDark,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16),
+          side: const BorderSide(color: MaatraTheme.borderDark),
+        ),
         title: Row(
-          children: const [
-            Icon(Icons.warning_amber_rounded, color: Colors.redAccent),
-            SizedBox(width: 8),
-            Text('Delete Account', style: TextStyle(color: Colors.white)),
+          children: [
+            const Icon(Icons.warning_amber_rounded, color: MaatraTheme.crimsonAlert),
+            const SizedBox(width: 8),
+            Text(
+              'Delete $role',
+              style: GoogleFonts.plusJakartaSans(color: MaatraTheme.textPrimary, fontWeight: FontWeight.bold),
+            ),
           ],
         ),
         content: Text(
-          'Are you sure you want to delete the $role account for "$name" (ID: ${userId.substring(0, 8)}...)? This action is permanent and removes all associated records.',
-          style: const TextStyle(color: Colors.white70),
+          'Are you sure you want to delete the $role account for "$name"? This action is permanent and removes all associated records.',
+          style: GoogleFonts.plusJakartaSans(color: MaatraTheme.textSecondary, fontSize: 13, height: 1.4),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
-            child: const Text('Cancel', style: TextStyle(color: Colors.grey)),
+            child: Text('Cancel', style: GoogleFonts.plusJakartaSans(color: MaatraTheme.textTertiary)),
           ),
           ElevatedButton(
             style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.redAccent,
+              backgroundColor: MaatraTheme.crimsonAlert,
               foregroundColor: Colors.white,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
             ),
             onPressed: () async {
               final scaffoldMessenger = ScaffoldMessenger.of(context);
@@ -141,12 +186,12 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
               final ok = await widget.adminController.deleteUser(userId);
               scaffoldMessenger.showSnackBar(
                 SnackBar(
-                  content: Text(ok ? 'Account deleted successfully.' : 'Failed to delete account.'),
-                  backgroundColor: ok ? Colors.green : Colors.red,
+                  content: Text(ok ? '$role account deleted successfully.' : 'Failed to delete $role.'),
+                  backgroundColor: ok ? MaatraTheme.emeraldSafe : MaatraTheme.crimsonAlert,
                 ),
               );
             },
-            child: const Text('Delete Permanently'),
+            child: Text('Delete Permanently', style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w700)),
           ),
         ],
       ),
@@ -155,7 +200,6 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
     final user = widget.authController.currentUser;
     final lastProv = widget.adminController.lastProvisioned;
 
@@ -172,39 +216,74 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
     }
 
     return Scaffold(
+      backgroundColor: MaatraTheme.bgDark,
       appBar: AppBar(
-        title: const Text('Account Lifecycle Console'),
+        backgroundColor: MaatraTheme.bgDark,
+        elevation: 0,
+        title: Row(
+          children: [
+            ClipRRect(
+              borderRadius: BorderRadius.circular(8),
+              child: Image.asset(
+                'assets/images/maatra_logo.png',
+                width: 24,
+                height: 24,
+                errorBuilder: (context, error, stackTrace) => const Icon(
+                  Icons.all_inclusive_rounded,
+                  size: 22,
+                  color: MaatraTheme.accentLilac,
+                ),
+              ),
+            ),
+            const SizedBox(width: 10),
+            Text(
+              'MAATRA Admin Console',
+              style: GoogleFonts.plusJakartaSans(
+                fontWeight: FontWeight.w800,
+                fontSize: 17,
+                color: MaatraTheme.textPrimary,
+              ),
+            ),
+          ],
+        ),
         actions: [
           IconButton(
-            icon: const Icon(Icons.refresh),
+            icon: const Icon(Icons.refresh_rounded, color: MaatraTheme.textSecondary),
             tooltip: 'Refresh All',
             onPressed: () => widget.adminController.loadAll(),
           ),
           IconButton(
-            icon: const Icon(Icons.logout),
+            icon: const Icon(Icons.logout_rounded, color: MaatraTheme.textSecondary),
             tooltip: 'Sign Out',
             onPressed: () => widget.authController.logout(),
           ),
         ],
-        bottom: TabBar(
-          controller: _tabController,
-          indicatorColor: const Color(0xFF14B8A6),
-          labelColor: const Color(0xFF14B8A6),
-          unselectedLabelColor: Colors.grey,
-          tabs: [
-            Tab(
-              icon: const Icon(Icons.medical_services, size: 20),
-              text: 'Doctors (${widget.adminController.doctors.length})',
+        bottom: PreferredSize(
+          preferredSize: const Size.fromHeight(48),
+          child: Container(
+            decoration: const BoxDecoration(
+              border: Border(bottom: BorderSide(color: MaatraTheme.borderDark)),
             ),
-            Tab(
-              icon: const Icon(Icons.volunteer_activism, size: 20),
-              text: 'ASHAs (${widget.adminController.ashas.length})',
+            child: TabBar(
+              controller: _tabController,
+              indicatorColor: MaatraTheme.primaryAmethyst,
+              indicatorWeight: 3,
+              labelColor: MaatraTheme.accentLilac,
+              unselectedLabelColor: MaatraTheme.textTertiary,
+              labelStyle: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w700, fontSize: 13),
+              unselectedLabelStyle: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w500, fontSize: 13),
+              tabs: [
+                Tab(
+                  icon: const Icon(Icons.medical_services_rounded, size: 18),
+                  text: 'Doctors (${widget.adminController.doctors.length})',
+                ),
+                Tab(
+                  icon: const Icon(Icons.volunteer_activism_rounded, size: 18),
+                  text: 'ASHAs (${widget.adminController.ashas.length})',
+                ),
+              ],
             ),
-            Tab(
-              icon: const Icon(Icons.people_alt, size: 20),
-              text: 'Patients (${widget.adminController.patients.length})',
-            ),
-          ],
+          ),
         ),
       ),
       body: SafeArea(
@@ -215,29 +294,56 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
 
             return Column(
               children: [
-                // Top Info Bar
+                // Admin Status Bar
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-                  color: const Color(0xFF0F172A),
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                  decoration: const BoxDecoration(
+                    color: MaatraTheme.surfaceDark,
+                    border: Border(bottom: BorderSide(color: MaatraTheme.borderDark)),
+                  ),
                   child: Row(
                     children: [
-                      const CircleAvatar(
-                        radius: 16,
-                        backgroundColor: Colors.purple,
-                        child: Icon(Icons.admin_panel_settings, size: 18, color: Colors.white),
+                      Container(
+                        padding: const EdgeInsets.all(6),
+                        decoration: BoxDecoration(
+                          color: MaatraTheme.primaryAmethyst.withValues(alpha: 0.15),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: const Icon(
+                          Icons.admin_panel_settings_rounded,
+                          size: 18,
+                          color: MaatraTheme.accentLilac,
+                        ),
                       ),
                       const SizedBox(width: 10),
                       Expanded(
-                        child: Text(
-                          '${user?.fullName ?? 'Admin'} (Account Administrator)',
-                          style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600, color: Colors.white),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Text(
+                              user?.email ?? 'admin123@gmail.com',
+                              style: GoogleFonts.plusJakartaSans(
+                                fontSize: 13,
+                                fontWeight: FontWeight.w700,
+                                color: MaatraTheme.textPrimary,
+                              ),
+                            ),
+                            Text(
+                              'Master Provider Administrator • Zero Hardcoded Accounts',
+                              style: GoogleFonts.plusJakartaSans(
+                                fontSize: 11,
+                                color: MaatraTheme.textTertiary,
+                              ),
+                            ),
+                          ],
                         ),
                       ),
                       if (isLoading)
                         const SizedBox(
-                          width: 14,
-                          height: 14,
-                          child: CircularProgressIndicator(strokeWidth: 2),
+                          width: 16,
+                          height: 16,
+                          child: CircularProgressIndicator(strokeWidth: 2, color: MaatraTheme.accentLilac),
                         ),
                     ],
                   ),
@@ -248,14 +354,8 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
                   child: TabBarView(
                     controller: _tabController,
                     children: [
-                      // 1. Doctors Tab
-                      _buildDoctorsTab(context, theme, isLoading),
-
-                      // 2. ASHAs Tab
-                      _buildAshasTab(context, theme, isLoading),
-
-                      // 3. Patients Tab
-                      _buildPatientsTab(context, theme, isLoading),
+                      _buildDoctorsTab(context, isLoading),
+                      _buildAshasTab(context, isLoading),
                     ],
                   ),
                 ),
@@ -267,10 +367,12 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
     );
   }
 
-  Widget _buildDoctorsTab(BuildContext context, ThemeData theme, bool isLoading) {
+  Widget _buildDoctorsTab(BuildContext context, bool isLoading) {
     final doctors = widget.adminController.doctors;
 
     return RefreshIndicator(
+      color: MaatraTheme.primaryAmethyst,
+      backgroundColor: MaatraTheme.surfaceDark,
       onRefresh: () => widget.adminController.loadAll(),
       child: ListView(
         padding: const EdgeInsets.all(16),
@@ -279,17 +381,22 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(
-                'Registered Doctors (${doctors.length})',
-                style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white),
+                'Doctor Accounts (${doctors.length})',
+                style: GoogleFonts.plusJakartaSans(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                  color: MaatraTheme.textPrimary,
+                ),
               ),
               ElevatedButton.icon(
                 key: const Key('admin_add_doctor_button'),
-                icon: const Icon(Icons.person_add_alt_1, size: 18),
-                label: const Text('Add Doctor'),
+                icon: const Icon(Icons.person_add_alt_1_rounded, size: 16),
+                label: Text('Provision Doctor', style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w700, fontSize: 13)),
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF14B8A6),
+                  backgroundColor: MaatraTheme.primaryAmethyst,
                   foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                 ),
                 onPressed: () {
                   Navigator.push(
@@ -302,10 +409,10 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
               ),
             ],
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 14),
 
           if (doctors.isEmpty && !isLoading)
-            _buildEmptyState('No doctor accounts created yet. Tap "Add Doctor" to provision a doctor.'),
+            _buildEmptyState('No doctor accounts created yet. Tap "Provision Doctor" to create a genuine Gmail account.'),
 
           ...doctors.map((doc) => _buildDoctorCard(context, doc)),
         ],
@@ -314,90 +421,125 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
   }
 
   Widget _buildDoctorCard(BuildContext context, ProfessionalUserModel doc) {
-    final license = doc.details?['medical_license_number'] ?? 'N/A';
     final spec = doc.details?['specialization'] ?? 'General Medicine';
     final facility = doc.details?['facility_name'] ?? 'Primary Health Center';
 
-    return Card(
+    return Container(
       margin: const EdgeInsets.only(bottom: 12),
-      color: const Color(0xFF1E293B),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-      child: Padding(
-        padding: const EdgeInsets.all(14),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                CircleAvatar(
-                  backgroundColor: const Color(0xFF14B8A6).withValues(alpha: 0.2),
-                  child: const Icon(Icons.medical_services, color: Color(0xFF14B8A6)),
+      decoration: BoxDecoration(
+        color: MaatraTheme.surfaceDark,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: MaatraTheme.borderDark),
+      ),
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Container(
+                width: 42,
+                height: 42,
+                decoration: BoxDecoration(
+                  color: MaatraTheme.primaryAmethyst.withValues(alpha: 0.15),
+                  borderRadius: BorderRadius.circular(10),
                 ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(doc.fullName, style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: Colors.white)),
-                      Text(doc.email, style: const TextStyle(fontSize: 12, color: Colors.grey)),
-                      if (doc.phone != null)
-                        Text('Phone: ${doc.phone}', style: const TextStyle(fontSize: 12, color: Colors.grey)),
-                    ],
-                  ),
-                ),
-                IconButton(
-                  icon: const Icon(Icons.delete_outline, color: Colors.redAccent, size: 20),
-                  tooltip: 'Delete Doctor Account',
-                  onPressed: () => _confirmDeleteUser(context, doc.id, doc.fullName, 'Doctor'),
-                ),
-              ],
-            ),
-            const Divider(color: Color(0xFF334155), height: 18),
-            Wrap(
-              spacing: 8,
-              runSpacing: 6,
-              children: [
-                _buildBadge('ID: ${doc.id.substring(0, 8)}...', Colors.purple),
-                _buildBadge('Spec: $spec', const Color(0xFF14B8A6)),
-                _buildBadge('License: $license', Colors.blueGrey),
-                _buildBadge('Facility: $facility', Colors.cyan),
-              ],
-            ),
-            const SizedBox(height: 10),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(
-                  doc.mustChangePassword ? 'Pending Activation' : (doc.isActive ? 'Active' : 'Deactivated'),
-                  style: TextStyle(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w600,
-                    color: doc.mustChangePassword ? Colors.amber : (doc.isActive ? Colors.greenAccent : Colors.redAccent),
-                  ),
-                ),
-                Row(
+                child: const Icon(Icons.medical_services_rounded, color: MaatraTheme.accentLilac, size: 22),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text('Status:', style: TextStyle(fontSize: 12, color: Colors.grey)),
-                    Switch(
-                      value: doc.isActive,
-                      activeThumbColor: const Color(0xFF14B8A6),
-                      onChanged: (val) => widget.adminController.toggleUserStatus(doc.id, val),
+                    Text(
+                      doc.fullName.isNotEmpty ? doc.fullName : 'Doctor',
+                      style: GoogleFonts.plusJakartaSans(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w700,
+                        color: MaatraTheme.textPrimary,
+                      ),
                     ),
+                    const SizedBox(height: 2),
+                    Text(
+                      doc.email,
+                      style: GoogleFonts.plusJakartaSans(
+                        fontSize: 13,
+                        color: MaatraTheme.accentLilac,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                    if (doc.phone != null && doc.phone!.isNotEmpty) ...[
+                      const SizedBox(height: 2),
+                      Text(
+                        'Phone: ${doc.phone}',
+                        style: GoogleFonts.plusJakartaSans(fontSize: 12, color: MaatraTheme.textTertiary),
+                      ),
+                    ],
                   ],
                 ),
-              ],
-            ),
-          ],
-        ),
+              ),
+              IconButton(
+                icon: const Icon(Icons.delete_outline_rounded, color: MaatraTheme.crimsonAlert, size: 20),
+                tooltip: 'Delete Doctor Account',
+                onPressed: () => _confirmDeleteUser(context, doc.id, doc.fullName, 'Doctor'),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Wrap(
+            spacing: 8,
+            runSpacing: 6,
+            children: [
+              _buildBadge('Specialization: $spec', MaatraTheme.primaryAmethyst),
+              _buildBadge('Facility: $facility', MaatraTheme.borderDark),
+            ],
+          ),
+          const SizedBox(height: 14),
+          const Divider(color: MaatraTheme.borderDark, height: 1),
+          const SizedBox(height: 10),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                doc.mustChangePassword
+                    ? 'Pending First Login'
+                    : (doc.isActive ? 'Active Provider' : 'Deactivated'),
+                style: GoogleFonts.plusJakartaSans(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                  color: doc.mustChangePassword
+                      ? MaatraTheme.amberWarning
+                      : (doc.isActive ? MaatraTheme.emeraldSafe : MaatraTheme.crimsonAlert),
+                ),
+              ),
+              Row(
+                children: [
+                  Text(
+                    'Active:',
+                    style: GoogleFonts.plusJakartaSans(fontSize: 12, color: MaatraTheme.textSecondary),
+                  ),
+                  const SizedBox(width: 4),
+                  Switch(
+                    value: doc.isActive,
+                    activeThumbColor: MaatraTheme.primaryAmethyst,
+                    onChanged: (val) => widget.adminController.toggleUserStatus(doc.id, val),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ],
       ),
     );
   }
 
-  Widget _buildAshasTab(BuildContext context, ThemeData theme, bool isLoading) {
+  Widget _buildAshasTab(BuildContext context, bool isLoading) {
     final ashas = widget.adminController.ashas;
 
     return RefreshIndicator(
+      color: MaatraTheme.primaryAmethyst,
+      backgroundColor: MaatraTheme.surfaceDark,
       onRefresh: () => widget.adminController.loadAll(),
       child: ListView(
         padding: const EdgeInsets.all(16),
@@ -406,17 +548,22 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(
-                'Registered ASHA Workers (${ashas.length})',
-                style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white),
+                'ASHA Healthcare Workers (${ashas.length})',
+                style: GoogleFonts.plusJakartaSans(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                  color: MaatraTheme.textPrimary,
+                ),
               ),
               ElevatedButton.icon(
                 key: const Key('admin_add_asha_button'),
-                icon: const Icon(Icons.group_add, size: 18),
-                label: const Text('Add ASHA'),
+                icon: const Icon(Icons.group_add_rounded, size: 16),
+                label: Text('Provision ASHA', style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.w700, fontSize: 13)),
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF0284C7),
+                  backgroundColor: MaatraTheme.deepAmethyst,
                   foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                 ),
                 onPressed: () {
                   Navigator.push(
@@ -429,10 +576,10 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
               ),
             ],
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 14),
 
           if (ashas.isEmpty && !isLoading)
-            _buildEmptyState('No ASHA worker accounts created yet. Tap "Add ASHA" to provision a worker.'),
+            _buildEmptyState('No ASHA worker accounts created yet. Tap "Provision ASHA" to register a healthcare worker.'),
 
           ...ashas.map((asha) => _buildAshaCard(context, asha)),
         ],
@@ -442,237 +589,156 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
 
   Widget _buildAshaCard(BuildContext context, ProfessionalUserModel asha) {
     final code = asha.details?['worker_id_code'] ?? 'N/A';
-    final area = asha.details?['assigned_area'] ?? 'General Sector';
-    final phc = asha.details?['primary_health_center'] ?? 'PHC Center';
+    final area = asha.details?['assigned_area'] ?? 'Community Sector';
 
-    return Card(
+    return Container(
       margin: const EdgeInsets.only(bottom: 12),
-      color: const Color(0xFF1E293B),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-      child: Padding(
-        padding: const EdgeInsets.all(14),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                CircleAvatar(
-                  backgroundColor: const Color(0xFF0284C7).withValues(alpha: 0.2),
-                  child: const Icon(Icons.volunteer_activism, color: Color(0xFF0284C7)),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(asha.fullName, style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: Colors.white)),
-                      Text(asha.email, style: const TextStyle(fontSize: 12, color: Colors.grey)),
-                      if (asha.phone != null)
-                        Text('Phone: ${asha.phone}', style: const TextStyle(fontSize: 12, color: Colors.grey)),
-                    ],
-                  ),
-                ),
-                IconButton(
-                  icon: const Icon(Icons.delete_outline, color: Colors.redAccent, size: 20),
-                  tooltip: 'Delete ASHA Account',
-                  onPressed: () => _confirmDeleteUser(context, asha.id, asha.fullName, 'ASHA Worker'),
-                ),
-              ],
-            ),
-            const Divider(color: Color(0xFF334155), height: 18),
-            Wrap(
-              spacing: 8,
-              runSpacing: 6,
-              children: [
-                _buildBadge('Code: $code', const Color(0xFF0284C7)),
-                _buildBadge('User ID: ${asha.id.substring(0, 8)}...', Colors.purple),
-                _buildBadge('Area: $area', Colors.indigo),
-                _buildBadge('Center: $phc', Colors.blueGrey),
-              ],
-            ),
-            const SizedBox(height: 10),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(
-                  asha.mustChangePassword ? 'Pending Activation' : (asha.isActive ? 'Active' : 'Deactivated'),
-                  style: TextStyle(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w600,
-                    color: asha.mustChangePassword ? Colors.amber : (asha.isActive ? Colors.greenAccent : Colors.redAccent),
-                  ),
-                ),
-                Row(
-                  children: [
-                    const Text('Status:', style: TextStyle(fontSize: 12, color: Colors.grey)),
-                    Switch(
-                      value: asha.isActive,
-                      activeThumbColor: const Color(0xFF0284C7),
-                      onChanged: (val) => widget.adminController.toggleUserStatus(asha.id, val),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          ],
-        ),
+      decoration: BoxDecoration(
+        color: MaatraTheme.surfaceDark,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: MaatraTheme.borderDark),
       ),
-    );
-  }
-
-  Widget _buildPatientsTab(BuildContext context, ThemeData theme, bool isLoading) {
-    final patients = widget.adminController.patients;
-
-    return RefreshIndicator(
-      onRefresh: () => widget.adminController.loadAll(),
-      child: ListView(
-        padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(
-                'Registered Patients (${patients.length})',
-                style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.white),
-              ),
-              ElevatedButton.icon(
-                key: const Key('admin_add_patient_button'),
-                icon: const Icon(Icons.person_add, size: 18),
-                label: const Text('Add Patient'),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF10B981),
-                  foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+              Container(
+                width: 42,
+                height: 42,
+                decoration: BoxDecoration(
+                  color: MaatraTheme.deepAmethyst.withValues(alpha: 0.25),
+                  borderRadius: BorderRadius.circular(10),
                 ),
-                onPressed: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (_) => CreatePatientScreen(adminController: widget.adminController),
+                child: const Icon(Icons.volunteer_activism_rounded, color: MaatraTheme.accentLightAmethyst, size: 22),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      asha.fullName.isNotEmpty ? asha.fullName : 'ASHA Worker',
+                      style: GoogleFonts.plusJakartaSans(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w700,
+                        color: MaatraTheme.textPrimary,
+                      ),
                     ),
-                  );
-                },
+                    const SizedBox(height: 2),
+                    Text(
+                      asha.email,
+                      style: GoogleFonts.plusJakartaSans(
+                        fontSize: 13,
+                        color: MaatraTheme.accentLightAmethyst,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                    if (asha.phone != null && asha.phone!.isNotEmpty) ...[
+                      const SizedBox(height: 2),
+                      Text(
+                        'Phone: ${asha.phone}',
+                        style: GoogleFonts.plusJakartaSans(fontSize: 12, color: MaatraTheme.textTertiary),
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+              IconButton(
+                icon: const Icon(Icons.delete_outline_rounded, color: MaatraTheme.crimsonAlert, size: 20),
+                tooltip: 'Delete ASHA Account',
+                onPressed: () => _confirmDeleteUser(context, asha.id, asha.fullName, 'ASHA Worker'),
               ),
             ],
           ),
           const SizedBox(height: 12),
-
-          if (patients.isEmpty && !isLoading)
-            _buildEmptyState('No patient accounts registered yet. Tap "Add Patient" to create a patient profile.'),
-
-          ...patients.map((pat) => _buildPatientCard(context, pat)),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildPatientCard(BuildContext context, PatientProfileModel pat) {
-    final hrNum = pat.healthRecord?.recordNumber ?? 'HR-PENDING';
-    final village = pat.villageLocality ?? 'Locality Not Specified';
-    final bg = pat.bloodGroup ?? 'N/A';
-
-    return Card(
-      margin: const EdgeInsets.only(bottom: 12),
-      color: const Color(0xFF1E293B),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-      child: Padding(
-        padding: const EdgeInsets.all(14),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                CircleAvatar(
-                  backgroundColor: const Color(0xFF10B981).withValues(alpha: 0.2),
-                  child: const Icon(Icons.person, color: Color(0xFF10B981)),
+          Wrap(
+            spacing: 8,
+            runSpacing: 6,
+            children: [
+              _buildBadge('Worker Code: $code', MaatraTheme.deepAmethyst),
+              _buildBadge('Assigned Area: $area', MaatraTheme.borderDark),
+            ],
+          ),
+          const SizedBox(height: 14),
+          const Divider(color: MaatraTheme.borderDark, height: 1),
+          const SizedBox(height: 10),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                asha.mustChangePassword
+                    ? 'Pending First Login'
+                    : (asha.isActive ? 'Active Field Worker' : 'Deactivated'),
+                style: GoogleFonts.plusJakartaSans(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                  color: asha.mustChangePassword
+                      ? MaatraTheme.amberWarning
+                      : (asha.isActive ? MaatraTheme.emeraldSafe : MaatraTheme.crimsonAlert),
                 ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(pat.fullName, style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: Colors.white)),
-                      Text(pat.email, style: const TextStyle(fontSize: 12, color: Colors.grey)),
-                      if (pat.phone != null)
-                        Text('Phone: ${pat.phone}', style: const TextStyle(fontSize: 12, color: Colors.grey)),
-                    ],
+              ),
+              Row(
+                children: [
+                  Text(
+                    'Active:',
+                    style: GoogleFonts.plusJakartaSans(fontSize: 12, color: MaatraTheme.textSecondary),
                   ),
-                ),
-                IconButton(
-                  icon: const Icon(Icons.delete_outline, color: Colors.redAccent, size: 20),
-                  tooltip: 'Delete Patient Account',
-                  onPressed: () => _confirmDeleteUser(context, pat.userId, pat.fullName, 'Patient'),
-                ),
-              ],
-            ),
-            const Divider(color: Color(0xFF334155), height: 18),
-            Wrap(
-              spacing: 8,
-              runSpacing: 6,
-              children: [
-                _buildBadge('Record: $hrNum', const Color(0xFF10B981)),
-                _buildBadge('User ID: ${pat.userId.isNotEmpty ? pat.userId.substring(0, 8) : pat.id.substring(0, 8)}...', Colors.purple),
-                _buildBadge('Blood: $bg', Colors.redAccent),
-                _buildBadge('Locality: $village', Colors.teal),
-              ],
-            ),
-            const SizedBox(height: 10),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                const Text(
-                  'Active Registered Patient',
-                  style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: Color(0xFF10B981)),
-                ),
-                Row(
-                  children: [
-                    const Text('Status:', style: TextStyle(fontSize: 12, color: Colors.grey)),
-                    Switch(
-                      value: true,
-                      activeThumbColor: const Color(0xFF10B981),
-                      onChanged: (val) => widget.adminController.toggleUserStatus(pat.userId, val),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          ],
-        ),
+                  const SizedBox(width: 4),
+                  Switch(
+                    value: asha.isActive,
+                    activeThumbColor: MaatraTheme.primaryAmethyst,
+                    onChanged: (val) => widget.adminController.toggleUserStatus(asha.id, val),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ],
       ),
     );
   }
 
   Widget _buildBadge(String label, Color color) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
       decoration: BoxDecoration(
         color: color.withValues(alpha: 0.15),
-        borderRadius: BorderRadius.circular(4),
-        border: Border.all(color: color.withValues(alpha: 0.4)),
+        borderRadius: BorderRadius.circular(6),
+        border: Border.all(color: color.withValues(alpha: 0.35)),
       ),
       child: Text(
         label,
-        style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: color),
+        style: GoogleFonts.plusJakartaSans(
+          fontSize: 11,
+          color: Colors.white.withValues(alpha: 0.9),
+          fontWeight: FontWeight.w500,
+        ),
       ),
     );
   }
 
-  Widget _buildEmptyState(String message) {
+  Widget _buildEmptyState(String text) {
     return Container(
-      padding: const EdgeInsets.all(24),
+      padding: const EdgeInsets.symmetric(vertical: 40, horizontal: 20),
       alignment: Alignment.center,
-      decoration: BoxDecoration(
-        color: const Color(0xFF1E293B),
-        borderRadius: BorderRadius.circular(8),
-      ),
-      child: Text(
-        message,
-        textAlign: TextAlign.center,
-        style: TextStyle(color: Colors.grey[400]),
+      child: Column(
+        children: [
+          Icon(Icons.folder_open_rounded, size: 48, color: MaatraTheme.textTertiary.withValues(alpha: 0.5)),
+          const SizedBox(height: 12),
+          Text(
+            text,
+            textAlign: TextAlign.center,
+            style: GoogleFonts.plusJakartaSans(
+              color: MaatraTheme.textTertiary,
+              fontSize: 13,
+              height: 1.5,
+            ),
+          ),
+        ],
       ),
     );
   }
 }
-

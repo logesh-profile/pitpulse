@@ -11,7 +11,8 @@ class CreateDoctorRequest(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     email: EmailStr
-    full_name: str = Field(..., min_length=2, max_length=255)
+    full_name: str = Field("Doctor", min_length=1, max_length=255)
+    password: Optional[str] = Field(None, min_length=6)
     phone: Optional[str] = Field(None, max_length=20)
     medical_license_number: Optional[str] = Field(None, max_length=100)
     specialization: Optional[str] = Field(None, max_length=100)
@@ -22,7 +23,8 @@ class CreateAshaRequest(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     email: EmailStr
-    full_name: str = Field(..., min_length=2, max_length=255)
+    full_name: str = Field("ASHA Worker", min_length=1, max_length=255)
+    password: Optional[str] = Field(None, min_length=6)
     phone: Optional[str] = Field(None, max_length=20)
     worker_id_code: Optional[str] = Field(None, max_length=100)
     assigned_area: Optional[str] = Field(None, max_length=255)

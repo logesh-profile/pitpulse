@@ -172,7 +172,7 @@ class _PatientAiChatScreenState extends State<PatientAiChatScreen> with TickerPr
                             },
                           );
                           setSheetState(() {});
-                          if (!LocalSpeechService().isAvailable && mounted) {
+                          if (!LocalSpeechService().isAvailable && context.mounted) {
                             ScaffoldMessenger.of(context).showSnackBar(
                               const SnackBar(
                                 content: Text('Microphone not available on this device.'),
@@ -239,7 +239,7 @@ class _PatientAiChatScreenState extends State<PatientAiChatScreen> with TickerPr
                 width: 24,
                 height: 24,
                 fit: BoxFit.contain,
-                errorBuilder: (_, __, ___) => const Icon(Icons.circle_outlined, size: 18, color: textPrimary),
+                errorBuilder: (context, error, stackTrace) => const Icon(Icons.circle_outlined, size: 18, color: textPrimary),
               ),
             ),
             const SizedBox(width: 10),
@@ -478,7 +478,7 @@ class _PatientAiChatScreenState extends State<PatientAiChatScreen> with TickerPr
                     width: 16,
                     height: 16,
                     fit: BoxFit.contain,
-                    errorBuilder: (_, __, ___) => const Icon(Icons.auto_awesome, size: 12, color: textPrimary),
+                    errorBuilder: (context, error, stackTrace) => const Icon(Icons.auto_awesome, size: 12, color: textPrimary),
                   ),
                 ),
               ),
@@ -638,7 +638,7 @@ class _PatientAiChatScreenState extends State<PatientAiChatScreen> with TickerPr
             warning.message,
             style: const TextStyle(color: textPrimary, fontSize: 12.5, height: 1.4),
           ),
-          if (warning.recommendedAction != null) ...[
+          if (warning.recommendedAction.isNotEmpty) ...[
             const SizedBox(height: 8),
             Text(
               'Action: ${warning.recommendedAction}',

@@ -165,7 +165,7 @@ class _MaatraRibbonRevealScreenState extends State<MaatraRibbonRevealScreen>
                             width: 110,
                             height: 110,
                             fit: BoxFit.contain,
-                            errorBuilder: (_, __, ___) => const SizedBox.shrink(),
+                            errorBuilder: (context, error, stackTrace) => const SizedBox.shrink(),
                           ),
                         ),
                       ),

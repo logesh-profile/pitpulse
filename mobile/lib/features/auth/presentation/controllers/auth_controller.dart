@@ -47,7 +47,6 @@ class AuthController extends ChangeNotifier {
         return;
       }
 
-      // Refresh session against real PostgreSQL database
       final tokenData = await authRemoteDataSource.refreshToken(
         refreshToken: savedRefreshToken,
       );
@@ -61,7 +60,6 @@ class AuthController extends ChangeNotifier {
       _status = AuthStatus.authenticated;
       _errorMessage = null;
     } catch (e) {
-      // Clear invalid credentials
       await secureStorageService.clearTokens();
       apiClient.setAuthToken(null);
       _currentUser = null;
@@ -72,7 +70,82 @@ class AuthController extends ChangeNotifier {
     notifyListeners();
   }
 
-  /// Performs real user login against PostgreSQL and saves JWT tokens in Android Keystore.
+  /// Registers a patient with real Gmail ID, triggers 6-digit OTP code dispatch.
+  Future<UserModel?> register({
+    required String email,
+    required String password,
+    required String fullName,
+    String? phone,
+  }) async {
+    _status = AuthStatus.loading;
+    _errorMessage = null;
+    notifyListeners();
+
+    try {
+      final user = await authRemoteDataSource.register(
+        email: email,
+        password: password,
+        fullName: fullName,
+        phone: phone,
+      );
+      _status = AuthStatus.unauthenticated;
+      _errorMessage = null;
+      notifyListeners();
+      return user;
+    } catch (e) {
+      _status = AuthStatus.error;
+      _errorMessage = e is Failure ? e.message : e.toString();
+      notifyListeners();
+      return null;
+    }
+  }
+
+  /// Verifies 6-digit OTP code sent to Gmail, activates patient account and logs in.
+  Future<bool> verifyCode({
+    required String email,
+    required String code,
+  }) async {
+    _status = AuthStatus.loading;
+    _errorMessage = null;
+    notifyListeners();
+
+    try {
+      final tokenData = await authRemoteDataSource.verifyCode(
+        email: email,
+        code: code,
+      );
+
+      await secureStorageService.saveAccessToken(tokenData.accessToken);
+      await secureStorageService.saveRefreshToken(tokenData.refreshToken);
+
+      _accessToken = tokenData.accessToken;
+      _currentUser = tokenData.user;
+      apiClient.setAuthToken(tokenData.accessToken);
+      _status = AuthStatus.authenticated;
+      _errorMessage = null;
+      notifyListeners();
+      return true;
+    } catch (e) {
+      _status = AuthStatus.error;
+      _errorMessage = e is Failure ? e.message : e.toString();
+      notifyListeners();
+      return false;
+    }
+  }
+
+  /// Resends fresh 6-digit OTP code to Gmail.
+  Future<bool> resendCode({required String email}) async {
+    try {
+      await authRemoteDataSource.resendCode(email: email);
+      return true;
+    } catch (e) {
+      _errorMessage = e is Failure ? e.message : e.toString();
+      notifyListeners();
+      return false;
+    }
+  }
+
+  /// Performs real user login against backend and saves JWT tokens.
   Future<bool> login({
     required String email,
     required String password,
@@ -105,27 +178,19 @@ class AuthController extends ChangeNotifier {
     }
   }
 
-  /// Performs real user registration in PostgreSQL and automatically signs in.
-  Future<bool> register({
-    required String email,
-    required String password,
-    required String fullName,
-    String? phone,
-  }) async {
+  /// Doctor / ASHA first-time login: saves personal details and updates profile status.
+  Future<bool> completeProfile(Map<String, dynamic> profileData) async {
     _status = AuthStatus.loading;
     _errorMessage = null;
     notifyListeners();
 
     try {
-      await authRemoteDataSource.register(
-        email: email,
-        password: password,
-        fullName: fullName,
-        phone: phone,
-      );
-
-      // Auto-login after successful registration
-      return await login(email: email, password: password);
+      final updatedUser = await authRemoteDataSource.completeProfile(profileData: profileData);
+      _currentUser = updatedUser;
+      _status = AuthStatus.authenticated;
+      _errorMessage = null;
+      notifyListeners();
+      return true;
     } catch (e) {
       _status = AuthStatus.error;
       _errorMessage = e is Failure ? e.message : e.toString();
@@ -134,7 +199,6 @@ class AuthController extends ChangeNotifier {
     }
   }
 
-  /// Changes current password and completes activation for professional accounts.
   Future<bool> changePassword({
     required String currentPassword,
     required String newPassword,
@@ -167,7 +231,6 @@ class AuthController extends ChangeNotifier {
     }
   }
 
-  /// Real logout: revokes refresh session on backend and clears local secure storage.
   Future<void> logout() async {
     _status = AuthStatus.loading;
     notifyListeners();
@@ -178,7 +241,6 @@ class AuthController extends ChangeNotifier {
         await authRemoteDataSource.logout(refreshToken: savedRefreshToken);
       }
     } catch (_) {
-      // Ignore network errors on logout
     } finally {
       await secureStorageService.clearTokens();
       apiClient.setAuthToken(null);

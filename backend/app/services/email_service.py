@@ -83,14 +83,65 @@ class EmailService:
         return token_record
 
     @staticmethod
+    async def create_verification_code(
+        db: AsyncSession,
+        user_id: UUID,
+        token_type: TokenTypeEnum = TokenTypeEnum.EMAIL_VERIFICATION,
+        expire_minutes: int = 15,
+    ) -> str:
+        """
+        Generates a 6-digit numeric verification OTP, stores SHA-256 hash in DB,
+        and returns the raw 6-digit code.
+        """
+        raw_code = f"{secrets.randbelow(900000) + 100000}"
+        token_digest = hash_token(raw_code)
+        expires_at = datetime.now(timezone.utc) + timedelta(minutes=expire_minutes)
+
+        token_record = VerificationToken(
+            user_id=user_id,
+            token_hash=token_digest,
+            token_type=token_type,
+            expires_at=expires_at,
+            is_used=False,
+        )
+        db.add(token_record)
+        await db.flush()
+
+        logger.info(
+            f"[VERIFICATION CODE] user_id={user_id}, code={raw_code}, expires={expires_at.isoformat()}"
+        )
+        return raw_code
+
+    @staticmethod
     async def send_verification_email(email: str, token: str) -> None:
         """
-        Dispatches email verification message.
-        In development / test environment, logs safely to console.
+        Dispatches email verification message (6-digit OTP code).
+        Tries SMTP if configured, else prints clearly to logs.
         """
         logger.info(
-            f"[EMAIL DISPATCH] Verification email to {email}: token={token}"
+            f"[EMAIL DISPATCH] To: {email} | MAATRA Verification Code: {token}"
         )
+        try:
+            from app.core.config import settings
+            smtp_user = getattr(settings, "SMTP_USER", None)
+            smtp_pass = getattr(settings, "SMTP_PASSWORD", None)
+            if smtp_user and smtp_pass:
+                import smtplib
+                from email.mime.text import MIMEText
+                msg = MIMEText(
+                    f"Hello,\n\nYour MAATRA verification code is: {token}\n\nThis code expires in 15 minutes.\nEnter it in the MAATRA app to verify your account.",
+                    "plain",
+                    "utf-8",
+                )
+                msg["Subject"] = f"MAATRA Verification Code: {token}"
+                msg["From"] = smtp_user
+                msg["To"] = email
+                with smtplib.SMTP_SSL("smtp.gmail.com", 465) as server:
+                    server.login(smtp_user, smtp_pass)
+                    server.sendmail(smtp_user, [email], msg.as_string())
+                logger.info(f"[EMAIL DISPATCH SUCCESS] Real Gmail sent to {email}")
+        except Exception as ex:
+            logger.warning(f"[EMAIL DISPATCH NOTE] SMTP not active, code logged: {ex}")
 
     @staticmethod
     async def send_professional_activation_email(

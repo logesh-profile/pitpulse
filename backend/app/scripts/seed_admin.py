@@ -14,8 +14,8 @@ from app.models.user import RoleEnum, User
 
 
 async def seed_initial_admin(
-    email: str = "admin@pitpulse.org",
-    password: str = "logesh@360",
+    email: str = "admin123@gmail.com",
+    password: str = "admin123",
     full_name: str = "System Administrator",
 ):
     """Seeds initial ADMIN user into PostgreSQL if not present."""
