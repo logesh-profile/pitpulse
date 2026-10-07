@@ -69,6 +69,22 @@ class _LoginScreenState extends State<LoginScreen> {
     }
   }
 
+  Future<void> _handleGoogleSignIn() async {
+    FocusScope.of(context).unfocus();
+    final success = await widget.authController.signInWithGoogle();
+    if (!success && mounted) {
+      final err = widget.authController.errorMessage;
+      if (err != null && err.isNotEmpty) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            backgroundColor: MaatraTheme.crimsonAlert,
+            content: Text(err, style: GoogleFonts.plusJakartaSans(color: Colors.white)),
+          ),
+        );
+      }
+    }
+  }
+
   void _saveUrlConfig() {
     final newUrl = _urlController.text.trim();
     if (newUrl.isNotEmpty) {
@@ -350,6 +366,38 @@ class _LoginScreenState extends State<LoginScreen> {
                     ],
                   ),
                   const SizedBox(height: 24),
+
+                  // Direct Google Login Button
+                  OutlinedButton(
+                    key: const Key('google_signin_button'),
+                    onPressed: isLoading ? null : _handleGoogleSignIn,
+                    style: OutlinedButton.styleFrom(
+                      side: const BorderSide(color: MaatraTheme.borderMuted),
+                      backgroundColor: MaatraTheme.surfaceDark,
+                      padding: const EdgeInsets.symmetric(vertical: 14),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                    ),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        const Icon(
+                          Icons.g_mobiledata_rounded,
+                          size: 28,
+                          color: MaatraTheme.accentLilac,
+                        ),
+                        const SizedBox(width: 8),
+                        Text(
+                          'Continue with Google',
+                          style: GoogleFonts.plusJakartaSans(
+                            color: MaatraTheme.textPrimary,
+                            fontSize: 15,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 14),
 
                   // Create Patient Account Button
                   OutlinedButton.icon(

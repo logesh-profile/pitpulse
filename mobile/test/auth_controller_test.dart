@@ -152,6 +152,35 @@ class FakeAuthRemoteDataSource implements AuthRemoteDataSource {
   Future<void> resendCode({required String email}) async {}
 
   @override
+  String? get lastVerificationCode => '123456';
+
+  @override
+  Future<TokenModel> googleLogin({
+    required String email,
+    String? fullName,
+    String? idToken,
+    String? googleId,
+    String? photoUrl,
+  }) async {
+    if (shouldFail) throw const ServerFailure('Google login failed.');
+    return TokenModel(
+      accessToken: 'google-access-token',
+      refreshToken: 'google-refresh-token',
+      tokenType: 'bearer',
+      expiresIn: 1800,
+      user: UserModel(
+        id: 'mock-uuid',
+        email: email,
+        fullName: fullName ?? 'Google User',
+        role: 'PATIENT',
+        isActive: true,
+        isVerified: true,
+        createdAt: '2026-10-04',
+      ),
+    );
+  }
+
+  @override
   Future<UserModel> completeProfile({required Map<String, dynamic> profileData}) async {
     return const UserModel(
       id: 'mock-uuid',

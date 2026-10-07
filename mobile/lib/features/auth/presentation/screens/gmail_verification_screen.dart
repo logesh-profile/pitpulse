@@ -200,7 +200,77 @@ class _GmailVerificationScreenState extends State<GmailVerificationScreen> {
                   ),
                 ),
               ),
-              const SizedBox(height: 36),
+              Builder(
+                builder: (context) {
+                  final codeToDisplay = widget.initialCode ?? widget.authController.lastVerificationCode;
+                  if (codeToDisplay == null || codeToDisplay.isEmpty) {
+                    return const SizedBox(height: 36);
+                  }
+                  return Column(
+                    children: [
+                      const SizedBox(height: 16),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                        decoration: BoxDecoration(
+                          color: MaatraTheme.primaryAmethyst.withValues(alpha: 0.12),
+                          borderRadius: BorderRadius.circular(14),
+                          border: Border.all(color: MaatraTheme.primaryAmethyst.withValues(alpha: 0.35)),
+                        ),
+                        child: Row(
+                          children: [
+                            const Icon(Icons.vpn_key_rounded, color: MaatraTheme.accentLilac, size: 20),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    'Instant Verification Code:',
+                                    style: GoogleFonts.plusJakartaSans(
+                                      color: MaatraTheme.accentLilac,
+                                      fontSize: 11.5,
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 2),
+                                  Text(
+                                    codeToDisplay,
+                                    style: GoogleFonts.jetBrainsMono(
+                                      color: Colors.white,
+                                      fontSize: 17,
+                                      fontWeight: FontWeight.bold,
+                                      letterSpacing: 2.5,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            ElevatedButton(
+                              onPressed: () {
+                                for (int i = 0; i < 6 && i < codeToDisplay.length; i++) {
+                                  _controllers[i].text = codeToDisplay[i];
+                                }
+                                _submitCode();
+                              },
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: MaatraTheme.primaryAmethyst,
+                                foregroundColor: Colors.white,
+                                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+                              ),
+                              child: Text(
+                                'Auto-fill',
+                                style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.bold, fontSize: 12),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: 24),
+                    ],
+                  );
+                },
+              ),
 
               // 6 Digits Input Grid
               Row(

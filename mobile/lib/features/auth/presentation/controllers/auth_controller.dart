@@ -1,4 +1,5 @@
 import 'package:flutter/foundation.dart';
+import 'package:google_sign_in/google_sign_in.dart';
 import '../../../../core/errors/failures.dart';
 import '../../../../core/network/api_client.dart';
 import '../../../../core/storage/secure_storage_service.dart';
@@ -27,6 +28,7 @@ class AuthController extends ChangeNotifier {
   UserModel? get currentUser => _currentUser;
   String? get accessToken => _accessToken;
   String? get errorMessage => _errorMessage;
+  String? get lastVerificationCode => authRemoteDataSource.lastVerificationCode;
   bool get isAuthenticated => _status == AuthStatus.authenticated && _currentUser != null;
 
   /// Checks whether an existing secure session exists on app startup and validates with backend.
@@ -173,6 +175,52 @@ class AuthController extends ChangeNotifier {
     } catch (e) {
       _status = AuthStatus.error;
       _errorMessage = e is Failure ? e.message : e.toString();
+      notifyListeners();
+      return false;
+    }
+  }
+
+  /// Performs direct Google Sign-In with device account picker and JWT session issuance.
+  Future<bool> signInWithGoogle() async {
+    _status = AuthStatus.loading;
+    _errorMessage = null;
+    notifyListeners();
+
+    try {
+      final googleSignIn = GoogleSignIn(
+        scopes: ['email', 'profile'],
+      );
+
+      final account = await googleSignIn.signIn();
+      if (account == null) {
+        // User dismissed the Google account picker
+        _status = AuthStatus.unauthenticated;
+        notifyListeners();
+        return false;
+      }
+
+      final auth = await account.authentication;
+      final tokenData = await authRemoteDataSource.googleLogin(
+        email: account.email,
+        fullName: account.displayName,
+        idToken: auth.idToken,
+        googleId: account.id,
+        photoUrl: account.photoUrl,
+      );
+
+      await secureStorageService.saveAccessToken(tokenData.accessToken);
+      await secureStorageService.saveRefreshToken(tokenData.refreshToken);
+
+      _accessToken = tokenData.accessToken;
+      _currentUser = tokenData.user;
+      apiClient.setAuthToken(tokenData.accessToken);
+      _status = AuthStatus.authenticated;
+      _errorMessage = null;
+      notifyListeners();
+      return true;
+    } catch (e) {
+      _status = AuthStatus.error;
+      _errorMessage = e is Failure ? e.message : 'Google Sign-In failed: $e';
       notifyListeners();
       return false;
     }

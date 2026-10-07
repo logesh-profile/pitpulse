@@ -42,6 +42,16 @@ abstract class AuthRemoteDataSource {
     required Map<String, dynamic> profileData,
   });
 
+  String? get lastVerificationCode;
+
+  Future<TokenModel> googleLogin({
+    required String email,
+    String? fullName,
+    String? idToken,
+    String? googleId,
+    String? photoUrl,
+  });
+
   Future<UserModel> getMe({
     required String accessToken,
   });
@@ -49,8 +59,12 @@ abstract class AuthRemoteDataSource {
 
 class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
   final ApiClient apiClient;
+  String? _lastVerificationCode;
 
   AuthRemoteDataSourceImpl({required this.apiClient});
+
+  @override
+  String? get lastVerificationCode => _lastVerificationCode;
 
   @override
   Future<UserModel> register({
@@ -72,12 +86,43 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
     if (response.data != null) {
       try {
         final userJson = response.data!['user'] as Map<String, dynamic>? ?? response.data!;
+        _lastVerificationCode = response.data!['dev_verification_code'] as String?;
         return UserModel.fromJson(userJson);
       } catch (e) {
         throw ParsingFailure('Failed to parse registration response: $e');
       }
     } else {
       throw const ParsingFailure('Empty response body from registration endpoint.');
+    }
+  }
+
+  @override
+  Future<TokenModel> googleLogin({
+    required String email,
+    String? fullName,
+    String? idToken,
+    String? googleId,
+    String? photoUrl,
+  }) async {
+    final response = await apiClient.post<Map<String, dynamic>>(
+      '/api/v1/auth/google-login',
+      data: {
+        'email': email.trim(),
+        'full_name': fullName?.trim(),
+        'id_token': idToken,
+        'google_id': googleId,
+        'photo_url': photoUrl,
+      },
+    );
+
+    if (response.data != null) {
+      try {
+        return TokenModel.fromJson(response.data!);
+      } catch (e) {
+        throw ParsingFailure('Failed to parse Google login response: $e');
+      }
+    } else {
+      throw const ParsingFailure('Empty response body from /auth/google-login endpoint.');
     }
   }
 
@@ -109,12 +154,15 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
   Future<void> resendCode({
     required String email,
   }) async {
-    await apiClient.post<Map<String, dynamic>>(
+    final response = await apiClient.post<Map<String, dynamic>>(
       '/api/v1/auth/resend-code',
       data: {
         'email': email.trim(),
       },
     );
+    if (response.data != null) {
+      _lastVerificationCode = response.data!['dev_verification_code'] as String?;
+    }
   }
 
   @override

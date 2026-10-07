@@ -39,6 +39,7 @@ dependencies:
   flutter_tts: ^4.2.5
   speech_to_text: ^7.5.0
   google_fonts: ^9.0.0
+  google_sign_in: ^6.2.2
 
 dev_dependencies:
   flutter_test:

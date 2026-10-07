@@ -63,6 +63,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
             builder: (_) => GmailVerificationScreen(
               authController: widget.authController,
               email: _emailController.text.trim(),
+              initialCode: widget.authController.lastVerificationCode,
             ),
           ),
         );
@@ -70,6 +71,23 @@ class _RegisterScreenState extends State<RegisterScreen> {
         setState(() {
           _errorMessage = widget.authController.errorMessage ?? 'Registration failed. Please check your details.';
         });
+      }
+    }
+  }
+
+  Future<void> _handleGoogleSignIn() async {
+    FocusScope.of(context).unfocus();
+    final success = await widget.authController.signInWithGoogle();
+    if (mounted) {
+      if (success) {
+        Navigator.of(context).popUntil((route) => route.isFirst);
+      } else {
+        final err = widget.authController.errorMessage;
+        if (err != null && err.isNotEmpty) {
+          setState(() {
+            _errorMessage = err;
+          });
+        }
       }
     }
   }
@@ -168,7 +186,11 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   ),
                   validator: (v) {
                     if (v == null || v.trim().isEmpty) return 'Please enter your Gmail address';
-                    if (!v.contains('@') || !v.contains('.')) return 'Please enter a valid email address';
+                    final email = v.trim().toLowerCase();
+                    if (!email.contains('@') || !email.contains('.')) return 'Please enter a valid email address';
+                    if (!email.endsWith('@gmail.com') && !email.endsWith('@googlemail.com')) {
+                      return 'Please enter a valid Gmail address (@gmail.com)';
+                    }
                     return null;
                   },
                 ),
@@ -268,6 +290,70 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   ),
                 ),
                 const SizedBox(height: 20),
+
+                // Or Divider
+                Row(
+                  children: [
+                    Expanded(child: Container(height: 1, color: MaatraTheme.borderMuted)),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 14),
+                      child: Text(
+                        'OR CONTINUE WITH',
+                        style: GoogleFonts.plusJakartaSans(
+                          color: MaatraTheme.textSecondary,
+                          fontSize: 11,
+                          fontWeight: FontWeight.w600,
+                          letterSpacing: 1.1,
+                        ),
+                      ),
+                    ),
+                    Expanded(child: Container(height: 1, color: MaatraTheme.borderMuted)),
+                  ],
+                ),
+                const SizedBox(height: 18),
+
+                // Direct Google Sign In Button
+                OutlinedButton(
+                  onPressed: _isSubmitting ? null : _handleGoogleSignIn,
+                  style: OutlinedButton.styleFrom(
+                    backgroundColor: MaatraTheme.surfaceDark,
+                    side: const BorderSide(color: MaatraTheme.borderMuted),
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                  ),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Container(
+                        width: 22,
+                        height: 22,
+                        alignment: Alignment.center,
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(11),
+                        ),
+                        child: const Text(
+                          'G',
+                          style: TextStyle(
+                            color: Color(0xFF4285F4),
+                            fontWeight: FontWeight.w900,
+                            fontSize: 14,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Text(
+                        'Sign up with Google (1-Tap)',
+                        style: GoogleFonts.plusJakartaSans(
+                          color: MaatraTheme.textPrimary,
+                          fontSize: 14,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 22),
 
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
