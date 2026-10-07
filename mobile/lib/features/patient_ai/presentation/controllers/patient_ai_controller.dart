@@ -3,6 +3,9 @@ import '../../data/patient_ai_engine.dart';
 import '../../domain/models/patient_ai_context.dart';
 import '../../domain/models/patient_ai_message.dart';
 
+import '../../../../core/network/api_client.dart';
+import '../../domain/models/ai_source_reference.dart';
+
 class PatientAiController extends ChangeNotifier {
   final PatientAiEngine _engine;
   PatientAiContext _context;
@@ -31,7 +34,7 @@ class PatientAiController extends ChangeNotifier {
       prompts.add('When is my Estimated Due Date (EDD)?');
       prompts.add('What should I ask my doctor for Week ${_context.activePregnancy!.gestationalAgeWeeks}?');
     } else {
-      prompts.add('How do I track my pregnancy progress?');
+      prompts.add('How do I track my health in MAATRA?');
     }
 
     if (_context.hasVitals) {
@@ -43,7 +46,7 @@ class PatientAiController extends ChangeNotifier {
     }
 
     prompts.add('What foods are healthy during pregnancy?');
-    prompts.add('What are the critical danger signs to watch for?');
+    prompts.add('Home remedies for stress and nausea');
 
     return prompts;
   }
@@ -55,13 +58,13 @@ class PatientAiController extends ChangeNotifier {
 
   void _initWelcomeMessage() {
     final patientName = _context.patientName;
-    String greeting = 'Hello $patientName! I am your **PitPulse Maternal AI Guide (v1.0.2)**.';
+    String greeting = 'Hello $patientName. I am **MAATRA AI**, powered by Grok.';
 
     if (_context.hasActivePregnancy) {
       final preg = _context.activePregnancy!;
-      greeting += '\n\nI see you are currently in **${preg.gestationalAgeDisplay}** (${preg.trimesterDisplay}). I can explain your fetal development, interpret your recorded vitals, help prepare questions for your doctor, and guide you on prenatal wellness.';
+      greeting += '\n\nI see you are in **${preg.gestationalAgeDisplay}** (${preg.trimesterDisplay}). You can ask me anything about your symptoms, remedies, vitals, nutrition, or everyday conversations.';
     } else {
-      greeting += '\n\nI can help you understand pregnancy milestones, explain recorded health vitals, summarize field checkups, and prepare questions for your doctor.';
+      greeting += '\n\nYou can ask me anything about wellness, remedies, medical guidance, your recorded vitals, or chat naturally in English or Tamil.';
     }
 
     _messages.add(
@@ -90,10 +93,7 @@ class PatientAiController extends ChangeNotifier {
     _isTyping = true;
     notifyListeners();
 
-    // 2. Subtle micro-delay for conversational rhythm
-    await Future.delayed(const Duration(milliseconds: 350));
-
-    // 3. Extract last 3 user turns for Context Stitching
+    // 2. Extract last turns for conversation context
     final userHistory = _messages
         .where((m) => m.sender == MessageSender.user && m.text != trimmed)
         .map((m) => m.text)
@@ -102,12 +102,61 @@ class PatientAiController extends ChangeNotifier {
         ? userHistory.sublist(userHistory.length - 3)
         : userHistory;
 
-    // 4. Process query through context-aware on-device engine
-    final aiResponse = _engine.processQuery(
-      userQuery: trimmed,
-      context: _context,
-      chatHistory: recentHistory,
-    );
+    PatientAiMessage? aiResponse;
+
+    // 3. Try Remote Grok AI via Backend if authenticated
+    try {
+      final client = ApiClient.instance;
+      if (client.authToken != null && client.authToken!.isNotEmpty) {
+        final historyPayload = _messages
+            .take(6)
+            .map((m) => {
+                  'role': m.isUser ? 'user' : 'assistant',
+                  'content': m.text,
+                })
+            .toList();
+
+        final response = await client.post(
+          '/api/v1/patient-ai/chat',
+          data: {
+            'message': trimmed,
+            'conversation_history': historyPayload,
+          },
+        );
+
+        if (response.statusCode == 200 && response.data != null) {
+          final replyText = response.data['reply_text'] as String? ?? '';
+          if (replyText.isNotEmpty) {
+            aiResponse = PatientAiMessage(
+              id: 'ai_${DateTime.now().millisecondsSinceEpoch}',
+              text: replyText,
+              sender: MessageSender.ai,
+              timestamp: DateTime.now(),
+              isOfflineGenerated: false,
+              sources: const [
+                AiSourceReference(
+                  type: AiSourceType.curatedKnowledgeBase,
+                  title: 'MAATRA Grok Intelligence',
+                  detail: 'xAI Grok Live Medical & Conversation Agent',
+                ),
+              ],
+            );
+          }
+        }
+      }
+    } catch (_) {
+      // Offline fallback
+    }
+
+    // 4. Grounded On-Device Fallback if remote unavailable
+    if (aiResponse == null) {
+      await Future.delayed(const Duration(milliseconds: 250));
+      aiResponse = _engine.processQuery(
+        userQuery: trimmed,
+        context: _context,
+        chatHistory: recentHistory,
+      );
+    }
 
     _isTyping = false;
     _messages.add(aiResponse);

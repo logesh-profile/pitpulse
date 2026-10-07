@@ -30,6 +30,11 @@ class Settings(BaseSettings):
     JWT_ACCESS_EXPIRE_MINUTES: int = 30
     JWT_REFRESH_EXPIRE_DAYS: int = 7
 
+    # xAI / Grok AI configuration
+    XAI_API_KEY: str = ""
+    XAI_BASE_URL: str = "https://api.x.ai/v1"
+    XAI_MODEL: str = "grok-2-mini"
+
     # Database configuration
     DATABASE_URL: str = "postgresql+asyncpg://postgres:logesh%40360@127.0.0.1:5432/pitpulse_db"
     SYNC_DATABASE_URL: str = "postgresql+psycopg2://postgres:logesh%40360@127.0.0.1:5432/pitpulse_db"

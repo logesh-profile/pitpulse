@@ -62,7 +62,7 @@ void main() {
       assignedAshaName: 'ASHA Anjali',
     );
 
-    testWidgets('Renders chat screen with offline badge, patient info and welcome message', (WidgetTester tester) async {
+    testWidgets('Renders chat screen with MAATRA Grok branding and welcome message', (WidgetTester tester) async {
       await tester.pumpWidget(
         MaterialApp(
           theme: ThemeData.dark(),
@@ -71,10 +71,9 @@ void main() {
       );
       await tester.pumpAndSettle();
 
-      expect(find.text('PitPulse Maternal AI'), findsOneWidget);
-      expect(find.text('ON-DEVICE'), findsOneWidget);
-      expect(find.text('Kavitha R • HR-2026-0001'), findsOneWidget);
-      expect(find.textContaining('Hello Kavitha R!'), findsOneWidget);
+      expect(find.text('MAATRA'), findsOneWidget);
+      expect(find.text('Grok Intelligence'), findsOneWidget);
+      expect(find.textContaining('Hello Kavitha R'), findsOneWidget);
       expect(find.text('How is my baby growing this week?'), findsWidgets);
     });
 

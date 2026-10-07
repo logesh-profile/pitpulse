@@ -1,7 +1,7 @@
 /// Application configuration management for environment, networking, and platform differences.
 class AppConfig {
-  static const String appName = 'PitPulse';
-  static const String appVersion = '0.1.0';
+  static const String appName = 'MAATRA';
+  static const String appVersion = '1.0.3';
 
   // Can be overridden via --dart-define=BACKEND_URL=http://your-ip:8000
   static const String _customBackendUrl = String.fromEnvironment('BACKEND_URL', defaultValue: '');

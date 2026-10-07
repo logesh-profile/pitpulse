@@ -6,6 +6,9 @@ import '../../domain/models/patient_ai_context.dart';
 import '../../domain/models/patient_ai_message.dart';
 import '../controllers/patient_ai_controller.dart';
 
+/// Classy, Minimalist Black & White Chatbot UI/UX for MAATRA.
+/// Inspired by ChatGPT & Claude: pristine monochrome palette, refined typography,
+/// subtle pulsing micro-animations, and fluid conversational interactions.
 class PatientAiChatScreen extends StatefulWidget {
   final PatientAiController? controller;
   final PatientAiContext? contextSnapshot;
@@ -20,21 +23,39 @@ class PatientAiChatScreen extends StatefulWidget {
   State<PatientAiChatScreen> createState() => _PatientAiChatScreenState();
 }
 
-class _PatientAiChatScreenState extends State<PatientAiChatScreen> {
+class _PatientAiChatScreenState extends State<PatientAiChatScreen> with TickerProviderStateMixin {
   late final PatientAiController _controller;
   final TextEditingController _inputController = TextEditingController();
   final ScrollController _scrollController = ScrollController();
   final FocusNode _focusNode = FocusNode();
 
-  static const Color primaryTeal = Color(0xFF0D9488);
-  static const Color accentCyan = Color(0xFF14B8A6);
-  static const Color darkCardBg = Color(0xFF1E293B);
+  bool _hasInputText = false;
+
+  // Classy Monochrome Palette (ChatGPT / Claude Aesthetic)
+  static const Color bgDark = Color(0xFF0D0D0D); // Deep Obsidian
+  static const Color surfaceDark = Color(0xFF171717); // Card Background
+  static const Color surfaceInput = Color(0xFF212121); // Input Pill
+  static const Color borderMuted = Color(0xFF262626); // Subtle Divider
+  static const Color borderActive = Color(0xFF383838); // Hover/Focus Border
+  static const Color textPrimary = Color(0xFFF5F5F5); // Crisp Ivory White
+  static const Color textSecondary = Color(0xFF9E9E9E); // Muted Neutral
+  static const Color textTertiary = Color(0xFF616161); // Hint / Timestamp
+  static const Color userBubble = Color(0xFF262626); // User Chat Bubble
 
   @override
   void initState() {
     super.initState();
     _controller = widget.controller ?? PatientAiController(context: widget.contextSnapshot);
     LocalTtsService().initialize();
+
+    _inputController.addListener(() {
+      final hasText = _inputController.text.trim().isNotEmpty;
+      if (hasText != _hasInputText) {
+        setState(() {
+          _hasInputText = hasText;
+        });
+      }
+    });
   }
 
   @override
@@ -55,7 +76,7 @@ class _PatientAiChatScreenState extends State<PatientAiChatScreen> {
       if (_scrollController.hasClients) {
         _scrollController.animateTo(
           _scrollController.position.maxScrollExtent,
-          duration: const Duration(milliseconds: 300),
+          duration: const Duration(milliseconds: 250),
           curve: Curves.easeOut,
         );
       }
@@ -71,14 +92,13 @@ class _PatientAiChatScreenState extends State<PatientAiChatScreen> {
     _scrollToBottom();
   }
 
-  /// Voice Input Sheet with offline speech capture and instant Tamil/English query chips
   void _showVoiceInputDialog() {
     showModalBottomSheet(
       context: context,
-      backgroundColor: const Color(0xFF0F172A),
+      backgroundColor: surfaceDark,
       isScrollControlled: true,
       shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
       builder: (ctx) {
         return StatefulBuilder(
@@ -87,7 +107,7 @@ class _PatientAiChatScreenState extends State<PatientAiChatScreen> {
 
             return Padding(
               padding: EdgeInsets.only(
-                bottom: MediaQuery.of(context).viewInsets.bottom + 20,
+                bottom: MediaQuery.of(context).viewInsets.bottom + 24,
                 left: 20,
                 right: 20,
                 top: 20,
@@ -100,155 +120,94 @@ class _PatientAiChatScreenState extends State<PatientAiChatScreen> {
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       Row(
-                        children: const [
-                          Icon(Icons.mic_rounded, color: Colors.amberAccent, size: 22),
-                          SizedBox(width: 8),
-                          Text(
-                            'Offline Voice Input / குரல் உள்ளீடு',
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.all(6),
+                            decoration: BoxDecoration(
+                              color: textPrimary.withValues(alpha: 0.1),
+                              shape: BoxShape.circle,
+                            ),
+                            child: const Icon(Icons.mic_rounded, color: textPrimary, size: 18),
+                          ),
+                          const SizedBox(width: 10),
+                          const Text(
+                            'Voice Input',
                             style: TextStyle(
-                              color: Colors.white,
+                              color: textPrimary,
                               fontSize: 16,
-                              fontWeight: FontWeight.bold,
+                              fontWeight: FontWeight.w600,
                             ),
                           ),
                         ],
                       ),
                       IconButton(
-                        icon: const Icon(Icons.close, color: Colors.grey),
+                        icon: const Icon(Icons.close_rounded, color: textSecondary, size: 20),
                         onPressed: () => Navigator.pop(ctx),
                       ),
                     ],
                   ),
-                  const SizedBox(height: 12),
-                  const Text(
-                    'Speak in Tamil or English (uses native offline speech recognizer). Or tap a sample voice question below:',
-                    style: TextStyle(color: Colors.grey, fontSize: 13),
+                  const SizedBox(height: 16),
+                  Text(
+                    isListening
+                        ? 'Listening in Tamil / English... speak naturally.'
+                        : 'Tap the microphone to speak your question or symptoms.',
+                    style: const TextStyle(color: textSecondary, fontSize: 13),
                   ),
-                  const SizedBox(height: 20),
-
-                  // Mic Pulse Button
+                  const SizedBox(height: 24),
                   Center(
                     child: GestureDetector(
                       onTap: () async {
-                        if (LocalSpeechService().isListening) {
+                        if (isListening) {
                           await LocalSpeechService().stopListening();
                           setSheetState(() {});
                         } else {
                           await LocalSpeechService().startListening(
-                            onResult: (words) {
+                            onResult: (spokenText) {
                               setSheetState(() {});
-                              if (words.trim().isNotEmpty) {
-                                _inputController.text = words;
+                              if (spokenText.trim().isNotEmpty) {
+                                Navigator.pop(ctx);
+                                _inputController.text = spokenText;
+                                _handleSend(spokenText);
                               }
                             },
                           );
                           setSheetState(() {});
+                          if (!LocalSpeechService().isAvailable && mounted) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: Text('Microphone not available on this device.'),
+                                backgroundColor: Color(0xFF262626),
+                              ),
+                            );
+                          }
                         }
                       },
                       child: Container(
                         width: 72,
                         height: 72,
                         decoration: BoxDecoration(
-                          color: isListening ? Colors.redAccent : primaryTeal,
+                          color: isListening ? textPrimary : surfaceInput,
                           shape: BoxShape.circle,
-                          boxShadow: [
-                            BoxShadow(
-                              color: (isListening ? Colors.redAccent : primaryTeal).withValues(alpha: 0.4),
-                              blurRadius: 16,
-                              spreadRadius: 4,
-                            ),
-                          ],
+                          border: Border.all(color: borderActive),
+                          boxShadow: isListening
+                              ? [
+                                  BoxShadow(
+                                    color: textPrimary.withValues(alpha: 0.3),
+                                    blurRadius: 20,
+                                    spreadRadius: 4,
+                                  ),
+                                ]
+                              : null,
                         ),
                         child: Icon(
                           isListening ? Icons.stop_rounded : Icons.mic_rounded,
-                          color: Colors.white,
-                          size: 36,
+                          size: 32,
+                          color: isListening ? bgDark : textPrimary,
                         ),
                       ),
                     ),
                   ),
-                  const SizedBox(height: 12),
-                  Center(
-                    child: Text(
-                      isListening ? '🎙️ Listening... (பேசுங்கள்)' : 'Tap mic to start speaking',
-                      style: TextStyle(
-                        color: isListening ? Colors.amberAccent : Colors.grey,
-                        fontSize: 13,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ),
-                  if (_inputController.text.isNotEmpty) ...[
-                    const SizedBox(height: 12),
-                    Container(
-                      padding: const EdgeInsets.all(12),
-                      decoration: BoxDecoration(
-                        color: darkCardBg,
-                        borderRadius: BorderRadius.circular(10),
-                        border: Border.all(color: accentCyan.withValues(alpha: 0.4)),
-                      ),
-                      child: Text(
-                        '"${_inputController.text}"',
-                        style: const TextStyle(color: Colors.white, fontSize: 14),
-                      ),
-                    ),
-                    const SizedBox(height: 10),
-                    ElevatedButton.icon(
-                      onPressed: () {
-                        Navigator.pop(ctx);
-                        _handleSend();
-                      },
-                      icon: const Icon(Icons.send_rounded, size: 18),
-                      label: const Text('Send Recognized Voice Text'),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: primaryTeal,
-                        foregroundColor: Colors.white,
-                        padding: const EdgeInsets.symmetric(vertical: 12),
-                      ),
-                    ),
-                  ],
                   const SizedBox(height: 20),
-                  const Text(
-                    'Quick Maternal Voice Prompts (மாதிரிகள்):',
-                    style: TextStyle(color: Colors.white70, fontSize: 12, fontWeight: FontWeight.bold),
-                  ),
-                  const SizedBox(height: 10),
-                  Wrap(
-                    spacing: 8,
-                    runSpacing: 8,
-                    children: [
-                      _buildVoiceSampleChip(
-                        ctx,
-                        'Enaku moonu maasam aaguthu, naan enna saapadanum?',
-                        '🥗 3rd Month Diet (Tamil)',
-                      ),
-                      _buildVoiceSampleChip(
-                        ctx,
-                        'கர்ப்ப கால உணவு முறை என்ன?',
-                        '🥦 Pregnancy Diet Guide',
-                      ),
-                      _buildVoiceSampleChip(
-                        ctx,
-                        'எனக்கு இரத்தப்போக்கு ஏற்படுகிறது',
-                        '🚨 Bleeding Red Flag',
-                      ),
-                      _buildVoiceSampleChip(
-                        ctx,
-                        'என் இரத்த அழுத்தம் (BP) இயல்பாக உள்ளதா?',
-                        '🩺 BP & Vitals Check',
-                      ),
-                      _buildVoiceSampleChip(
-                        ctx,
-                        'டாக்டரிடம் நான் என்ன கேட்க வேண்டும்?',
-                        '📋 Doctor Prep',
-                      ),
-                      _buildVoiceSampleChip(
-                        ctx,
-                        'What should I eat during the 1st trimester?',
-                        '🥗 1st Trimester Diet (English)',
-                      ),
-                    ],
-                  ),
                 ],
               ),
             );
@@ -258,99 +217,77 @@ class _PatientAiChatScreenState extends State<PatientAiChatScreen> {
     );
   }
 
-  Widget _buildVoiceSampleChip(BuildContext ctx, String query, String label) {
-    return ActionChip(
-      avatar: const Icon(Icons.record_voice_over_rounded, size: 14, color: Colors.amberAccent),
-      label: Text(label, style: const TextStyle(fontSize: 11, color: Colors.white)),
-      backgroundColor: darkCardBg,
-      side: BorderSide(color: accentCyan.withValues(alpha: 0.3)),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-      onPressed: () {
-        Navigator.pop(ctx);
-        _handleSend(query);
-      },
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: bgDark,
       appBar: AppBar(
+        backgroundColor: bgDark,
+        elevation: 0,
+        scrolledUnderElevation: 0,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back_ios_new_rounded, color: textPrimary, size: 18),
+          onPressed: () => Navigator.maybePop(context),
+        ),
         title: Row(
+          mainAxisSize: MainAxisSize.min,
           children: [
-            Container(
-              padding: const EdgeInsets.all(6),
-              decoration: BoxDecoration(
-                color: accentCyan.withValues(alpha: 0.2),
-                borderRadius: BorderRadius.circular(8),
+            ClipRRect(
+              borderRadius: BorderRadius.circular(6),
+              child: Image.asset(
+                'assets/images/maatra_logo.png',
+                width: 24,
+                height: 24,
+                fit: BoxFit.contain,
+                errorBuilder: (_, __, ___) => const Icon(Icons.circle_outlined, size: 18, color: textPrimary),
               ),
-              child: const Icon(Icons.auto_awesome, color: accentCyan, size: 20),
             ),
             const SizedBox(width: 10),
             Column(
               crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text('PitPulse Maternal AI', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+              mainAxisSize: MainAxisSize.min,
+              children: const [
                 Text(
-                  '${_controller.context.patientName}${_controller.context.healthRecordNumber != null ? " • ${_controller.context.healthRecordNumber}" : ""}',
-                  style: const TextStyle(fontSize: 11, color: Colors.grey),
+                  'MAATRA',
+                  style: TextStyle(
+                    color: textPrimary,
+                    fontSize: 16,
+                    fontWeight: FontWeight.w700,
+                    letterSpacing: 1.2,
+                  ),
+                ),
+                Text(
+                  'Grok Intelligence',
+                  style: TextStyle(
+                    color: textSecondary,
+                    fontSize: 11,
+                    fontWeight: FontWeight.w400,
+                  ),
                 ),
               ],
             ),
           ],
         ),
         actions: [
-          Container(
-            margin: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
-            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-            decoration: BoxDecoration(
-              color: Colors.green.withValues(alpha: 0.15),
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: Colors.green.withValues(alpha: 0.5)),
-            ),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: const [
-                Icon(Icons.offline_bolt, color: Colors.greenAccent, size: 14),
-                SizedBox(width: 4),
-                Text('ON-DEVICE', style: TextStyle(color: Colors.greenAccent, fontSize: 11, fontWeight: FontWeight.bold)),
-              ],
-            ),
+          IconButton(
+            icon: const Icon(Icons.refresh_rounded, color: textSecondary, size: 20),
+            tooltip: 'New Conversation',
+            onPressed: () {
+              _controller.clearConversation();
+              _scrollToBottom();
+            },
           ),
+          const SizedBox(width: 8),
         ],
+        bottom: const PreferredSize(
+          preferredSize: Size.fromHeight(1),
+          child: Divider(color: borderMuted, height: 1, thickness: 1),
+        ),
       ),
       body: SafeArea(
         child: Column(
           children: [
-            // 100MB Architecture Badge Banner
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
-              decoration: const BoxDecoration(
-                color: Color(0xFF0F172A),
-                border: Border(bottom: BorderSide(color: Color(0xFF1E293B))),
-              ),
-              child: Row(
-                children: [
-                  Container(
-                    width: 7,
-                    height: 7,
-                    decoration: const BoxDecoration(
-                      color: Color(0xFF10B981),
-                      shape: BoxShape.circle,
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  const Expanded(
-                    child: Text(
-                      'PitPulse v1.0.2 • Stateful Agentic RAG Controller • 100% Offline Multi-Turn',
-                      style: TextStyle(fontSize: 11, color: Color(0xFF10B981), fontWeight: FontWeight.bold),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-
-            // Chat Messages List
+            // Chat Message Trajectory
             Expanded(
               child: AnimatedBuilder(
                 animation: _controller,
@@ -361,41 +298,49 @@ class _PatientAiChatScreenState extends State<PatientAiChatScreen> {
 
                   return ListView.builder(
                     controller: _scrollController,
-                    padding: const EdgeInsets.all(14),
+                    padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 20),
                     itemCount: messages.length + (isTyping ? 1 : 0),
                     itemBuilder: (context, index) {
                       if (index == messages.length && isTyping) {
-                        return _buildTypingIndicator();
+                        return _buildClaudeTypingIndicator();
                       }
                       final msg = messages[index];
-                      return _buildMessageBubble(msg);
+                      return _buildMinimalMessageItem(msg);
                     },
                   );
                 },
               ),
             ),
 
-            // Quick Prompt Chips
+            // Quick Prompt Suggestions (Minimalist Pill Row)
             AnimatedBuilder(
               animation: _controller,
               builder: (context, _) {
                 final chips = _controller.quickPromptChips;
-                return Container(
-                  height: 42,
-                  margin: const EdgeInsets.only(bottom: 6),
+                return SizedBox(
+                  height: 38,
                   child: ListView.separated(
-                    padding: const EdgeInsets.symmetric(horizontal: 12),
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
                     scrollDirection: Axis.horizontal,
                     itemCount: chips.length,
                     separatorBuilder: (_, _) => const SizedBox(width: 8),
                     itemBuilder: (context, index) {
                       final chipText = chips[index];
-                      return ActionChip(
-                        label: Text(chipText, style: const TextStyle(fontSize: 12, color: Colors.white70)),
-                        backgroundColor: darkCardBg,
-                        side: BorderSide(color: accentCyan.withValues(alpha: 0.3)),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                        onPressed: () => _handleSend(chipText),
+                      return InkWell(
+                        onTap: () => _handleSend(chipText),
+                        borderRadius: BorderRadius.circular(18),
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                          decoration: BoxDecoration(
+                            color: surfaceDark,
+                            borderRadius: BorderRadius.circular(18),
+                            border: Border.all(color: borderMuted),
+                          ),
+                          child: Text(
+                            chipText,
+                            style: const TextStyle(fontSize: 12, color: textSecondary),
+                          ),
+                        ),
                       );
                     },
                   ),
@@ -403,62 +348,75 @@ class _PatientAiChatScreenState extends State<PatientAiChatScreen> {
               },
             ),
 
-            // Bottom Input Bar with Voice Mic & Text Input
+            const SizedBox(height: 10),
+
+            // Minimalist Pill Composer Bar (ChatGPT / Claude Style)
             Container(
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+              padding: const EdgeInsets.fromLTRB(14, 6, 14, 12),
               decoration: const BoxDecoration(
-                color: Color(0xFF0F172A),
-                border: Border(top: BorderSide(color: Color(0xFF334155))),
+                color: bgDark,
+                border: Border(top: BorderSide(color: borderMuted, width: 0.5)),
               ),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: TextField(
-                      key: const Key('patient_ai_input_field'),
-                      controller: _inputController,
-                      focusNode: _focusNode,
-                      style: const TextStyle(color: Colors.white, fontSize: 14),
-                      textInputAction: TextInputAction.send,
-                      onSubmitted: (_) => _handleSend(),
-                      decoration: InputDecoration(
-                        hintText: 'Type or speak in Tamil or English...',
-                        hintStyle: const TextStyle(color: Colors.grey, fontSize: 13),
-                        filled: true,
-                        fillColor: darkCardBg,
-                        contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(24),
-                          borderSide: BorderSide.none,
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                decoration: BoxDecoration(
+                  color: surfaceInput,
+                  borderRadius: BorderRadius.circular(28),
+                  border: Border.all(color: borderMuted),
+                ),
+                child: Row(
+                  children: [
+                    // Voice Mic Action Button
+                    IconButton(
+                      icon: const Icon(Icons.mic_rounded, color: textSecondary, size: 20),
+                      tooltip: 'Voice Input',
+                      onPressed: _showVoiceInputDialog,
+                    ),
+
+                    // Clean Text Field
+                    Expanded(
+                      child: TextField(
+                        key: const Key('patient_ai_input_field'),
+                        controller: _inputController,
+                        focusNode: _focusNode,
+                        style: const TextStyle(color: textPrimary, fontSize: 14),
+                        textInputAction: TextInputAction.send,
+                        maxLines: 4,
+                        minLines: 1,
+                        onSubmitted: (_) => _handleSend(),
+                        decoration: const InputDecoration(
+                          hintText: 'Ask MAATRA anything...',
+                          hintStyle: TextStyle(color: textTertiary, fontSize: 14),
+                          border: InputBorder.none,
+                          contentPadding: EdgeInsets.symmetric(horizontal: 4, vertical: 8),
+                          isDense: true,
                         ),
                       ),
                     ),
-                  ),
-                  const SizedBox(width: 8),
 
-                  // Voice Mic Button
-                  CircleAvatar(
-                    backgroundColor: Colors.amber[700],
-                    radius: 20,
-                    child: IconButton(
-                      key: const Key('patient_ai_voice_button'),
-                      icon: const Icon(Icons.mic_rounded, size: 20, color: Colors.white),
-                      tooltip: 'Voice Input / தமிழில் பேசுங்கள்',
-                      onPressed: _showVoiceInputDialog,
-                    ),
-                  ),
-                  const SizedBox(width: 6),
+                    const SizedBox(width: 4),
 
-                  // Send Button
-                  CircleAvatar(
-                    backgroundColor: primaryTeal,
-                    radius: 20,
-                    child: IconButton(
+                    // Signature Circular Up-Arrow Send Button (ChatGPT/Claude Style)
+                    GestureDetector(
                       key: const Key('patient_ai_send_button'),
-                      icon: const Icon(Icons.send_rounded, size: 18, color: Colors.white),
-                      onPressed: _handleSend,
+                      onTap: () => _handleSend(),
+                      child: AnimatedContainer(
+                        duration: const Duration(milliseconds: 180),
+                        width: 34,
+                        height: 34,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: _hasInputText ? textPrimary : const Color(0xFF2E2E2E),
+                        ),
+                        child: Icon(
+                          Icons.arrow_upward_rounded,
+                          size: 18,
+                          color: _hasInputText ? bgDark : textTertiary,
+                        ),
+                      ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
             ),
           ],
@@ -467,28 +425,26 @@ class _PatientAiChatScreenState extends State<PatientAiChatScreen> {
     );
   }
 
-  Widget _buildMessageBubble(PatientAiMessage msg) {
+  /// Clean, spacious message item
+  Widget _buildMinimalMessageItem(PatientAiMessage msg) {
     if (msg.isUser) {
       return Padding(
-        padding: const EdgeInsets.only(bottom: 12, left: 40),
+        padding: const EdgeInsets.only(bottom: 18, left: 48),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.end,
+          crossAxisAlignment: CrossAxisAlignment.end,
           children: [
             Flexible(
               child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                 decoration: BoxDecoration(
-                  color: primaryTeal,
-                  borderRadius: const BorderRadius.only(
-                    topLeft: Radius.circular(14),
-                    topRight: Radius.circular(14),
-                    bottomLeft: Radius.circular(14),
-                    bottomRight: Radius.circular(2),
-                  ),
+                  color: userBubble,
+                  borderRadius: BorderRadius.circular(20),
+                  border: Border.all(color: borderMuted),
                 ),
                 child: Text(
                   msg.text,
-                  style: const TextStyle(color: Colors.white, fontSize: 14),
+                  style: const TextStyle(color: textPrimary, fontSize: 14.5, height: 1.4),
                 ),
               ),
             ),
@@ -497,273 +453,254 @@ class _PatientAiChatScreenState extends State<PatientAiChatScreen> {
       );
     }
 
-    // AI Response Bubble
+    // Assistant / MAATRA Message (Spacious, Left-Aligned on Canvas)
     return Padding(
-      padding: const EdgeInsets.only(bottom: 14),
+      padding: const EdgeInsets.only(bottom: 24),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              CircleAvatar(
-                radius: 14,
-                backgroundColor: accentCyan.withValues(alpha: 0.2),
-                child: const Icon(Icons.auto_awesome, size: 14, color: accentCyan),
-              ),
-              const SizedBox(width: 8),
-              Expanded(
-                child: Container(
-                  padding: const EdgeInsets.all(14),
-                  decoration: BoxDecoration(
-                    color: darkCardBg,
-                    borderRadius: const BorderRadius.only(
-                      topLeft: Radius.circular(2),
-                      topRight: Radius.circular(14),
-                      bottomLeft: Radius.circular(14),
-                      bottomRight: Radius.circular(14),
-                    ),
-                    border: Border.all(color: const Color(0xFF334155)),
+              // Subtle Minimalist Logo Mark
+              Container(
+                width: 26,
+                height: 26,
+                margin: const EdgeInsets.only(top: 2),
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: surfaceDark,
+                  border: Border.all(color: borderMuted),
+                ),
+                child: Center(
+                  child: Image.asset(
+                    'assets/images/maatra_logo.png',
+                    width: 16,
+                    height: 16,
+                    fit: BoxFit.contain,
+                    errorBuilder: (_, __, ___) => const Icon(Icons.auto_awesome, size: 12, color: textPrimary),
                   ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      // Agentic Tools Badge (if routed through tools)
-                      if (msg.executedTools.isNotEmpty) ...[
+                ),
+              ),
+              const SizedBox(width: 12),
+
+              // Formatted Message Body
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      msg.text,
+                      style: const TextStyle(
+                        color: textPrimary,
+                        fontSize: 14.5,
+                        height: 1.5,
+                        fontWeight: FontWeight.w400,
+                      ),
+                    ),
+
+                    // Triage Warning Card (If Red Flag Symptom)
+                    if (msg.warning != null) ...[
+                      const SizedBox(height: 14),
+                      _buildClassyWarningCard(msg.warning!),
+                    ],
+
+                    const SizedBox(height: 10),
+
+                    // Bottom Row: Audio Readout & Source Tag
+                    Row(
+                      children: [
+                        // TTS Audio Read Aloud
+                        ValueListenableBuilder<bool>(
+                          valueListenable: LocalTtsService().isPlayingNotifier,
+                          builder: (context, isPlaying, _) {
+                            final isThisPlaying = isPlaying && LocalTtsService().currentlySpeakingId == msg.id;
+
+                            return InkWell(
+                              onTap: () {
+                                LocalTtsService().speak(
+                                  text: msg.text,
+                                  messageId: msg.id,
+                                  isTamil: msg.isTamil,
+                                );
+                              },
+                              borderRadius: BorderRadius.circular(14),
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                                decoration: BoxDecoration(
+                                  color: isThisPlaying ? textPrimary.withValues(alpha: 0.15) : surfaceDark,
+                                  borderRadius: BorderRadius.circular(14),
+                                  border: Border.all(color: borderMuted),
+                                ),
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Icon(
+                                      isThisPlaying ? Icons.stop_rounded : Icons.volume_up_rounded,
+                                      size: 14,
+                                      color: isThisPlaying ? textPrimary : textSecondary,
+                                    ),
+                                    const SizedBox(width: 5),
+                                    Text(
+                                      isThisPlaying ? 'Stop' : 'Read aloud',
+                                      style: TextStyle(
+                                        fontSize: 11,
+                                        fontWeight: FontWeight.w500,
+                                        color: isThisPlaying ? textPrimary : textSecondary,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            );
+                          },
+                        ),
+
+                        const SizedBox(width: 10),
+
+                        // Intelligence Indicator Badge
                         Container(
-                          margin: const EdgeInsets.only(bottom: 8),
-                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                           decoration: BoxDecoration(
-                            color: accentCyan.withValues(alpha: 0.12),
-                            borderRadius: BorderRadius.circular(6),
-                            border: Border.all(color: accentCyan.withValues(alpha: 0.35)),
+                            color: surfaceDark,
+                            borderRadius: BorderRadius.circular(14),
+                            border: Border.all(color: borderMuted),
                           ),
                           child: Row(
                             mainAxisSize: MainAxisSize.min,
-                            children: [
-                              const Icon(Icons.hub_rounded, size: 12, color: accentCyan),
-                              const SizedBox(width: 4),
+                            children: const [
+                              Icon(Icons.check_circle_outline_rounded, size: 12, color: textSecondary),
+                              SizedBox(width: 4),
                               Text(
-                                'Agentic Tools: ${msg.executedTools.join(' → ')}',
-                                style: const TextStyle(fontSize: 10, fontWeight: FontWeight.bold, color: accentCyan),
+                                'Grok Grounded',
+                                style: TextStyle(fontSize: 10, color: textSecondary, fontWeight: FontWeight.w500),
                               ),
                             ],
                           ),
                         ),
                       ],
-
-                      // Formatted Response Text
-                      Text(
-                        msg.text,
-                        style: const TextStyle(color: Colors.white, fontSize: 14, height: 1.4),
-                      ),
-
-                      // Warning Banner (if present)
-                      if (msg.warning != null) ...[
-                        const SizedBox(height: 12),
-                        _buildWarningCard(msg.warning!),
-                      ],
-
-                      // Offline TTS Voice Speaker Button
-                      const SizedBox(height: 12),
-                      ValueListenableBuilder<bool>(
-                        valueListenable: LocalTtsService().isPlayingNotifier,
-                        builder: (context, isPlaying, _) {
-                          final isThisPlaying = isPlaying && LocalTtsService().currentlySpeakingId == msg.id;
-
-                          return InkWell(
-                            onTap: () {
-                              LocalTtsService().speak(
-                                text: msg.text,
-                                messageId: msg.id,
-                                isTamil: msg.isTamil,
-                              );
-                            },
-                            borderRadius: BorderRadius.circular(16),
-                            child: Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-                              decoration: BoxDecoration(
-                                color: isThisPlaying ? Colors.amber.withValues(alpha: 0.2) : const Color(0xFF0F172A),
-                                borderRadius: BorderRadius.circular(16),
-                                border: Border.all(
-                                  color: isThisPlaying ? Colors.amberAccent : const Color(0xFF334155),
-                                ),
-                              ),
-                              child: Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  Icon(
-                                    isThisPlaying ? Icons.stop_circle_rounded : Icons.volume_up_rounded,
-                                    size: 16,
-                                    color: isThisPlaying ? Colors.amberAccent : accentCyan,
-                                  ),
-                                  const SizedBox(width: 6),
-                                  Text(
-                                    isThisPlaying
-                                        ? (msg.isTamil ? 'நிறுத்து (Stop Audio)' : 'Stop Listening')
-                                        : (msg.isTamil ? '🔊 தமிழில் கேளுங்கள் (Listen in Tamil)' : '🔊 Read Aloud (TTS)'),
-                                    style: TextStyle(
-                                      fontSize: 11,
-                                      fontWeight: FontWeight.bold,
-                                      color: isThisPlaying ? Colors.amberAccent : Colors.white70,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          );
-                        },
-                      ),
-
-                      // Source Cards (if present)
-                      if (msg.sources.isNotEmpty) ...[
-                        const Divider(color: Color(0xFF334155), height: 20),
-                        Row(
-                          children: const [
-                            Icon(Icons.verified_user_outlined, size: 12, color: accentCyan),
-                            SizedBox(width: 4),
-                            Text(
-                              'Grounded in your authenticated clinical data:',
-                              style: TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: accentCyan),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 6),
-                        ...msg.sources.map((src) => _buildSourceBadge(src)),
-                      ],
-                    ],
-                  ),
+                    ),
+                  ],
                 ),
               ),
             ],
           ),
-
-          // Suggested followup questions chips
-          if (msg.suggestedQuestions.isNotEmpty) ...[
-            const SizedBox(height: 8),
-            Padding(
-              padding: const EdgeInsets.only(left: 32),
-              child: Wrap(
-                spacing: 6,
-                runSpacing: 6,
-                children: msg.suggestedQuestions.map((q) {
-                  return ActionChip(
-                    padding: EdgeInsets.zero,
-                    labelPadding: const EdgeInsets.symmetric(horizontal: 8),
-                    label: Text('💡 $q', style: const TextStyle(fontSize: 11, color: accentCyan)),
-                    backgroundColor: const Color(0xFF0F172A),
-                    side: BorderSide(color: accentCyan.withValues(alpha: 0.3)),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                    onPressed: () => _handleSend(q),
-                  );
-                }).toList(),
-              ),
-            ),
-          ],
         ],
       ),
     );
   }
 
-  Widget _buildWarningCard(AiScreeningWarning warning) {
-    final isEmergency = warning.isEmergency;
-    final color = isEmergency ? Colors.redAccent : Colors.amber;
+  /// Claude / ChatGPT Style Pulsing Typing Indicator
+  Widget _buildClaudeTypingIndicator() {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 20, left: 38),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: const [
+          _PulsingDot(delayMs: 0),
+          SizedBox(width: 4),
+          _PulsingDot(delayMs: 200),
+          SizedBox(width: 4),
+          _PulsingDot(delayMs: 400),
+        ],
+      ),
+    );
+  }
 
+  /// Minimalist Classy Warning Card (Monochrome with subtle urgency)
+  Widget _buildClassyWarningCard(AiScreeningWarning warning) {
     return Container(
-      padding: const EdgeInsets.all(12),
+      padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.15),
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: color.withValues(alpha: 0.5)),
+        color: surfaceDark,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: const Color(0xFFDC2626).withValues(alpha: 0.6)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
-              Icon(isEmergency ? Icons.warning_rounded : Icons.info_outline, color: color, size: 18),
-              const SizedBox(width: 6),
+              const Icon(Icons.warning_amber_rounded, color: Color(0xFFEF4444), size: 16),
+              const SizedBox(width: 8),
               Text(
                 warning.title,
-                style: TextStyle(color: color, fontWeight: FontWeight.bold, fontSize: 13),
+                style: const TextStyle(
+                  color: Color(0xFFEF4444),
+                  fontSize: 13,
+                  fontWeight: FontWeight.w600,
+                ),
               ),
             ],
           ),
-          const SizedBox(height: 4),
-          Text(warning.message, style: const TextStyle(fontSize: 12, color: Colors.white70)),
           const SizedBox(height: 6),
           Text(
-            'Recommended Action: ${warning.recommendedAction}',
-            style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: color),
+            warning.message,
+            style: const TextStyle(color: textPrimary, fontSize: 12.5, height: 1.4),
           ),
+          if (warning.recommendedAction != null) ...[
+            const SizedBox(height: 8),
+            Text(
+              'Action: ${warning.recommendedAction}',
+              style: const TextStyle(color: textSecondary, fontSize: 12, fontWeight: FontWeight.w500),
+            ),
+          ],
         ],
       ),
     );
   }
+}
 
-  Widget _buildSourceBadge(dynamic src) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 4),
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-      decoration: BoxDecoration(
-        color: const Color(0xFF0F172A),
-        borderRadius: BorderRadius.circular(4),
-        border: Border.all(color: const Color(0xFF334155)),
-      ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Icon(Icons.bookmark_outline, size: 12, color: Colors.grey),
-          const SizedBox(width: 6),
-          Expanded(
-            child: RichText(
-              text: TextSpan(
-                text: '${src.title}: ',
-                style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Colors.white70),
-                children: [
-                  TextSpan(
-                    text: src.detail,
-                    style: const TextStyle(fontWeight: FontWeight.normal, color: Colors.grey),
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ],
-      ),
+/// Subtle breathing dot animation like Claude & ChatGPT
+class _PulsingDot extends StatefulWidget {
+  final int delayMs;
+  const _PulsingDot({required this.delayMs});
+
+  @override
+  State<_PulsingDot> createState() => _PulsingDotState();
+}
+
+class _PulsingDotState extends State<_PulsingDot> with SingleTickerProviderStateMixin {
+  late final AnimationController _anim;
+
+  @override
+  void initState() {
+    super.initState();
+    _anim = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 1000),
     );
+
+    Future.delayed(Duration(milliseconds: widget.delayMs), () {
+      if (mounted) {
+        _anim.repeat(reverse: true);
+      }
+    });
   }
 
-  Widget _buildTypingIndicator() {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 14, left: 32),
-      child: Row(
-        children: [
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-            decoration: BoxDecoration(
-              color: darkCardBg,
-              borderRadius: BorderRadius.circular(14),
-              border: Border.all(color: const Color(0xFF334155)),
-            ),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: const [
-                SizedBox(
-                  width: 12,
-                  height: 12,
-                  child: CircularProgressIndicator(strokeWidth: 2, color: accentCyan),
-                ),
-                SizedBox(width: 8),
-                Text(
-                  'PitPulse AI analyzing your health records...',
-                  style: TextStyle(fontSize: 12, color: Colors.grey),
-                ),
-              ],
+  @override
+  void dispose() {
+    _anim.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedBuilder(
+      animation: _anim,
+      builder: (context, _) {
+        return Opacity(
+          opacity: 0.25 + (_anim.value * 0.75),
+          child: Container(
+            width: 7,
+            height: 7,
+            decoration: const BoxDecoration(
+              color: Color(0xFFD4D4D4),
+              shape: BoxShape.circle,
             ),
           ),
-        ],
-      ),
+        );
+      },
     );
   }
 }

@@ -19,6 +19,7 @@ import '../features/asha/data/datasources/asha_remote_data_source.dart';
 import '../features/asha/presentation/controllers/asha_controller.dart';
 import '../features/doctor/data/datasources/doctor_remote_data_source.dart';
 import '../features/doctor/presentation/controllers/doctor_controller.dart';
+import '../features/common/presentation/screens/maatra_ribbon_reveal_screen.dart';
 import '../features/pregnancy/data/datasources/pregnancy_remote_data_source.dart';
 import '../features/pregnancy/presentation/controllers/pregnancy_controller.dart';
 
@@ -61,6 +62,7 @@ class _PitPulseAppState extends State<PitPulseApp> {
   late final PregnancyController _pregnancyController;
   late final AshaController _ashaController;
   late final DoctorController _doctorController;
+  bool _hasShownReveal = false;
 
   @override
   void initState() {
@@ -97,17 +99,32 @@ class _PitPulseAppState extends State<PitPulseApp> {
 
   Widget _resolveHomeScreen(AuthController auth) {
     if (!auth.isAuthenticated) {
+      _hasShownReveal = false;
       return LoginScreen(authController: auth);
     }
 
     final user = auth.currentUser;
     if (user == null) {
+      _hasShownReveal = false;
       return LoginScreen(authController: auth);
     }
 
     // First login mandatory password change
     if (user.mustChangePassword) {
       return ChangePasswordScreen(authController: auth);
+    }
+
+    // Harmonious Ribbon Loop Reveal Screen after login
+    if (!_hasShownReveal) {
+      return MaatraRibbonRevealScreen(
+        onCompleted: () {
+          if (mounted) {
+            setState(() {
+              _hasShownReveal = true;
+            });
+          }
+        },
+      );
     }
 
     // Role-specific routing

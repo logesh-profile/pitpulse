@@ -14,6 +14,7 @@ from app.patient_ai.domain.schemas import (
     ToolCallRecord,
 )
 from app.patient_ai.tools.patient_tools import PatientAiTools
+from app.services.grok_service import GrokService
 
 
 class PatientAiEngine:
@@ -111,13 +112,44 @@ class PatientAiEngine:
 
             tool_records.append(rec)
 
-        # 4. Synthesize Grounded Output
-        reply_text, sources, flags, followups = GroundedSynthesizer.synthesize_response(
-            user_query=user_text,
-            intent=intent,
-            tool_results=tool_results,
-            screening_flags=red_flags,
+        # 4. Synthesize via Grok AI with Real Authenticated Patient Records
+        patient_health_summary = await PatientAiTools.get_my_health_summary(db, patient_user)
+        patient_context = {
+            "patient_name": patient_user.full_name,
+            "patient_phone": patient_user.phone_number,
+            "patient_email": patient_user.email,
+            "health_summary": patient_health_summary,
+            "tool_results": tool_results,
+        }
+
+        grok_res = await GrokService.chat_completion(
+            user_message=user_text,
+            patient_context=patient_context,
+            conversation_history=conversation_history,
         )
+
+        reply_text = grok_res.get("reply", "")
+        if not reply_text:
+            reply_text, sources, flags, followups = GroundedSynthesizer.synthesize_response(
+                user_query=user_text,
+                intent=intent,
+                tool_results=tool_results,
+                screening_flags=red_flags,
+            )
+        else:
+            sources = [
+                AiSourceBadge(
+                    source_name="MAATRA Grok Intelligence",
+                    section_ref=grok_res.get("model", "grok-2-mini"),
+                    retrieval_method="live_llm",
+                )
+            ]
+            flags = red_flags
+            followups = [
+                "Explain my latest vitals",
+                "Home remedies for wellness",
+                "What should I ask my doctor?",
+            ]
 
         # 5. Outbound Safety Filter & Moderation
         moderated_reply = SafetyGuard.moderate_outbound_response(reply_text)
