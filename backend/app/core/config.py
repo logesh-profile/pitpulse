@@ -35,6 +35,9 @@ class Settings(BaseSettings):
     XAI_BASE_URL: str = "https://api.x.ai/v1"
     XAI_MODEL: str = "grok-2-mini"
 
+    # Google Gemini AI configuration (100% Free)
+    GEMINI_API_KEY: str = ""
+
     # Database configuration
     DATABASE_URL: str = "postgresql+asyncpg://postgres:logesh%40360@127.0.0.1:5432/pitpulse_db"
     SYNC_DATABASE_URL: str = "postgresql+psycopg2://postgres:logesh%40360@127.0.0.1:5432/pitpulse_db"

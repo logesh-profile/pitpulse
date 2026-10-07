@@ -72,7 +72,7 @@ void main() {
       await tester.pumpAndSettle();
 
       expect(find.text('MAATRA'), findsOneWidget);
-      expect(find.text('Grok Intelligence'), findsOneWidget);
+      expect(find.text('Gemini Intelligence'), findsOneWidget);
       expect(find.textContaining('Hello Kavitha R'), findsOneWidget);
       expect(find.text('How is my baby growing this week?'), findsWidgets);
     });

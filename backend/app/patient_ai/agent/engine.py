@@ -14,6 +14,7 @@ from app.patient_ai.domain.schemas import (
     ToolCallRecord,
 )
 from app.patient_ai.tools.patient_tools import PatientAiTools
+from app.services.gemini_service import GeminiService
 from app.services.grok_service import GrokService
 
 
@@ -112,7 +113,7 @@ class PatientAiEngine:
 
             tool_records.append(rec)
 
-        # 4. Synthesize via Grok AI with Real Authenticated Patient Records
+        # 4. Synthesize via Free Gemini AI with Real Authenticated Patient Records
         patient_health_summary = await PatientAiTools.get_my_health_summary(db, patient_user)
         patient_context = {
             "patient_name": patient_user.full_name,
@@ -122,13 +123,26 @@ class PatientAiEngine:
             "tool_results": tool_results,
         }
 
-        grok_res = await GrokService.chat_completion(
+        # Try Google Gemini (100% Free Tier) first
+        gemini_res = await GeminiService.chat_completion(
             user_message=user_text,
             patient_context=patient_context,
             conversation_history=conversation_history,
         )
 
-        reply_text = grok_res.get("reply", "")
+        reply_text = gemini_res.get("reply", "")
+        model_name = gemini_res.get("model", "Gemini Free AI")
+
+        # Fallback to Grok if Gemini is unavailable
+        if not reply_text:
+            grok_res = await GrokService.chat_completion(
+                user_message=user_text,
+                patient_context=patient_context,
+                conversation_history=conversation_history,
+            )
+            reply_text = grok_res.get("reply", "")
+            model_name = grok_res.get("model", "Grok AI")
+
         if not reply_text:
             reply_text, sources, flags, followups = GroundedSynthesizer.synthesize_response(
                 user_query=user_text,
@@ -139,8 +153,8 @@ class PatientAiEngine:
         else:
             sources = [
                 AiSourceBadge(
-                    source_name="MAATRA Grok Intelligence",
-                    section_ref=grok_res.get("model", "grok-2-mini"),
+                    source_name="MAATRA Live Intelligence",
+                    section_ref=model_name,
                     retrieval_method="live_llm",
                 )
             ]

@@ -257,7 +257,7 @@ class _PatientAiChatScreenState extends State<PatientAiChatScreen> with TickerPr
                   ),
                 ),
                 Text(
-                  'Grok Intelligence',
+                  'Gemini Intelligence',
                   style: TextStyle(
                     color: textSecondary,
                     fontSize: 11,

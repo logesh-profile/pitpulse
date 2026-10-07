@@ -1,10 +1,9 @@
 import 'package:flutter/foundation.dart';
+import '../../data/gemini_ai_service.dart';
 import '../../data/patient_ai_engine.dart';
+import '../../domain/models/ai_source_reference.dart';
 import '../../domain/models/patient_ai_context.dart';
 import '../../domain/models/patient_ai_message.dart';
-
-import '../../../../core/network/api_client.dart';
-import '../../domain/models/ai_source_reference.dart';
 
 class PatientAiController extends ChangeNotifier {
   final PatientAiEngine _engine;
@@ -58,7 +57,7 @@ class PatientAiController extends ChangeNotifier {
 
   void _initWelcomeMessage() {
     final patientName = _context.patientName;
-    String greeting = 'Hello $patientName. I am **MAATRA AI**, powered by Grok.';
+    String greeting = 'Hello $patientName. I am **MAATRA AI**, powered by Google Gemini.';
 
     if (_context.hasActivePregnancy) {
       final preg = _context.activePregnancy!;
@@ -104,51 +103,43 @@ class PatientAiController extends ChangeNotifier {
 
     PatientAiMessage? aiResponse;
 
-    // 3. Try Remote Grok AI via Backend if authenticated
+    // 3. Live Google Gemini Free LLM Engine (Direct Over Internet)
     try {
-      final client = ApiClient.instance;
-      if (client.authToken != null && client.authToken!.isNotEmpty) {
-        final historyPayload = _messages
-            .take(6)
-            .map((m) => {
-                  'role': m.isUser ? 'user' : 'assistant',
-                  'content': m.text,
-                })
-            .toList();
+      final historyPayload = _messages
+          .take(6)
+          .map((m) => <String, String>{
+                'role': m.isUser ? 'user' : 'model',
+                'content': m.text,
+              })
+          .toList();
 
-        final response = await client.post(
-          '/api/v1/patient-ai/chat',
-          data: {
-            'message': trimmed,
-            'conversation_history': historyPayload,
-          },
+      final geminiReply = await GeminiAiService.askGemini(
+        userQuery: trimmed,
+        context: _context,
+        chatHistory: historyPayload,
+      );
+
+      if (geminiReply != null && geminiReply.isNotEmpty) {
+        aiResponse = PatientAiMessage(
+          id: 'ai_${DateTime.now().millisecondsSinceEpoch}',
+          text: geminiReply,
+          sender: MessageSender.ai,
+          timestamp: DateTime.now(),
+          isOfflineGenerated: false,
+          sources: const [
+            AiSourceReference(
+              type: AiSourceType.curatedKnowledgeBase,
+              title: 'MAATRA Gemini Intelligence',
+              detail: 'Google Gemini 100% Free Live Medical & Conversation Agent',
+            ),
+          ],
         );
-
-        if (response.statusCode == 200 && response.data != null) {
-          final replyText = response.data['reply_text'] as String? ?? '';
-          if (replyText.isNotEmpty) {
-            aiResponse = PatientAiMessage(
-              id: 'ai_${DateTime.now().millisecondsSinceEpoch}',
-              text: replyText,
-              sender: MessageSender.ai,
-              timestamp: DateTime.now(),
-              isOfflineGenerated: false,
-              sources: const [
-                AiSourceReference(
-                  type: AiSourceType.curatedKnowledgeBase,
-                  title: 'MAATRA Grok Intelligence',
-                  detail: 'xAI Grok Live Medical & Conversation Agent',
-                ),
-              ],
-            );
-          }
-        }
       }
     } catch (_) {
       // Offline fallback
     }
 
-    // 4. Grounded On-Device Fallback if remote unavailable
+    // 4. Natural Grounded Fallback if offline / airplane mode
     if (aiResponse == null) {
       await Future.delayed(const Duration(milliseconds: 250));
       aiResponse = _engine.processQuery(
