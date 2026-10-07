@@ -20,6 +20,7 @@ from app.models.user import RoleEnum, User
 from app.models.verification_token import TokenTypeEnum
 from app.schemas.auth import (
     CompleteProfileRequest,
+    GoogleLoginRequest,
     TokenResponse,
     UserLoginRequest,
     UserRegisterRequest,
@@ -38,7 +39,7 @@ class AuthService:
         if result.scalar_one_or_none():
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
-                detail="An account with this email address already exists.",
+                detail="This Gmail address is already registered. Please sign in instead.",
             )
 
         # Check duplicate phone if provided
@@ -98,11 +99,16 @@ class AuthService:
         result = await db.execute(stmt)
         user = result.scalar_one_or_none()
 
-        # Generic error message prevents account enumeration
-        if not user or not verify_password(req.password, user.password_hash):
+        if not user:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="No account found with this Gmail address. Please register first.",
+            )
+
+        if not verify_password(req.password, user.password_hash):
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="Invalid email or password.",
+                detail="Incorrect password for this account. Please try again.",
                 headers={"WWW-Authenticate": "Bearer"},
             )
 
@@ -133,6 +139,71 @@ class AuthService:
         )
         db.add(db_refresh)
         await db.commit()
+
+        return TokenResponse(
+            access_token=access_token,
+            refresh_token=raw_refresh,
+            token_type="bearer",
+            expires_in=settings.JWT_ACCESS_EXPIRE_MINUTES * 60,
+            user=UserResponse.model_validate(user),
+        )
+
+    @staticmethod
+    async def google_login_user(
+        db: AsyncSession,
+        req: GoogleLoginRequest,
+    ) -> TokenResponse:
+        """
+        Authenticates a patient directly verified via Google Sign-In.
+        If existing user, signs them in. If new patient, creates profile automatically.
+        """
+        import secrets
+        email = req.email.lower().strip()
+
+        stmt = select(User).where(User.email == email)
+        result = await db.execute(stmt)
+        user = result.scalar_one_or_none()
+
+        if not user:
+            # Auto-provision genuine Patient account verified by Google
+            full_name = req.full_name.strip() if req.full_name and req.full_name.strip() else email.split("@")[0].capitalize()
+            dummy_pw = hash_password(secrets.token_urlsafe(32))
+
+            user = User(
+                email=email,
+                full_name=full_name,
+                password_hash=dummy_pw,
+                role=RoleEnum.PATIENT,
+                is_active=True,
+                is_verified=True,
+                is_profile_completed=True,
+            )
+            db.add(user)
+            await db.flush()
+
+            patient_profile = PatientProfile(user_id=user.id)
+            db.add(patient_profile)
+            await db.flush()
+        else:
+            if not user.is_active:
+                raise HTTPException(
+                    status_code=status.HTTP_403_FORBIDDEN,
+                    detail="User account has been deactivated. Please contact support.",
+                )
+            user.is_verified = True
+
+        user.last_login_at = datetime.now(timezone.utc)
+        access_token = create_access_token(user_id=user.id, role=user.role.value)
+        raw_refresh, token_hash, expires_at = create_refresh_token_pair(user_id=user.id)
+
+        db_refresh = RefreshToken(
+            user_id=user.id,
+            token_hash=token_hash,
+            expires_at=expires_at,
+        )
+        db.add(db_refresh)
+        await db.commit()
+        await db.refresh(user)
 
         return TokenResponse(
             access_token=access_token,

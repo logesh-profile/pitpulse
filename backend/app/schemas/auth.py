@@ -27,6 +27,14 @@ class UserLoginRequest(BaseModel):
     password: str
 
 
+class GoogleLoginRequest(BaseModel):
+    email: EmailStr
+    full_name: Optional[str] = None
+    id_token: Optional[str] = None
+    google_id: Optional[str] = None
+    photo_url: Optional[str] = None
+
+
 class RefreshTokenRequest(BaseModel):
     refresh_token: str
 

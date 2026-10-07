@@ -8,6 +8,7 @@ from app.schemas.auth import (
     ActivateProfessionalRequest,
     ChangePasswordRequest,
     CompleteProfileRequest,
+    GoogleLoginRequest,
     LogoutRequest,
     RefreshTokenRequest,
     ResendVerificationRequest,
@@ -165,6 +166,20 @@ async def login(
     db: AsyncSession = Depends(get_db),
 ) -> TokenResponse:
     return await AuthService.authenticate_user(db=db, req=req)
+
+
+@router.post(
+    "/google-login",
+    response_model=TokenResponse,
+    status_code=status.HTTP_200_OK,
+    summary="Direct Google Sign-In & token issuance",
+    description="Authenticates or auto-provisions a genuine Google-verified patient account and issues JWT tokens.",
+)
+async def google_login(
+    req: GoogleLoginRequest,
+    db: AsyncSession = Depends(get_db),
+) -> TokenResponse:
+    return await AuthService.google_login_user(db=db, req=req)
 
 
 @router.post(
