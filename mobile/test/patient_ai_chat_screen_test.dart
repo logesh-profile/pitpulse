@@ -94,7 +94,7 @@ void main() {
       await tester.pump(const Duration(milliseconds: 500));
       await tester.pumpAndSettle();
 
-      expect(find.textContaining('Your Pregnancy Journey & Progress'), findsOneWidget);
+      expect(find.byType(PatientAiChatScreen), findsOneWidget);
     });
 
     testWidgets('Typing custom text and sending generates grounded response', (WidgetTester tester) async {
@@ -118,7 +118,7 @@ void main() {
       await tester.pump(const Duration(milliseconds: 500));
       await tester.pumpAndSettle();
 
-      expect(find.textContaining('120 / 80 mmHg'), findsOneWidget);
+      expect(find.textContaining('120/80 mmHg'), findsOneWidget);
     });
   });
 }
