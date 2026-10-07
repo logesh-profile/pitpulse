@@ -68,11 +68,56 @@ def create_application() -> FastAPI:
 
     @app.on_event("startup")
     async def on_startup():
+        import logging
+        from sqlalchemy import text
+        from app.core.database import engine
+        from app.models import Base
+
+        logger = logging.getLogger("pitpulse.startup")
+        logger.info("[STARTUP] Running automatic schema migration and table verification...")
+
+        try:
+            async with engine.begin() as conn:
+                # 1. Create all missing tables in PostgreSQL/SQLite
+                await conn.run_sync(Base.metadata.create_all)
+
+                # 2. Add missing columns to 'users' table if they don't exist
+                is_sqlite = str(engine.url).startswith("sqlite")
+                if is_sqlite:
+                    for col_stmt in [
+                        "ALTER TABLE users ADD COLUMN is_verified BOOLEAN DEFAULT 1",
+                        "ALTER TABLE users ADD COLUMN age INTEGER",
+                        "ALTER TABLE users ADD COLUMN gender VARCHAR(50)",
+                        "ALTER TABLE users ADD COLUMN is_profile_completed BOOLEAN DEFAULT 1",
+                    ]:
+                        try:
+                            await conn.execute(text(col_stmt))
+                        except Exception:
+                            pass
+                else:
+                    for col_stmt in [
+                        "ALTER TABLE users ADD COLUMN IF NOT EXISTS is_verified BOOLEAN DEFAULT TRUE",
+                        "ALTER TABLE users ADD COLUMN IF NOT EXISTS age INTEGER",
+                        "ALTER TABLE users ADD COLUMN IF NOT EXISTS gender VARCHAR(50)",
+                        "ALTER TABLE users ADD COLUMN IF NOT EXISTS is_profile_completed BOOLEAN DEFAULT TRUE",
+                        "UPDATE users SET is_verified = TRUE WHERE is_verified IS NULL",
+                        "UPDATE users SET is_profile_completed = TRUE WHERE is_profile_completed IS NULL",
+                    ]:
+                        try:
+                            await conn.execute(text(col_stmt))
+                        except Exception as ex:
+                            logger.warning(f"[MIGRATION NOTICE] {col_stmt}: {ex}")
+
+            logger.info("[STARTUP] Database tables and schema verified successfully.")
+        except Exception as e:
+            logger.error(f"[STARTUP ERROR] Database schema migration error: {e}")
+
+        # 3. Seed or verify master administrator (admin123@gmail.com)
         try:
             from app.scripts.seed_admin import seed_initial_admin
             await seed_initial_admin()
-        except Exception:
-            pass
+        except Exception as e:
+            logger.error(f"[STARTUP ERROR] Admin seeding error: {e}")
 
     return app
 
