@@ -220,7 +220,17 @@ class AuthController extends ChangeNotifier {
       return true;
     } catch (e) {
       _status = AuthStatus.error;
-      _errorMessage = e is Failure ? e.message : 'Google Sign-In failed: $e';
+      if (e is Failure) {
+        _errorMessage = e.message;
+      } else {
+        final errText = e.toString();
+        if (errText.contains('10:') || errText.contains('sign_in_failed')) {
+          _errorMessage =
+              'Google Sign-In configuration needed: The SHA-1 certificate must be registered in Google Cloud Console. Please use your Gmail and password below to sign in or register.';
+        } else {
+          _errorMessage = 'Google Sign-In: $errText';
+        }
+      }
       notifyListeners();
       return false;
     }
