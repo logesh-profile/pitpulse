@@ -34,7 +34,6 @@ class PatientDashboardScreen extends StatefulWidget {
 class _PatientDashboardScreenState extends State<PatientDashboardScreen> {
   late final PregnancyController _pregnancyController;
   late final AshaController _ashaController;
-  static const Color primaryTeal = Color(0xFF0D9488);
 
   @override
   void initState() {
@@ -143,114 +142,144 @@ class _PatientDashboardScreenState extends State<PatientDashboardScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    // Patient Profile Summary Card
-                    Card(
-                      color: const Color(0xFF1E293B),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                      child: Padding(
-                        padding: const EdgeInsets.all(16.0),
-                        child: Column(
-                          children: [
-                            Row(
-                              children: [
-                                CircleAvatar(
-                                  radius: 28,
-                                  backgroundColor: const Color(0xFF14B8A6),
-                                  child: Text(
-                                    (user?.fullName.isNotEmpty == true) ? user!.fullName[0].toUpperCase() : 'P',
-                                    style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Colors.white),
+                    // Patient Profile Summary Card - Swiss Porcelain Style
+                    Container(
+                      padding: const EdgeInsets.all(20.0),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(color: MaatraTheme.borderHairline),
+                      ),
+                      child: Column(
+                        children: [
+                          Row(
+                            children: [
+                              Container(
+                                width: 52,
+                                height: 52,
+                                decoration: BoxDecoration(
+                                  color: MaatraTheme.brandEmerald,
+                                  borderRadius: BorderRadius.circular(14),
+                                ),
+                                alignment: Alignment.center,
+                                child: Text(
+                                  (user?.fullName.isNotEmpty == true) ? user!.fullName[0].toUpperCase() : 'P',
+                                  style: GoogleFonts.plusJakartaSans(
+                                    fontSize: 22,
+                                    fontWeight: FontWeight.w800,
+                                    color: Colors.white,
                                   ),
                                 ),
-                                const SizedBox(width: 14),
-                                Expanded(
-                                  child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
-                                    children: [
-                                      Text(
-                                        user?.fullName ?? 'Patient',
-                                        style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
-                                      ),
-                                      Text(
-                                        user?.email ?? '',
-                                        style: theme.textTheme.bodySmall?.copyWith(color: Colors.grey[400]),
-                                      ),
-                                      const SizedBox(height: 4),
-                                      Container(
-                                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                                        decoration: BoxDecoration(
-                                          color: const Color(0xFF14B8A6).withValues(alpha: 0.2),
-                                          borderRadius: BorderRadius.circular(4),
-                                          border: Border.all(color: const Color(0xFF14B8A6)),
-                                        ),
-                                        child: const Text(
-                                          'PATIENT / CITIZEN',
-                                          style: TextStyle(fontSize: 10, color: Color(0xFF14B8A6), fontWeight: FontWeight.bold),
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                              ],
-                            ),
-                            const Divider(height: 24),
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                Column(
+                              ),
+                              const SizedBox(width: 14),
+                              Expanded(
+                                child: Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
-                                    const Text('HEALTH RECORD ID', style: TextStyle(fontSize: 10, color: Colors.grey, fontWeight: FontWeight.bold)),
+                                    Text(
+                                      user?.fullName ?? 'Patient',
+                                      style: GoogleFonts.plusJakartaSans(
+                                        fontSize: 17,
+                                        fontWeight: FontWeight.w800,
+                                        color: MaatraTheme.textCharcoal,
+                                        letterSpacing: -0.3,
+                                      ),
+                                    ),
                                     const SizedBox(height: 2),
                                     Text(
-                                      profile?.healthRecord?.recordNumber ?? (isProfileLoading ? 'Loading...' : 'HR-INITIALIZING'),
-                                      style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Color(0xFF14B8A6)),
+                                      user?.email ?? '',
+                                      style: GoogleFonts.plusJakartaSans(
+                                        fontSize: 12.5,
+                                        color: MaatraTheme.textMuted,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 6),
+                                    Container(
+                                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                                      decoration: BoxDecoration(
+                                        color: MaatraTheme.brandSageWash,
+                                        borderRadius: BorderRadius.circular(6),
+                                        border: Border.all(color: MaatraTheme.brandSage.withValues(alpha: 0.2)),
+                                      ),
+                                      child: Text(
+                                        'PATIENT / CITIZEN',
+                                        style: GoogleFonts.plusJakartaSans(
+                                          fontSize: 10,
+                                          color: MaatraTheme.brandSage,
+                                          fontWeight: FontWeight.w700,
+                                          letterSpacing: 0.6,
+                                        ),
+                                      ),
                                     ),
                                   ],
                                 ),
-                                TextButton.icon(
-                                  icon: const Icon(Icons.arrow_forward, size: 16),
-                                  label: const Text('View Full Profile'),
-                                  onPressed: () {
-                                    Navigator.push(
-                                      context,
-                                      MaterialPageRoute(
-                                        builder: (_) => PatientProfileScreen(patientController: widget.patientController),
-                                      ),
-                                    );
-                                  },
+                              ),
+                            ],
+                          ),
+                          const Divider(height: 28, color: MaatraTheme.borderHairline),
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    'HEALTH RECORD ID',
+                                    style: GoogleFonts.plusJakartaSans(
+                                      fontSize: 10,
+                                      color: MaatraTheme.textQuiet,
+                                      fontWeight: FontWeight.w700,
+                                      letterSpacing: 0.8,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 2),
+                                  Text(
+                                    profile?.healthRecord?.recordNumber ?? (isProfileLoading ? 'Loading...' : 'HR-INITIALIZING'),
+                                    style: GoogleFonts.plusJakartaSans(
+                                      fontSize: 13.5,
+                                      fontWeight: FontWeight.w700,
+                                      color: MaatraTheme.brandEmerald,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              TextButton.icon(
+                                icon: const Icon(Icons.arrow_forward_rounded, size: 15, color: MaatraTheme.brandEmerald),
+                                label: Text(
+                                  'View Profile',
+                                  style: GoogleFonts.plusJakartaSans(
+                                    color: MaatraTheme.brandEmerald,
+                                    fontWeight: FontWeight.w700,
+                                    fontSize: 13,
+                                  ),
                                 ),
-                              ],
-                            ),
-                          ],
-                        ),
+                                onPressed: () {
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (_) => PatientProfileScreen(patientController: widget.patientController),
+                                    ),
+                                  );
+                                },
+                              ),
+                            ],
+                          ),
+                        ],
                       ),
                     ),
                     const SizedBox(height: 20),
-
-                    // ==========================================
                     // PATIENT AI: Anu — ur ai at ur place
                     // ==========================================
                     Container(
                       decoration: BoxDecoration(
-                        gradient: const LinearGradient(
-                          colors: [Color(0xFF1E1435), Color(0xFF111827)],
-                          begin: Alignment.topLeft,
-                          end: Alignment.bottomRight,
-                        ),
-                        borderRadius: BorderRadius.circular(20),
-                        border: Border.all(color: MaatraTheme.primaryAmethyst.withValues(alpha: 0.35), width: 1.2),
-                        boxShadow: [
-                          BoxShadow(
-                            color: MaatraTheme.primaryAmethyst.withValues(alpha: 0.15),
-                            blurRadius: 18,
-                            offset: const Offset(0, 6),
-                          ),
-                        ],
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(color: MaatraTheme.brandSage.withValues(alpha: 0.3), width: 1.2),
                       ),
                       child: Material(
                         color: Colors.transparent,
                         child: InkWell(
-                          borderRadius: BorderRadius.circular(20),
+                          borderRadius: BorderRadius.circular(16),
                           onTap: _openPatientAi,
                           child: Padding(
                             padding: const EdgeInsets.all(20.0),
@@ -263,22 +292,14 @@ class _PatientDashboardScreenState extends State<PatientDashboardScreen> {
                                       width: 52,
                                       height: 52,
                                       decoration: BoxDecoration(
-                                        borderRadius: BorderRadius.circular(16),
-                                        border: Border.all(color: MaatraTheme.primaryAmethyst.withValues(alpha: 0.5), width: 1.5),
-                                        boxShadow: [
-                                          BoxShadow(
-                                            color: MaatraTheme.primaryAmethyst.withValues(alpha: 0.35),
-                                            blurRadius: 12,
-                                            offset: const Offset(0, 4),
-                                          ),
-                                        ],
+                                        shape: BoxShape.circle,
+                                        border: Border.all(color: MaatraTheme.brandSage.withValues(alpha: 0.4), width: 1.5),
                                       ),
-                                      child: ClipRRect(
-                                        borderRadius: BorderRadius.circular(14.5),
+                                      child: ClipOval(
                                         child: Image.asset(
                                           'assets/images/anu_avatar.png',
                                           fit: BoxFit.cover,
-                                          errorBuilder: (context, error, stackTrace) => const Icon(Icons.auto_awesome, color: Colors.white, size: 22),
+                                          errorBuilder: (context, error, stackTrace) => const Icon(Icons.auto_awesome, color: MaatraTheme.brandEmerald, size: 22),
                                         ),
                                       ),
                                     ),
@@ -290,20 +311,19 @@ class _PatientDashboardScreenState extends State<PatientDashboardScreen> {
                                           Text(
                                             'Anu',
                                             style: GoogleFonts.plusJakartaSans(
-                                              color: MaatraTheme.textPrimary,
+                                              color: MaatraTheme.textCharcoal,
                                               fontWeight: FontWeight.w800,
                                               fontSize: 18,
                                               letterSpacing: -0.3,
                                             ),
                                           ),
-                                          const SizedBox(height: 3),
+                                          const SizedBox(height: 2),
                                           Text(
                                             'ur ai at ur place',
                                             style: GoogleFonts.plusJakartaSans(
-                                              color: MaatraTheme.accentLilac,
-                                              fontSize: 12,
+                                              color: MaatraTheme.brandSage,
+                                              fontSize: 12.5,
                                               fontWeight: FontWeight.w600,
-                                              letterSpacing: 0.2,
                                             ),
                                           ),
                                         ],
@@ -312,43 +332,53 @@ class _PatientDashboardScreenState extends State<PatientDashboardScreen> {
                                     Container(
                                       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                                       decoration: BoxDecoration(
-                                        color: MaatraTheme.primaryAmethyst.withValues(alpha: 0.15),
+                                        color: MaatraTheme.brandSageWash,
                                         borderRadius: BorderRadius.circular(12),
-                                        border: Border.all(color: MaatraTheme.primaryAmethyst.withValues(alpha: 0.4)),
+                                        border: Border.all(color: MaatraTheme.brandSage.withValues(alpha: 0.2)),
                                       ),
-                                      child: Text(
-                                        'LIVE',
-                                        style: GoogleFonts.plusJakartaSans(
-                                          fontSize: 10,
-                                          fontWeight: FontWeight.w800,
-                                          color: MaatraTheme.accentLilac,
-                                          letterSpacing: 0.8,
-                                        ),
+                                      child: Row(
+                                        mainAxisSize: MainAxisSize.min,
+                                        children: [
+                                          Container(
+                                            width: 6,
+                                            height: 6,
+                                            decoration: const BoxDecoration(
+                                              color: MaatraTheme.statusSafe,
+                                              shape: BoxShape.circle,
+                                            ),
+                                          ),
+                                          const SizedBox(width: 6),
+                                          Text(
+                                            'Anu Live',
+                                            style: GoogleFonts.plusJakartaSans(
+                                              color: MaatraTheme.brandSage,
+                                              fontSize: 11,
+                                              fontWeight: FontWeight.w700,
+                                            ),
+                                          ),
+                                        ],
                                       ),
                                     ),
                                   ],
                                 ),
                                 const SizedBox(height: 14),
                                 Text(
-                                  'Ask Anu home remedies, symptoms, daily nutrition, or converse naturally in English or Tamil.',
+                                  'Ask questions about your pregnancy symptoms, diet, fetal development, or upcoming doctor visits anytime.',
                                   style: GoogleFonts.plusJakartaSans(
-                                    color: MaatraTheme.textSecondary,
+                                    color: MaatraTheme.textMuted,
                                     fontSize: 13,
-                                    height: 1.45,
+                                    height: 1.5,
                                   ),
                                 ),
                                 const SizedBox(height: 16),
-                                Container(
+                                SizedBox(
                                   height: 44,
-                                  decoration: BoxDecoration(
-                                    gradient: const LinearGradient(
-                                      colors: [MaatraTheme.deepAmethyst, MaatraTheme.primaryAmethyst],
-                                    ),
-                                    borderRadius: BorderRadius.circular(12),
-                                  ),
+                                  width: double.infinity,
                                   child: ElevatedButton.icon(
                                     style: ElevatedButton.styleFrom(
-                                      backgroundColor: Colors.transparent,
+                                      backgroundColor: MaatraTheme.brandEmerald,
+                                      foregroundColor: Colors.white,
+                                      elevation: 0,
                                       shadowColor: Colors.transparent,
                                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                                     ),
@@ -357,7 +387,7 @@ class _PatientDashboardScreenState extends State<PatientDashboardScreen> {
                                       'Chat with Anu',
                                       style: GoogleFonts.plusJakartaSans(
                                         color: Colors.white,
-                                        fontSize: 13,
+                                        fontSize: 13.5,
                                         fontWeight: FontWeight.w700,
                                       ),
                                     ),
@@ -371,18 +401,16 @@ class _PatientDashboardScreenState extends State<PatientDashboardScreen> {
                       ),
                     ),
                     const SizedBox(height: 24),
-
-                    // ==========================================
                     // STAGE 5: Assigned ASHA Health Worker Section
                     // ==========================================
                     Text(
                       'Assigned Field Healthcare Worker',
-                      style: theme.textTheme.titleSmall?.copyWith(fontWeight: FontWeight.bold, color: Colors.grey[300]),
+                      style: theme.textTheme.titleSmall?.copyWith(color: MaatraTheme.textCharcoal, fontWeight: FontWeight.w800),
                     ),
                     const SizedBox(height: 8),
 
                     Card(
-                      color: const Color(0xFF1E293B),
+                      color: Colors.white,
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(12),
                         side: BorderSide(
@@ -464,7 +492,7 @@ class _PatientDashboardScreenState extends State<PatientDashboardScreen> {
                       children: [
                         Text(
                           'Maternal & Pregnancy Care',
-                          style: theme.textTheme.titleSmall?.copyWith(fontWeight: FontWeight.bold, color: Colors.grey[300]),
+                          style: theme.textTheme.titleSmall?.copyWith(color: MaatraTheme.textCharcoal, fontWeight: FontWeight.w800),
                         ),
                         if (allPregnancies.isNotEmpty)
                           TextButton(
@@ -484,7 +512,7 @@ class _PatientDashboardScreenState extends State<PatientDashboardScreen> {
 
                     if (isPregnancyLoading && allPregnancies.isEmpty)
                       const Card(
-                        color: Color(0xFF1E293B),
+                        color: MaatraTheme.surfacePorcelain,
                         child: Padding(
                           padding: EdgeInsets.all(24.0),
                           child: Center(child: CircularProgressIndicator()),
@@ -493,23 +521,17 @@ class _PatientDashboardScreenState extends State<PatientDashboardScreen> {
                     else if (activePregnancy != null)
                       // Real Active Pregnancy Card
                       Card(
-                        elevation: 3,
+                        elevation: 0,
+                        color: MaatraTheme.surfacePorcelain,
                         shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
-                          side: const BorderSide(color: Color(0xFF14B8A6), width: 1.2),
+                          borderRadius: BorderRadius.circular(16),
+                          side: const BorderSide(color: MaatraTheme.borderHairline, width: 1),
                         ),
                         child: Container(
                           padding: const EdgeInsets.all(16),
                           decoration: BoxDecoration(
-                            borderRadius: BorderRadius.circular(12),
-                            gradient: LinearGradient(
-                              colors: [
-                                const Color(0xFF14B8A6).withValues(alpha: 0.15),
-                                const Color(0xFF0F172A),
-                              ],
-                              begin: Alignment.topLeft,
-                              end: Alignment.bottomRight,
-                            ),
+                            borderRadius: BorderRadius.circular(16),
+                            color: MaatraTheme.surfacePorcelain,
                           ),
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
@@ -519,40 +541,40 @@ class _PatientDashboardScreenState extends State<PatientDashboardScreen> {
                                 children: [
                                   Row(
                                     children: [
-                                      const Icon(Icons.pregnant_woman, color: Color(0xFF14B8A6), size: 24),
+                                      const Icon(Icons.pregnant_woman, color: MaatraTheme.brandEmerald, size: 24),
                                       const SizedBox(width: 8),
                                       Text(
                                         'Pregnancy #${activePregnancy.pregnancyNumber}',
-                                        style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                                        style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: MaatraTheme.textCharcoal),
                                       ),
                                     ],
                                   ),
                                   Container(
-                                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 3),
+                                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                                     decoration: BoxDecoration(
-                                      color: const Color(0xFF14B8A6).withValues(alpha: 0.25),
+                                      color: MaatraTheme.brandSageWash,
                                       borderRadius: BorderRadius.circular(12),
-                                      border: Border.all(color: const Color(0xFF14B8A6)),
+                                      border: Border.all(color: MaatraTheme.brandSage.withValues(alpha: 0.3)),
                                     ),
                                     child: const Text(
                                       'ACTIVE',
-                                      style: TextStyle(color: Color(0xFF14B8A6), fontWeight: FontWeight.bold, fontSize: 11),
+                                      style: TextStyle(color: MaatraTheme.brandSage, fontWeight: FontWeight.bold, fontSize: 11),
                                     ),
                                   ),
                                 ],
                               ),
-                              const Divider(height: 20),
+                              const Divider(height: 20, color: MaatraTheme.borderHairline),
                               Row(
                                 children: [
                                   Expanded(
                                     child: Column(
                                       crossAxisAlignment: CrossAxisAlignment.start,
                                       children: [
-                                        const Text('Gestational Age', style: TextStyle(fontSize: 11, color: Colors.grey)),
+                                        const Text('Gestational Age', style: TextStyle(fontSize: 11, color: MaatraTheme.textMuted)),
                                         const SizedBox(height: 2),
                                         Text(
                                           activePregnancy.gestationalAgeDisplay,
-                                          style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Colors.white),
+                                          style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: MaatraTheme.textCharcoal),
                                         ),
                                       ],
                                     ),
@@ -561,11 +583,11 @@ class _PatientDashboardScreenState extends State<PatientDashboardScreen> {
                                     child: Column(
                                       crossAxisAlignment: CrossAxisAlignment.start,
                                       children: [
-                                        const Text('Trimester', style: TextStyle(fontSize: 11, color: Colors.grey)),
+                                        const Text('Trimester', style: TextStyle(fontSize: 11, color: MaatraTheme.textMuted)),
                                         const SizedBox(height: 2),
                                         Text(
                                           activePregnancy.trimesterDisplay,
-                                          style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Colors.amber),
+                                          style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: MaatraTheme.statusWarning),
                                         ),
                                       ],
                                     ),
@@ -574,11 +596,11 @@ class _PatientDashboardScreenState extends State<PatientDashboardScreen> {
                                     child: Column(
                                       crossAxisAlignment: CrossAxisAlignment.start,
                                       children: [
-                                        const Text('Estimated Due Date', style: TextStyle(fontSize: 11, color: Colors.grey)),
+                                        const Text('Estimated Due Date', style: TextStyle(fontSize: 11, color: MaatraTheme.textMuted)),
                                         const SizedBox(height: 2),
                                         Text(
                                           _formatDateShort(activePregnancy.edd),
-                                          style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: Color(0xFF14B8A6)),
+                                          style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: MaatraTheme.brandEmerald),
                                         ),
                                       ],
                                     ),
@@ -591,7 +613,7 @@ class _PatientDashboardScreenState extends State<PatientDashboardScreen> {
                                 children: [
                                   ElevatedButton.icon(
                                     style: ElevatedButton.styleFrom(
-                                      backgroundColor: const Color(0xFF14B8A6),
+                                      backgroundColor: MaatraTheme.brandEmerald,
                                       foregroundColor: Colors.white,
                                     ),
                                     icon: const Icon(Icons.arrow_forward, size: 16),
@@ -617,7 +639,7 @@ class _PatientDashboardScreenState extends State<PatientDashboardScreen> {
                     else
                       // Truthful Empty State Card
                       Card(
-                        color: const Color(0xFF1E293B),
+                        color: Colors.white,
                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                         child: Padding(
                           padding: const EdgeInsets.all(18.0),
@@ -627,8 +649,8 @@ class _PatientDashboardScreenState extends State<PatientDashboardScreen> {
                                 children: [
                                   CircleAvatar(
                                     radius: 20,
-                                    backgroundColor: primaryTeal.withValues(alpha: 0.2),
-                                    child: const Icon(Icons.pregnant_woman, color: primaryTeal, size: 22),
+                                    backgroundColor: MaatraTheme.brandEmerald.withValues(alpha: 0.2),
+                                    child: const Icon(Icons.pregnant_woman, color: MaatraTheme.brandEmerald, size: 22),
                                   ),
                                   const SizedBox(width: 12),
                                   Expanded(
@@ -668,7 +690,7 @@ class _PatientDashboardScreenState extends State<PatientDashboardScreen> {
                                       child: const Text('View History'),
                                     ),
                                   ElevatedButton.icon(
-                                    style: ElevatedButton.styleFrom(backgroundColor: primaryTeal),
+                                    style: ElevatedButton.styleFrom(backgroundColor: MaatraTheme.brandEmerald),
                                     icon: const Icon(Icons.add, color: Colors.white, size: 16),
                                     label: const Text('Register Pregnancy', style: TextStyle(color: Colors.white)),
                                     onPressed: () async {
@@ -700,7 +722,7 @@ class _PatientDashboardScreenState extends State<PatientDashboardScreen> {
                       children: [
                         Text(
                           'Maternal Vitals (${vitals.length})',
-                          style: theme.textTheme.titleSmall?.copyWith(fontWeight: FontWeight.bold, color: Colors.grey[300]),
+                          style: theme.textTheme.titleSmall?.copyWith(color: MaatraTheme.textCharcoal, fontWeight: FontWeight.w800),
                         ),
                       ],
                     ),
@@ -708,7 +730,7 @@ class _PatientDashboardScreenState extends State<PatientDashboardScreen> {
 
                     if (vitals.isEmpty)
                       Card(
-                        color: const Color(0xFF1E293B),
+                        color: Colors.white,
                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                         child: const Padding(
                           padding: EdgeInsets.all(18.0),
@@ -729,7 +751,7 @@ class _PatientDashboardScreenState extends State<PatientDashboardScreen> {
                       ...vitals.map((vit) {
                         return Card(
                           margin: const EdgeInsets.only(bottom: 10),
-                          color: const Color(0xFF1E293B),
+                          color: Colors.white,
                           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                           child: Padding(
                             padding: const EdgeInsets.all(14.0),
@@ -741,7 +763,7 @@ class _PatientDashboardScreenState extends State<PatientDashboardScreen> {
                                   children: [
                                     Row(
                                       children: [
-                                        const Icon(Icons.favorite, size: 16, color: Color(0xFF14B8A6)),
+                                        const Icon(Icons.favorite, size: 16, color: MaatraTheme.brandEmerald),
                                         const SizedBox(width: 6),
                                         Text(
                                           _formatDateShort(vit.recordedAt),
@@ -808,7 +830,7 @@ class _PatientDashboardScreenState extends State<PatientDashboardScreen> {
                       children: [
                         Text(
                           'ASHA Field Home Visits (${homeVisits.length})',
-                          style: theme.textTheme.titleSmall?.copyWith(fontWeight: FontWeight.bold, color: Colors.grey[300]),
+                          style: theme.textTheme.titleSmall?.copyWith(color: MaatraTheme.textCharcoal, fontWeight: FontWeight.w800),
                         ),
                       ],
                     ),
@@ -816,7 +838,7 @@ class _PatientDashboardScreenState extends State<PatientDashboardScreen> {
 
                     if (homeVisits.isEmpty)
                       Card(
-                        color: const Color(0xFF1E293B),
+                        color: Colors.white,
                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                         child: const Padding(
                           padding: EdgeInsets.all(18.0),
@@ -837,7 +859,7 @@ class _PatientDashboardScreenState extends State<PatientDashboardScreen> {
                       ...homeVisits.map((v) {
                         return Card(
                           margin: const EdgeInsets.only(bottom: 10),
-                          color: const Color(0xFF1E293B),
+                          color: Colors.white,
                           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                           child: Padding(
                             padding: const EdgeInsets.all(14.0),
@@ -892,7 +914,7 @@ class _PatientDashboardScreenState extends State<PatientDashboardScreen> {
                     // Health Modules Foundation
                     Text(
                       'Connected Health Network Foundation',
-                      style: theme.textTheme.titleSmall?.copyWith(fontWeight: FontWeight.bold, color: Colors.grey[300]),
+                      style: theme.textTheme.titleSmall?.copyWith(color: MaatraTheme.textCharcoal, fontWeight: FontWeight.w800),
                     ),
                     const SizedBox(height: 12),
 
@@ -947,21 +969,34 @@ class _PatientDashboardScreenState extends State<PatientDashboardScreen> {
   }) {
     return Card(
       margin: const EdgeInsets.only(bottom: 12),
-      color: const Color(0xFF1E293B),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+      color: MaatraTheme.surfacePorcelain,
+      elevation: 0,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
+        side: const BorderSide(color: MaatraTheme.borderHairline),
+      ),
       child: ListTile(
-        leading: Icon(icon, color: const Color(0xFF14B8A6)),
-        title: Text(title, style: const TextStyle(fontWeight: FontWeight.bold)),
-        subtitle: Text(subtitle, style: const TextStyle(fontSize: 12, color: Colors.grey)),
+        leading: Container(
+          width: 40,
+          height: 40,
+          decoration: BoxDecoration(
+            color: MaatraTheme.brandSageWash,
+            borderRadius: BorderRadius.circular(10),
+          ),
+          child: Icon(icon, color: MaatraTheme.brandEmerald, size: 22),
+        ),
+        title: Text(title, style: const TextStyle(fontWeight: FontWeight.w700, color: MaatraTheme.textCharcoal, fontSize: 14)),
+        subtitle: Text(subtitle, style: const TextStyle(fontSize: 12, color: MaatraTheme.textMuted)),
         trailing: Container(
           padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
           decoration: BoxDecoration(
-            color: Colors.black26,
-            borderRadius: BorderRadius.circular(4),
+            color: MaatraTheme.surfaceSubtle,
+            borderRadius: BorderRadius.circular(6),
+            border: Border.all(color: MaatraTheme.borderHairline),
           ),
           child: Text(
             status,
-            style: const TextStyle(fontSize: 10, color: Colors.grey),
+            style: const TextStyle(fontSize: 10, color: MaatraTheme.textMuted, fontWeight: FontWeight.w600),
           ),
         ),
         onTap: onTap,

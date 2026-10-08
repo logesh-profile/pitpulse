@@ -199,9 +199,9 @@ class _PitPulseAppState extends State<PitPulseApp> {
           navigatorKey: PitPulseApp.navigatorKey,
           title: AppConfig.appName,
           debugShowCheckedModeBanner: false,
-          theme: MaatraTheme.darkTheme,
-          darkTheme: MaatraTheme.darkTheme,
-          themeMode: ThemeMode.dark,
+          theme: MaatraTheme.lightTheme,
+          darkTheme: MaatraTheme.lightTheme,
+          themeMode: ThemeMode.light,
           home: _resolveHomeScreen(_authController),
         );
       },

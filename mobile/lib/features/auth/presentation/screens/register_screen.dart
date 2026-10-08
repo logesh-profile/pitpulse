@@ -249,26 +249,15 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 ),
                 const SizedBox(height: 32),
 
-                // Submit Button
-                Container(
-                  height: 54,
-                  decoration: BoxDecoration(
-                    gradient: const LinearGradient(
-                      colors: [MaatraTheme.deepAmethyst, MaatraTheme.primaryAmethyst],
-                    ),
-                    borderRadius: BorderRadius.circular(14),
-                    boxShadow: [
-                      BoxShadow(
-                        color: MaatraTheme.primaryAmethyst.withValues(alpha: 0.35),
-                        blurRadius: 16,
-                        offset: const Offset(0, 4),
-                      ),
-                    ],
-                  ),
+                // Submit Button - Solid Medical Emerald
+                SizedBox(
+                  height: 52,
                   child: ElevatedButton(
                     onPressed: _isSubmitting ? null : _submitRegister,
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.transparent,
+                      backgroundColor: MaatraTheme.brandEmerald,
+                      foregroundColor: Colors.white,
+                      elevation: 0,
                       shadowColor: Colors.transparent,
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
                     ),
@@ -282,7 +271,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                             'Send Verification Code',
                             style: GoogleFonts.plusJakartaSans(
                               color: Colors.white,
-                              fontSize: 16,
+                              fontSize: 15,
                               fontWeight: FontWeight.w700,
                             ),
                           ),
@@ -293,20 +282,20 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 // Or Divider
                 Row(
                   children: [
-                    Expanded(child: Container(height: 1, color: MaatraTheme.borderMuted)),
+                    Expanded(child: Container(height: 1, color: MaatraTheme.borderHairline)),
                     Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 14),
                       child: Text(
                         'OR CONTINUE WITH',
                         style: GoogleFonts.plusJakartaSans(
-                          color: MaatraTheme.textSecondary,
+                          color: MaatraTheme.textQuiet,
                           fontSize: 11,
                           fontWeight: FontWeight.w600,
                           letterSpacing: 1.1,
                         ),
                       ),
                     ),
-                    Expanded(child: Container(height: 1, color: MaatraTheme.borderMuted)),
+                    Expanded(child: Container(height: 1, color: MaatraTheme.borderHairline)),
                   ],
                 ),
                 const SizedBox(height: 18),
@@ -315,38 +304,23 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 OutlinedButton(
                   onPressed: _isSubmitting ? null : _handleGoogleSignIn,
                   style: OutlinedButton.styleFrom(
-                    backgroundColor: MaatraTheme.surfaceDark,
-                    side: const BorderSide(color: MaatraTheme.borderMuted),
+                    backgroundColor: Colors.white,
+                    side: const BorderSide(color: MaatraTheme.borderHairline),
+                    elevation: 0,
                     padding: const EdgeInsets.symmetric(vertical: 14),
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
                   ),
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Container(
-                        width: 22,
-                        height: 22,
-                        alignment: Alignment.center,
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(11),
-                        ),
-                        child: const Text(
-                          'G',
-                          style: TextStyle(
-                            color: Color(0xFF4285F4),
-                            fontWeight: FontWeight.w900,
-                            fontSize: 14,
-                          ),
-                        ),
-                      ),
-                      const SizedBox(width: 12),
+                      const Icon(Icons.g_mobiledata_rounded, size: 28, color: MaatraTheme.brandEmerald),
+                      const SizedBox(width: 8),
                       Text(
-                        'Sign up with Google (1-Tap)',
+                        'Continue with Google',
                         style: GoogleFonts.plusJakartaSans(
                           color: MaatraTheme.textPrimary,
-                          fontSize: 14,
-                          fontWeight: FontWeight.w700,
+                          fontSize: 14.5,
+                          fontWeight: FontWeight.w600,
                         ),
                       ),
                     ],

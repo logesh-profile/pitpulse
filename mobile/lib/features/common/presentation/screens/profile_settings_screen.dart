@@ -113,27 +113,18 @@ class ProfileSettingsScreen extends StatelessWidget {
                 child: Row(
                   children: [
                     Container(
-                      width: 58,
-                      height: 58,
+                      width: 56,
+                      height: 56,
                       decoration: BoxDecoration(
-                        gradient: const LinearGradient(
-                          colors: [MaatraTheme.deepAmethyst, MaatraTheme.primaryAmethyst],
-                        ),
-                        borderRadius: BorderRadius.circular(18),
-                        boxShadow: [
-                          BoxShadow(
-                            color: MaatraTheme.primaryAmethyst.withValues(alpha: 0.3),
-                            blurRadius: 14,
-                            offset: const Offset(0, 4),
-                          ),
-                        ],
+                        color: MaatraTheme.brandEmerald,
+                        borderRadius: BorderRadius.circular(16),
                       ),
                       alignment: Alignment.center,
                       child: Text(
                         initial,
                         style: GoogleFonts.plusJakartaSans(
                           color: Colors.white,
-                          fontSize: 24,
+                          fontSize: 22,
                           fontWeight: FontWeight.w800,
                         ),
                       ),
@@ -164,14 +155,14 @@ class ProfileSettingsScreen extends StatelessWidget {
                           Container(
                             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 3),
                             decoration: BoxDecoration(
-                              color: MaatraTheme.primaryAmethyst.withValues(alpha: 0.15),
+                              color: MaatraTheme.brandSageWash,
                               borderRadius: BorderRadius.circular(8),
-                              border: Border.all(color: MaatraTheme.primaryAmethyst.withValues(alpha: 0.4)),
+                              border: Border.all(color: MaatraTheme.brandSage.withValues(alpha: 0.25)),
                             ),
                             child: Text(
                               role,
                               style: GoogleFonts.plusJakartaSans(
-                                color: MaatraTheme.accentLilac,
+                                color: MaatraTheme.brandSage,
                                 fontSize: 11,
                                 fontWeight: FontWeight.w700,
                                 letterSpacing: 0.8,

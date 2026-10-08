@@ -1,102 +1,147 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
-/// MAATRA Theme System: Option 2 - "Midnight Slate & Royal Amethyst"
-/// Ultra-premium luxury aesthetic with Plus Jakarta Sans typography.
+/// MAATRA Design System: Swiss Medical Precision with Subtle Warmth
+///
+/// Inspired by One Medical & Apple Health:
+/// - Warm ivory and porcelain canvas
+/// - Deep forest emerald brand trust color
+/// - Hairline borders and restrained 14-18px corner radii
+/// - Human-centered Plus Jakarta Sans typography
+/// - Zero cheap neon gradients, zero fuzzy AI glows
 class MaatraTheme {
-  // Midnight Slate & Royal Amethyst Palette
-  static const Color bgDark = Color(0xFF0B0F19); // Void Midnight Slate
-  static const Color surfaceDark = Color(0xFF111827); // Obsidian Card
-  static const Color cardDark = Color(0xFF161F30); // Elevated Card
-  static const Color inputDark = Color(0xFF1F293D); // Pill / Input Fill
-  static const Color borderMuted = Color(0xFF2A344A); // Elegant border
-  static const Color borderActive = Color(0xFF8B5CF6); // Focus amethyst
+  // ==========================================
+  // 1. SWISS PORCELAIN & WARM IVORY FOUNDATION
+  // ==========================================
+  static const Color bgIvory = Color(0xFFFAF8F5); // Warm, soothing ivory canvas
+  static const Color surfacePorcelain = Color(0xFFFFFFFF); // Pure crisp porcelain card surface
+  static const Color surfaceSubtle = Color(0xFFF3EFEA); // Soft warm inset / pill background
+  static const Color borderHairline = Color(0xFFE8E2D8); // Ultra-delicate 1px hairline divider
+  static const Color borderFocused = Color(0xFF0D483A); // Active brand emerald focus border
 
-  // Amethyst Accents
-  static const Color primaryAmethyst = Color(0xFF8B5CF6); // Vivid Royal Amethyst
-  static const Color accentLilac = Color(0xFFA78BFA); // Electric Lilac
-  static const Color accentLightAmethyst = Color(0xFFC4B5FD); // Light Pastel Amethyst
-  static const Color deepAmethyst = Color(0xFF6D28D9); // Deep Velvet Violet
-  static const Color amethystGlow = Color(0x338B5CF6); // Soft glow overlay
-  static const Color borderDark = Color(0xFF1F2937); // Dark Slate border
+  // ==========================================
+  // 2. BRAND & CLINICAL TRUST ACCENTS
+  // ==========================================
+  static const Color brandEmerald = Color(0xFF0D483A); // Deep medical forest emerald
+  static const Color brandEmeraldDark = Color(0xFF09362B); // Rich deep obsidian emerald
+  static const Color brandEmeraldLight = Color(0xFF165B4A); // Slightly lighter emerald for hover
+  static const Color brandSage = Color(0xFF2E6555); // Calm clinical sage
+  static const Color brandSageWash = Color(0xFFEBF3F0); // Very soft tint for pills & badges
 
-  // Status & Utility Accents
-  static const Color emeraldSuccess = Color(0xFF10B981);
-  static const Color emeraldSafe = Color(0xFF10B981);
-  static const Color amberWarning = Color(0xFFF59E0B);
-  static const Color crimsonAlert = Color(0xFFEF4444);
+  // ==========================================
+  // 3. HUMAN-CENTERED TYPOGRAPHY (CHARCOAL INK)
+  // ==========================================
+  static const Color textCharcoal = Color(0xFF1B2421); // Authoritative deep charcoal ink
+  static const Color textMuted = Color(0xFF56635F); // Refined slate sage for secondary copy
+  static const Color textQuiet = Color(0xFF8A9793); // Soft hint, timestamp, label
 
-  // Typography Palette
-  static const Color textPrimary = Color(0xFFF9FAFB); // Crisp Ivory
-  static const Color textSecondary = Color(0xFF9CA3AF); // Cool Slate Lavender
-  static const Color textTertiary = Color(0xFF64748B); // Muted Timestamp/Hint
+  // ==========================================
+  // 4. CLINICAL STATUS PALETTE (RESTFUL & PRECISE)
+  // ==========================================
+  static const Color statusSafe = Color(0xFF1B7A58); // Healthy vitals green
+  static const Color statusSafeWash = Color(0xFFE8F5EF);
+  static const Color statusWarning = Color(0xFFB46A10); // Warm amber attention
+  static const Color statusWarningWash = Color(0xFFFEF5E7);
+  static const Color statusAlert = Color(0xFFC53030); // Soft medical terracotta alert
+  static const Color statusAlertWash = Color(0xFFFDE8E8);
 
-  static ThemeData get darkTheme {
+  // ==========================================
+  // 5. BACKWARD-COMPATIBLE ALIASES
+  // ==========================================
+  static const Color bgDark = bgIvory;
+  static const Color surfaceDark = surfacePorcelain;
+  static const Color cardDark = surfacePorcelain;
+  static const Color inputDark = surfaceSubtle;
+  static const Color borderMuted = borderHairline;
+  static const Color borderActive = brandEmerald;
+  static const Color borderDark = borderHairline;
+
+  static const Color primaryAmethyst = brandEmerald;
+  static const Color accentLilac = brandSage;
+  static const Color accentLightAmethyst = brandSageWash;
+  static const Color deepAmethyst = brandEmeraldDark;
+  static const Color amethystGlow = Color(0x1A0D483A);
+
+  static const Color emeraldSuccess = statusSafe;
+  static const Color emeraldSafe = statusSafe;
+  static const Color amberWarning = statusWarning;
+  static const Color crimsonAlert = statusAlert;
+
+  static const Color textPrimary = textCharcoal;
+  static const Color textSecondary = textMuted;
+  static const Color textTertiary = textQuiet;
+
+  // ==========================================
+  // 6. SWISS THEMEDATA DEFINITION
+  // ==========================================
+  static ThemeData get lightTheme {
     return ThemeData(
       useMaterial3: true,
-      brightness: Brightness.dark,
-      scaffoldBackgroundColor: bgDark,
-      primaryColor: primaryAmethyst,
-      canvasColor: surfaceDark,
-      cardColor: surfaceDark,
+      brightness: Brightness.light,
+      scaffoldBackgroundColor: bgIvory,
+      primaryColor: brandEmerald,
+      canvasColor: surfacePorcelain,
+      cardColor: surfacePorcelain,
       fontFamily: GoogleFonts.plusJakartaSans().fontFamily,
-      colorScheme: const ColorScheme.dark(
-        primary: primaryAmethyst,
-        secondary: accentLilac,
-        surface: surfaceDark,
-        error: crimsonAlert,
+      colorScheme: const ColorScheme.light(
+        primary: brandEmerald,
+        secondary: brandSage,
+        surface: surfacePorcelain,
+        error: statusAlert,
         onPrimary: Colors.white,
         onSecondary: Colors.white,
-        onSurface: textPrimary,
+        onSurface: textCharcoal,
         onError: Colors.white,
       ),
       appBarTheme: AppBarTheme(
-        backgroundColor: bgDark,
+        backgroundColor: bgIvory,
         elevation: 0,
         scrolledUnderElevation: 0,
         centerTitle: false,
-        iconTheme: const IconThemeData(color: textPrimary),
+        iconTheme: const IconThemeData(color: textCharcoal),
         titleTextStyle: GoogleFonts.plusJakartaSans(
-          color: textPrimary,
-          fontSize: 18,
-          fontWeight: FontWeight.w700,
-          letterSpacing: 0.5,
+          color: textCharcoal,
+          fontSize: 19,
+          fontWeight: FontWeight.w800,
+          letterSpacing: -0.4,
         ),
       ),
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
-        fillColor: inputDark,
+        fillColor: surfaceSubtle,
         contentPadding: const EdgeInsets.symmetric(horizontal: 18, vertical: 16),
         hintStyle: GoogleFonts.plusJakartaSans(
-          color: textTertiary,
+          color: textQuiet,
           fontSize: 14,
         ),
         labelStyle: GoogleFonts.plusJakartaSans(
-          color: textSecondary,
+          color: textMuted,
           fontSize: 14,
+          fontWeight: FontWeight.w500,
         ),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(14),
-          borderSide: const BorderSide(color: borderMuted),
+          borderSide: const BorderSide(color: borderHairline),
         ),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(14),
-          borderSide: const BorderSide(color: borderMuted),
+          borderSide: const BorderSide(color: borderHairline),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(14),
-          borderSide: const BorderSide(color: primaryAmethyst, width: 1.5),
+          borderSide: const BorderSide(color: brandEmerald, width: 1.5),
         ),
         errorBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(14),
-          borderSide: const BorderSide(color: crimsonAlert),
+          borderSide: const BorderSide(color: statusAlert),
         ),
       ),
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(
-          backgroundColor: primaryAmethyst,
+          backgroundColor: brandEmerald,
           foregroundColor: Colors.white,
           elevation: 0,
+          shadowColor: Colors.transparent,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(14),
           ),
@@ -104,32 +149,40 @@ class MaatraTheme {
           textStyle: GoogleFonts.plusJakartaSans(
             fontSize: 15,
             fontWeight: FontWeight.w700,
-            letterSpacing: 0.3,
+            letterSpacing: -0.2,
           ),
         ),
       ),
       cardTheme: CardThemeData(
-        color: surfaceDark,
+        color: surfacePorcelain,
         elevation: 0,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(16),
-          side: const BorderSide(color: borderMuted),
+          side: const BorderSide(color: borderHairline, width: 1.0),
         ),
       ),
       dialogTheme: DialogThemeData(
-        backgroundColor: surfaceDark,
+        backgroundColor: surfacePorcelain,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(20),
-          side: const BorderSide(color: borderMuted),
+          side: const BorderSide(color: borderHairline),
         ),
       ),
       bottomSheetTheme: const BottomSheetThemeData(
-        backgroundColor: surfaceDark,
-        modalBackgroundColor: surfaceDark,
+        backgroundColor: surfacePorcelain,
+        modalBackgroundColor: surfacePorcelain,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
         ),
       ),
+      dividerTheme: const DividerThemeData(
+        color: borderHairline,
+        thickness: 1,
+        space: 1,
+      ),
     );
   }
+
+  // DarkTheme alias for cohesive rendering
+  static ThemeData get darkTheme => lightTheme;
 }

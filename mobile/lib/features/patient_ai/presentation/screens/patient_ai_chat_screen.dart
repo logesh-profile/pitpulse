@@ -31,16 +31,16 @@ class _PatientAiChatScreenState extends State<PatientAiChatScreen> with TickerPr
 
   bool _hasInputText = false;
 
-  // Classy Monochrome Palette (ChatGPT / Claude Aesthetic)
-  static const Color bgDark = Color(0xFF0D0D0D); // Deep Obsidian
-  static const Color surfaceDark = Color(0xFF171717); // Card Background
-  static const Color surfaceInput = Color(0xFF212121); // Input Pill
-  static const Color borderMuted = Color(0xFF262626); // Subtle Divider
-  static const Color borderActive = Color(0xFF383838); // Hover/Focus Border
-  static const Color textPrimary = Color(0xFFF5F5F5); // Crisp Ivory White
-  static const Color textSecondary = Color(0xFF9E9E9E); // Muted Neutral
-  static const Color textTertiary = Color(0xFF616161); // Hint / Timestamp
-  static const Color userBubble = Color(0xFF262626); // User Chat Bubble
+  // Swiss Medical Precision Palette (One Medical / Apple Health)
+  static const Color bgDark = Color(0xFFFAF8F5); // Warm Ivory Canvas
+  static const Color surfaceDark = Color(0xFFFFFFFF); // Pure Porcelain Card
+  static const Color surfaceInput = Color(0xFFF3EFEA); // Soft Warm Pill Fill
+  static const Color borderMuted = Color(0xFFE8E2D8); // Ultra-delicate Hairline
+  static const Color borderActive = Color(0xFF0D483A); // Brand Forest Emerald
+  static const Color textPrimary = Color(0xFF1B2421); // Charcoal Ink
+  static const Color textSecondary = Color(0xFF56635F); // Refined Slate Sage
+  static const Color textTertiary = Color(0xFF8A9793); // Soft Hint / Timestamp
+  static const Color userBubble = Color(0xFF0D483A); // Deep Medical Emerald User Bubble
 
   @override
   void initState() {
@@ -451,7 +451,7 @@ class _PatientAiChatScreenState extends State<PatientAiChatScreen> with TickerPr
                 ),
                 child: Text(
                   msg.text,
-                  style: const TextStyle(color: textPrimary, fontSize: 14.5, height: 1.4),
+                  style: const TextStyle(color: Colors.white, fontSize: 14.5, height: 1.4),
                 ),
               ),
             ),
@@ -619,9 +619,9 @@ class _PatientAiChatScreenState extends State<PatientAiChatScreen> with TickerPr
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: surfaceDark,
+        color: const Color(0xFFFDF2F0),
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: const Color(0xFFDC2626).withValues(alpha: 0.6)),
+        border: Border.all(color: const Color(0xFFFCA5A5)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,

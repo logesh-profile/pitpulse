@@ -177,57 +177,34 @@ class _LoginScreenState extends State<LoginScreen> {
                     ),
                   ],
 
-                  // MAATRA Trefoil Knot Logo
+                  // MAATRA Approved Symbol
                   Center(
-                    child: Container(
-                      width: 76,
-                      height: 76,
-                      padding: const EdgeInsets.all(12),
-                      decoration: BoxDecoration(
-                        color: MaatraTheme.surfaceDark,
-                        borderRadius: BorderRadius.circular(22),
-                        border: Border.all(color: MaatraTheme.primaryAmethyst.withValues(alpha: 0.35), width: 1.5),
-                        boxShadow: [
-                          BoxShadow(
-                            color: MaatraTheme.primaryAmethyst.withValues(alpha: 0.25),
-                            blurRadius: 28,
-                            spreadRadius: 2,
-                          ),
-                        ],
-                      ),
-                      child: ClipRRect(
-                        borderRadius: BorderRadius.circular(12),
-                        child: Image.asset(
-                          'assets/images/maatra_logo.png',
-                          fit: BoxFit.contain,
-                          errorBuilder: (context, error, stackTrace) => const Icon(
-                            Icons.all_inclusive_rounded,
-                            size: 38,
-                            color: MaatraTheme.accentLilac,
-                          ),
-                        ),
-                      ),
+                    child: Image.asset(
+                      'assets/images/maatra_symbol.png',
+                      width: 64,
+                      height: 60,
+                      fit: BoxFit.contain,
                     ),
                   ),
-                  const SizedBox(height: 20),
+                  const SizedBox(height: 16),
 
                   Text(
                     'MAATRA',
                     textAlign: TextAlign.center,
                     style: GoogleFonts.plusJakartaSans(
                       color: MaatraTheme.textPrimary,
-                      fontSize: 28,
-                      fontWeight: FontWeight.w900,
-                      letterSpacing: 2.0,
+                      fontSize: 26,
+                      fontWeight: FontWeight.w800,
+                      letterSpacing: 1.0,
                     ),
                   ),
-                  const SizedBox(height: 6),
+                  const SizedBox(height: 4),
                   Text(
-                    'Healthcare Intelligence & Maternal Continuum',
+                    'Maternal & Child Health Platform',
                     textAlign: TextAlign.center,
                     style: GoogleFonts.plusJakartaSans(
                       color: MaatraTheme.textSecondary,
-                      fontSize: 13,
+                      fontSize: 13.5,
                       fontWeight: FontWeight.w500,
                     ),
                   ),
@@ -305,27 +282,16 @@ class _LoginScreenState extends State<LoginScreen> {
                   ),
                   const SizedBox(height: 28),
 
-                  // Sign In Button with Amethyst Gradient
-                  Container(
-                    height: 54,
-                    decoration: BoxDecoration(
-                      gradient: const LinearGradient(
-                        colors: [MaatraTheme.deepAmethyst, MaatraTheme.primaryAmethyst],
-                      ),
-                      borderRadius: BorderRadius.circular(14),
-                      boxShadow: [
-                        BoxShadow(
-                          color: MaatraTheme.primaryAmethyst.withValues(alpha: 0.35),
-                          blurRadius: 18,
-                          offset: const Offset(0, 4),
-                        ),
-                      ],
-                    ),
+                  // Sign In Button - Solid Medical Emerald
+                  SizedBox(
+                    height: 52,
                     child: ElevatedButton(
                       key: const Key('login_submit_button'),
                       onPressed: isLoading ? null : _submitLogin,
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.transparent,
+                        backgroundColor: MaatraTheme.brandEmerald,
+                        foregroundColor: Colors.white,
+                        elevation: 0,
                         shadowColor: Colors.transparent,
                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
                       ),
@@ -339,41 +305,42 @@ class _LoginScreenState extends State<LoginScreen> {
                               'Sign In to MAATRA',
                               style: GoogleFonts.plusJakartaSans(
                                 color: Colors.white,
-                                fontSize: 16,
+                                fontSize: 15,
                                 fontWeight: FontWeight.w700,
                               ),
                             ),
                     ),
                   ),
-                  const SizedBox(height: 28),
+                  const SizedBox(height: 24),
 
                   // Divider
                   Row(
                     children: [
-                      const Expanded(child: Divider(color: MaatraTheme.borderMuted)),
+                      const Expanded(child: Divider(color: MaatraTheme.borderHairline)),
                       Padding(
                         padding: const EdgeInsets.symmetric(horizontal: 16),
                         child: Text(
                           'OR',
                           style: GoogleFonts.plusJakartaSans(
-                            color: MaatraTheme.textTertiary,
+                            color: MaatraTheme.textQuiet,
                             fontSize: 12,
                             fontWeight: FontWeight.w600,
                           ),
                         ),
                       ),
-                      const Expanded(child: Divider(color: MaatraTheme.borderMuted)),
+                      const Expanded(child: Divider(color: MaatraTheme.borderHairline)),
                     ],
                   ),
-                  const SizedBox(height: 24),
+                  const SizedBox(height: 20),
 
                   // Direct Google Login Button
                   OutlinedButton(
                     key: const Key('google_signin_button'),
                     onPressed: isLoading ? null : _handleGoogleSignIn,
                     style: OutlinedButton.styleFrom(
-                      side: const BorderSide(color: MaatraTheme.borderMuted),
-                      backgroundColor: MaatraTheme.surfaceDark,
+                      side: const BorderSide(color: MaatraTheme.borderHairline),
+                      backgroundColor: Colors.white,
+                      elevation: 0,
                       padding: const EdgeInsets.symmetric(vertical: 14),
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
                     ),
@@ -383,21 +350,21 @@ class _LoginScreenState extends State<LoginScreen> {
                         const Icon(
                           Icons.g_mobiledata_rounded,
                           size: 28,
-                          color: MaatraTheme.accentLilac,
+                          color: MaatraTheme.brandEmerald,
                         ),
                         const SizedBox(width: 8),
                         Text(
                           'Continue with Google',
                           style: GoogleFonts.plusJakartaSans(
                             color: MaatraTheme.textPrimary,
-                            fontSize: 15,
+                            fontSize: 14.5,
                             fontWeight: FontWeight.w600,
                           ),
                         ),
                       ],
                     ),
                   ),
-                  const SizedBox(height: 14),
+                  const SizedBox(height: 12),
 
                   // Create Patient Account Button
                   OutlinedButton.icon(
@@ -411,16 +378,18 @@ class _LoginScreenState extends State<LoginScreen> {
                       );
                     },
                     style: OutlinedButton.styleFrom(
-                      side: const BorderSide(color: MaatraTheme.borderMuted),
-                      padding: const EdgeInsets.symmetric(vertical: 16),
+                      side: const BorderSide(color: MaatraTheme.borderHairline),
+                      backgroundColor: Colors.white,
+                      elevation: 0,
+                      padding: const EdgeInsets.symmetric(vertical: 14),
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
                     ),
-                    icon: const Icon(Icons.person_add_alt_1_rounded, color: MaatraTheme.accentLilac, size: 20),
+                    icon: const Icon(Icons.person_add_alt_1_rounded, color: MaatraTheme.brandEmerald, size: 18),
                     label: Text(
                       'Patient? Register with Gmail',
                       style: GoogleFonts.plusJakartaSans(
-                        color: MaatraTheme.textPrimary,
-                        fontSize: 15,
+                        color: MaatraTheme.brandEmerald,
+                        fontSize: 14,
                         fontWeight: FontWeight.w600,
                       ),
                     ),
