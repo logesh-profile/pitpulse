@@ -21,6 +21,14 @@ class HealthResponse(BaseModel):
     timestamp: str
 
 
+class AppVersionResponse(BaseModel):
+    latest_version: str
+    min_supported_version: str
+    force_update: bool
+    download_url: str
+    release_notes: str
+
+
 def create_application() -> FastAPI:
     app = FastAPI(
         title="PitPulse Healthcare API",
@@ -85,6 +93,22 @@ def create_application() -> FastAPI:
             "status": "online",
             "docs": "/docs" if settings.DEBUG else "disabled",
         }
+
+    @app.get(
+        "/api/v1/system/app-version",
+        response_model=AppVersionResponse,
+        status_code=status.HTTP_200_OK,
+        tags=["System"],
+        summary="Mobile App Version and In-App Update Verification",
+    )
+    async def get_app_version() -> AppVersionResponse:
+        return AppVersionResponse(
+            latest_version=settings.APP_LATEST_VERSION,
+            min_supported_version=settings.APP_MIN_SUPPORTED_VERSION,
+            force_update=settings.APP_FORCE_UPDATE,
+            download_url=settings.APP_DOWNLOAD_URL,
+            release_notes=settings.APP_RELEASE_NOTES,
+        )
 
     @app.get(
         "/api/v1/system/db-check",

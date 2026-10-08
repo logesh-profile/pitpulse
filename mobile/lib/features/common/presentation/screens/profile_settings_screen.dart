@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../../../../core/theme/maatra_theme.dart';
+import '../../../../core/services/version_check_service.dart';
 import '../../../auth/presentation/controllers/auth_controller.dart';
 
 class ProfileSettingsScreen extends StatelessWidget {
@@ -258,6 +259,30 @@ class ProfileSettingsScreen extends StatelessWidget {
                       icon: Icons.info_outline_rounded,
                       title: 'Platform Version',
                       value: 'MAATRA 1.0.0',
+                    ),
+                    const Divider(color: MaatraTheme.borderMuted, height: 1),
+                    ListTile(
+                      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 2),
+                      leading: Container(
+                        padding: const EdgeInsets.all(8),
+                        decoration: BoxDecoration(
+                          color: MaatraTheme.primaryAmethyst.withValues(alpha: 0.12),
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: const Icon(Icons.sync_rounded, color: MaatraTheme.accentLilac, size: 20),
+                      ),
+                      title: Text(
+                        'Check for Updates',
+                        style: GoogleFonts.plusJakartaSans(
+                          color: MaatraTheme.textPrimary,
+                          fontSize: 14,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                      trailing: const Icon(Icons.chevron_right_rounded, color: MaatraTheme.textTertiary, size: 20),
+                      onTap: () {
+                        VersionCheckService.checkAndPrompt(context, manualCheck: true);
+                      },
                     ),
                   ],
                 ),

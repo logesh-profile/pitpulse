@@ -24,8 +24,11 @@ import '../features/common/presentation/screens/maatra_ribbon_reveal_screen.dart
 import '../features/auth/presentation/screens/professional_onboarding_screen.dart';
 import '../features/pregnancy/data/datasources/pregnancy_remote_data_source.dart';
 import '../features/pregnancy/presentation/controllers/pregnancy_controller.dart';
+import '../core/services/version_check_service.dart';
 
 class PitPulseApp extends StatefulWidget {
+  static final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
+
   final ApiClient apiClient;
   final SecureStorageService? secureStorageService;
   final AuthRemoteDataSource? authRemoteDataSource;
@@ -97,6 +100,15 @@ class _PitPulseAppState extends State<PitPulseApp> {
 
     // Check existing session on launch
     _authController.checkAuthSession();
+
+    // Check for application updates non-blocking in background
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      await Future.delayed(const Duration(milliseconds: 600));
+      final navCtx = PitPulseApp.navigatorKey.currentContext;
+      if (navCtx != null && navCtx.mounted) {
+        VersionCheckService.checkAndPrompt(navCtx, apiClient: widget.apiClient);
+      }
+    });
   }
 
   Widget _resolveHomeScreen(AuthController auth) {
@@ -184,6 +196,7 @@ class _PitPulseAppState extends State<PitPulseApp> {
       listenable: _authController,
       builder: (context, _) {
         return MaterialApp(
+          navigatorKey: PitPulseApp.navigatorKey,
           title: AppConfig.appName,
           debugShowCheckedModeBanner: false,
           theme: MaatraTheme.darkTheme,
