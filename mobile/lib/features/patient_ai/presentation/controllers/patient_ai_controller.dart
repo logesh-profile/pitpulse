@@ -57,7 +57,7 @@ class PatientAiController extends ChangeNotifier {
 
   void _initWelcomeMessage() {
     final patientName = _context.patientName;
-    String greeting = 'Hello $patientName. I am **MAATRA AI**, powered by Google Gemini.';
+    String greeting = 'Hello $patientName. I am **Anu**, ur ai at ur place.';
 
     if (_context.hasActivePregnancy) {
       final preg = _context.activePregnancy!;
@@ -129,8 +129,8 @@ class PatientAiController extends ChangeNotifier {
           sources: const [
             AiSourceReference(
               type: AiSourceType.curatedKnowledgeBase,
-              title: 'MAATRA Gemini Intelligence',
-              detail: 'Google Gemini 100% Free Live Medical & Conversation Agent',
+              title: 'Anu',
+              detail: 'ur ai at ur place',
             ),
           ],
         );

@@ -100,6 +100,16 @@ class _PitPulseAppState extends State<PitPulseApp> {
   }
 
   Widget _resolveHomeScreen(AuthController auth) {
+    // Show refined loading while checking local stored credentials
+    if (auth.status == AuthStatus.loading && auth.currentUser == null) {
+      return const Scaffold(
+        backgroundColor: MaatraTheme.bgDark,
+        body: Center(
+          child: CircularProgressIndicator(color: MaatraTheme.primaryAmethyst, strokeWidth: 2.5),
+        ),
+      );
+    }
+
     if (!auth.isAuthenticated) {
       _hasShownReveal = false;
       return LoginScreen(authController: auth);
@@ -126,8 +136,9 @@ class _PitPulseAppState extends State<PitPulseApp> {
       );
     }
 
-    // 3. Harmonious Ribbon Loop Reveal Screen after login
+    // 3. Harmonious Ribbon Loop Reveal Screen after fresh login (bypass on app restart)
     if (!_hasShownReveal) {
+      _hasShownReveal = true; // Mark shown so reopening app routes straight to dashboard
       return MaatraRibbonRevealScreen(
         onCompleted: () {
           if (mounted) {

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:pitpulse_mobile/features/auth/presentation/controllers/auth_controller.dart';
 import '../controllers/asha_controller.dart';
 import 'asha_patient_detail_screen.dart';
+import '../../../common/presentation/screens/profile_settings_screen.dart';
 
 class AshaDashboardScreen extends StatefulWidget {
   final AuthController authController;
@@ -49,9 +50,16 @@ class _AshaDashboardScreenState extends State<AshaDashboardScreen> {
             onPressed: () => _ashaController.loadMyAssignedPatients(),
           ),
           IconButton(
-            icon: const Icon(Icons.logout),
-            tooltip: 'Sign Out',
-            onPressed: () => widget.authController.logout(),
+            icon: const Icon(Icons.settings_outlined),
+            tooltip: 'Profile & Settings',
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => ProfileSettingsScreen(authController: widget.authController),
+                ),
+              );
+            },
           ),
         ],
       ),

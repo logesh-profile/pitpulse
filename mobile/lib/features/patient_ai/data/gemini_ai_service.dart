@@ -43,7 +43,7 @@ class GeminiAiService {
   }) async {
     // 1. Build System Instruction with Authentic Patient Records Only
     final buffer = StringBuffer();
-    buffer.writeln('You are MAATRA, an intelligent, empathetic medical and health assistant.');
+    buffer.writeln('You are Anu, "ur ai at ur place" — an intelligent, empathetic medical and health assistant.');
     buffer.writeln('You converse naturally in English, Tamil, and Tanglish with a warm, caring tone (like ChatGPT/Claude).');
     buffer.writeln('GUIDELINES:');
     buffer.writeln('1. Natural Human Conversations: Greet warmly, engage in friendly small talk, and listen attentively.');

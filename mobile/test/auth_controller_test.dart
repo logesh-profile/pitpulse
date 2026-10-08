@@ -10,11 +10,13 @@ import 'package:pitpulse_mobile/features/auth/presentation/controllers/auth_cont
 class InMemorySecureStorageService implements SecureStorageService {
   String? _access;
   String? _refresh;
+  String? _userData;
 
   @override
   Future<void> clearTokens() async {
     _access = null;
     _refresh = null;
+    _userData = null;
   }
 
   @override
@@ -28,6 +30,12 @@ class InMemorySecureStorageService implements SecureStorageService {
 
   @override
   Future<void> saveRefreshToken(String token) async => _refresh = token;
+
+  @override
+  Future<void> saveUserData(String userJson) async => _userData = userJson;
+
+  @override
+  Future<String?> getUserData() async => _userData;
 }
 
 class FakeAuthRemoteDataSource implements AuthRemoteDataSource {

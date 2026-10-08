@@ -248,16 +248,16 @@ class _PatientAiChatScreenState extends State<PatientAiChatScreen> with TickerPr
               mainAxisSize: MainAxisSize.min,
               children: const [
                 Text(
-                  'MAATRA',
+                  'Anu',
                   style: TextStyle(
                     color: textPrimary,
                     fontSize: 16,
                     fontWeight: FontWeight.w700,
-                    letterSpacing: 1.2,
+                    letterSpacing: 0.5,
                   ),
                 ),
                 Text(
-                  'Gemini Intelligence',
+                  'ur ai at ur place',
                   style: TextStyle(
                     color: textSecondary,
                     fontSize: 11,
@@ -385,7 +385,7 @@ class _PatientAiChatScreenState extends State<PatientAiChatScreen> with TickerPr
                         minLines: 1,
                         onSubmitted: (_) => _handleSend(),
                         decoration: const InputDecoration(
-                          hintText: 'Ask MAATRA anything...',
+                          hintText: 'Ask Anu anything (English / தமிழ்)...',
                           hintStyle: TextStyle(color: textTertiary, fontSize: 14),
                           border: InputBorder.none,
                           contentPadding: EdgeInsets.symmetric(horizontal: 4, vertical: 8),
@@ -572,7 +572,7 @@ class _PatientAiChatScreenState extends State<PatientAiChatScreen> with TickerPr
                               Icon(Icons.check_circle_outline_rounded, size: 12, color: textSecondary),
                               SizedBox(width: 4),
                               Text(
-                                'Grok Grounded',
+                                'Anu Live',
                                 style: TextStyle(fontSize: 10, color: textSecondary, fontWeight: FontWeight.w500),
                               ),
                             ],

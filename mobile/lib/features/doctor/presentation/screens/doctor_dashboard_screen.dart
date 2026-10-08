@@ -5,6 +5,7 @@ import 'package:pitpulse_mobile/features/auth/presentation/controllers/auth_cont
 import '../../data/models/doctor_models.dart';
 import '../controllers/doctor_controller.dart';
 import 'doctor_patient_detail_screen.dart';
+import '../../../common/presentation/screens/profile_settings_screen.dart';
 
 class DoctorDashboardScreen extends StatefulWidget {
   final AuthController authController;
@@ -321,9 +322,16 @@ class _DoctorDashboardScreenState extends State<DoctorDashboardScreen> with Sing
             onPressed: () => _doctorController.loadDoctorData(),
           ),
           IconButton(
-            icon: const Icon(Icons.logout_rounded, color: MaatraTheme.textSecondary, size: 20),
-            tooltip: 'Sign Out',
-            onPressed: () => widget.authController.logout(),
+            icon: const Icon(Icons.settings_outlined, color: MaatraTheme.textSecondary, size: 20),
+            tooltip: 'Profile & Settings',
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => ProfileSettingsScreen(authController: widget.authController),
+                ),
+              );
+            },
           ),
         ],
         bottom: TabBar(

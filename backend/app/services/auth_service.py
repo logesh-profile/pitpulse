@@ -33,7 +33,10 @@ class AuthService:
     @staticmethod
     async def register_user(db: AsyncSession, req: UserRegisterRequest) -> Tuple[User, str]:
         """Registers a new user into PostgreSQL, creates an email verification token, and dispatches email."""
-        # Check duplicate email
+        # 1. Technical validation of Gmail address syntax, length, and Google MX server
+        EmailService.validate_gmail_technical(req.email)
+
+        # 2. Check duplicate email
         stmt = select(User).where(User.email == req.email.lower().strip())
         result = await db.execute(stmt)
         if result.scalar_one_or_none():

@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
+import 'package:pitpulse_mobile/core/theme/maatra_theme.dart';
 import 'package:pitpulse_mobile/features/auth/presentation/controllers/auth_controller.dart';
 import 'package:pitpulse_mobile/features/asha/presentation/controllers/asha_controller.dart';
 import 'package:pitpulse_mobile/features/patients/presentation/controllers/patient_controller.dart';
@@ -9,6 +11,7 @@ import 'package:pitpulse_mobile/features/pregnancy/presentation/screens/pregnanc
 import 'package:pitpulse_mobile/features/pregnancy/presentation/screens/pregnancy_list_screen.dart';
 import 'package:pitpulse_mobile/features/patient_ai/domain/models/patient_ai_context.dart';
 import 'package:pitpulse_mobile/features/patient_ai/presentation/screens/patient_ai_chat_screen.dart';
+import 'package:pitpulse_mobile/features/common/presentation/screens/profile_settings_screen.dart';
 
 class PatientDashboardScreen extends StatefulWidget {
   final AuthController authController;
@@ -99,9 +102,16 @@ class _PatientDashboardScreenState extends State<PatientDashboardScreen> {
             },
           ),
           IconButton(
-            icon: const Icon(Icons.logout),
-            tooltip: 'Sign Out',
-            onPressed: () => widget.authController.logout(),
+            icon: const Icon(Icons.settings_outlined),
+            tooltip: 'Profile & Settings',
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => ProfileSettingsScreen(authController: widget.authController),
+                ),
+              );
+            },
           ),
         ],
       ),
@@ -218,116 +228,135 @@ class _PatientDashboardScreenState extends State<PatientDashboardScreen> {
                     const SizedBox(height: 20),
 
                     // ==========================================
-                    // PATIENT AI: Maternal Intelligence Assistant
+                    // PATIENT AI: Anu — ur ai at ur place
                     // ==========================================
                     Container(
                       decoration: BoxDecoration(
                         gradient: const LinearGradient(
-                          colors: [Color(0xFF0D9488), Color(0xFF1E3A8A)],
+                          colors: [Color(0xFF1E1435), Color(0xFF111827)],
                           begin: Alignment.topLeft,
                           end: Alignment.bottomRight,
                         ),
-                        borderRadius: BorderRadius.circular(16),
+                        borderRadius: BorderRadius.circular(20),
+                        border: Border.all(color: MaatraTheme.primaryAmethyst.withValues(alpha: 0.35), width: 1.2),
                         boxShadow: [
                           BoxShadow(
-                            color: const Color(0xFF0D9488).withValues(alpha: 0.3),
-                            blurRadius: 12,
-                            offset: const Offset(0, 4),
+                            color: MaatraTheme.primaryAmethyst.withValues(alpha: 0.15),
+                            blurRadius: 18,
+                            offset: const Offset(0, 6),
                           ),
                         ],
                       ),
                       child: Material(
                         color: Colors.transparent,
                         child: InkWell(
-                          borderRadius: BorderRadius.circular(16),
+                          borderRadius: BorderRadius.circular(20),
                           onTap: _openPatientAi,
                           child: Padding(
-                            padding: const EdgeInsets.all(18.0),
+                            padding: const EdgeInsets.all(20.0),
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Row(
                                   children: [
                                     Container(
-                                      padding: const EdgeInsets.all(10),
+                                      padding: const EdgeInsets.all(12),
                                       decoration: BoxDecoration(
-                                        color: Colors.white.withValues(alpha: 0.15),
-                                        shape: BoxShape.circle,
+                                        gradient: const LinearGradient(
+                                          colors: [MaatraTheme.deepAmethyst, MaatraTheme.primaryAmethyst],
+                                        ),
+                                        borderRadius: BorderRadius.circular(16),
+                                        boxShadow: [
+                                          BoxShadow(
+                                            color: MaatraTheme.primaryAmethyst.withValues(alpha: 0.3),
+                                            blurRadius: 10,
+                                            offset: const Offset(0, 3),
+                                          ),
+                                        ],
                                       ),
-                                      child: const Icon(Icons.auto_awesome, color: Colors.white, size: 24),
+                                      child: const Icon(Icons.auto_awesome, color: Colors.white, size: 22),
                                     ),
-                                    const SizedBox(width: 12),
-                                    const Expanded(
+                                    const SizedBox(width: 14),
+                                    Expanded(
                                       child: Column(
                                         crossAxisAlignment: CrossAxisAlignment.start,
                                         children: [
                                           Text(
-                                            'PitPulse Maternal AI Agent',
-                                            style: TextStyle(
-                                              color: Colors.white,
-                                              fontWeight: FontWeight.bold,
-                                              fontSize: 16,
-                                              letterSpacing: 0.3,
+                                            'Anu',
+                                            style: GoogleFonts.plusJakartaSans(
+                                              color: MaatraTheme.textPrimary,
+                                              fontWeight: FontWeight.w800,
+                                              fontSize: 18,
+                                              letterSpacing: -0.3,
                                             ),
                                           ),
-                                          SizedBox(height: 2),
+                                          const SizedBox(height: 3),
                                           Text(
-                                            'Grounded in your real health records • 100% Offline',
-                                            style: TextStyle(
-                                              color: Colors.white70,
-                                              fontSize: 11,
+                                            'ur ai at ur place',
+                                            style: GoogleFonts.plusJakartaSans(
+                                              color: MaatraTheme.accentLilac,
+                                              fontSize: 12,
+                                              fontWeight: FontWeight.w600,
+                                              letterSpacing: 0.2,
                                             ),
                                           ),
                                         ],
                                       ),
                                     ),
                                     Container(
-                                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                                       decoration: BoxDecoration(
-                                        color: Colors.white.withValues(alpha: 0.2),
+                                        color: MaatraTheme.primaryAmethyst.withValues(alpha: 0.15),
                                         borderRadius: BorderRadius.circular(12),
-                                        border: Border.all(color: Colors.white38),
+                                        border: Border.all(color: MaatraTheme.primaryAmethyst.withValues(alpha: 0.4)),
                                       ),
-                                      child: const Row(
-                                        mainAxisSize: MainAxisSize.min,
-                                        children: [
-                                          Icon(Icons.offline_bolt, size: 12, color: Colors.amberAccent),
-                                          SizedBox(width: 4),
-                                          Text(
-                                            'ON-DEVICE',
-                                            style: TextStyle(
-                                              fontSize: 9,
-                                              fontWeight: FontWeight.bold,
-                                              color: Colors.white,
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                                const SizedBox(height: 14),
-                                const Text(
-                                  'Ask questions about your pregnancy progress, recorded vitals, doctor preparation, or nutrition guidelines anytime.',
-                                  style: TextStyle(color: Colors.white, fontSize: 13, height: 1.3),
-                                ),
-                                const SizedBox(height: 14),
-                                Row(
-                                  children: [
-                                    Expanded(
-                                      child: OutlinedButton.icon(
-                                        style: OutlinedButton.styleFrom(
-                                          foregroundColor: Colors.white,
-                                          side: const BorderSide(color: Colors.white54),
-                                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                                          padding: const EdgeInsets.symmetric(vertical: 10),
+                                      child: Text(
+                                        'LIVE',
+                                        style: GoogleFonts.plusJakartaSans(
+                                          fontSize: 10,
+                                          fontWeight: FontWeight.w800,
+                                          color: MaatraTheme.accentLilac,
+                                          letterSpacing: 0.8,
                                         ),
-                                        icon: const Icon(Icons.chat_bubble_outline, size: 16),
-                                        label: const Text('Open AI Assistant', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
-                                        onPressed: _openPatientAi,
                                       ),
                                     ),
                                   ],
+                                ),
+                                const SizedBox(height: 14),
+                                Text(
+                                  'Ask Anu home remedies, symptoms, daily nutrition, or converse naturally in English or Tamil.',
+                                  style: GoogleFonts.plusJakartaSans(
+                                    color: MaatraTheme.textSecondary,
+                                    fontSize: 13,
+                                    height: 1.45,
+                                  ),
+                                ),
+                                const SizedBox(height: 16),
+                                Container(
+                                  height: 44,
+                                  decoration: BoxDecoration(
+                                    gradient: const LinearGradient(
+                                      colors: [MaatraTheme.deepAmethyst, MaatraTheme.primaryAmethyst],
+                                    ),
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
+                                  child: ElevatedButton.icon(
+                                    style: ElevatedButton.styleFrom(
+                                      backgroundColor: Colors.transparent,
+                                      shadowColor: Colors.transparent,
+                                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                                    ),
+                                    icon: const Icon(Icons.chat_bubble_outline_rounded, size: 16, color: Colors.white),
+                                    label: Text(
+                                      'Chat with Anu',
+                                      style: GoogleFonts.plusJakartaSans(
+                                        color: Colors.white,
+                                        fontSize: 13,
+                                        fontWeight: FontWeight.w700,
+                                      ),
+                                    ),
+                                    onPressed: _openPatientAi,
+                                  ),
                                 ),
                               ],
                             ),

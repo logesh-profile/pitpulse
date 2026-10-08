@@ -6,6 +6,7 @@ import '../../presentation/controllers/admin_controller.dart';
 import '../../../auth/presentation/controllers/auth_controller.dart';
 import 'create_asha_screen.dart';
 import 'create_doctor_screen.dart';
+import '../../../common/presentation/screens/profile_settings_screen.dart';
 
 class AdminDashboardScreen extends StatefulWidget {
   final AuthController authController;
@@ -253,9 +254,16 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
             onPressed: () => widget.adminController.loadAll(),
           ),
           IconButton(
-            icon: const Icon(Icons.logout_rounded, color: MaatraTheme.textSecondary),
-            tooltip: 'Sign Out',
-            onPressed: () => widget.authController.logout(),
+            icon: const Icon(Icons.settings_outlined, color: MaatraTheme.textSecondary),
+            tooltip: 'Profile & Settings',
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => ProfileSettingsScreen(authController: widget.authController),
+                ),
+              );
+            },
           ),
         ],
         bottom: PreferredSize(

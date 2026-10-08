@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import '../../../../core/errors/failures.dart';
@@ -39,6 +40,8 @@ class AuthController extends ChangeNotifier {
 
     try {
       final savedRefreshToken = await secureStorageService.getRefreshToken();
+      final savedAccessToken = await secureStorageService.getAccessToken();
+      final savedUserJson = await secureStorageService.getUserData();
 
       if (savedRefreshToken == null || savedRefreshToken.isEmpty) {
         _status = AuthStatus.unauthenticated;
@@ -49,24 +52,53 @@ class AuthController extends ChangeNotifier {
         return;
       }
 
-      final tokenData = await authRemoteDataSource.refreshToken(
-        refreshToken: savedRefreshToken,
-      );
+      // 1. Immediately restore cached user and access token so app opens instantly
+      if (savedUserJson != null && savedUserJson.isNotEmpty) {
+        try {
+          final userMap = jsonDecode(savedUserJson) as Map<String, dynamic>;
+          _currentUser = UserModel.fromJson(userMap);
+          _accessToken = savedAccessToken;
+          if (savedAccessToken != null) {
+            apiClient.setAuthToken(savedAccessToken);
+          }
+          _status = AuthStatus.authenticated;
+          notifyListeners();
+        } catch (_) {}
+      }
 
-      await secureStorageService.saveAccessToken(tokenData.accessToken);
-      await secureStorageService.saveRefreshToken(tokenData.refreshToken);
+      // 2. Validate and refresh session with backend
+      try {
+        final tokenData = await authRemoteDataSource.refreshToken(
+          refreshToken: savedRefreshToken,
+        );
 
-      _accessToken = tokenData.accessToken;
-      _currentUser = tokenData.user;
-      apiClient.setAuthToken(tokenData.accessToken);
-      _status = AuthStatus.authenticated;
-      _errorMessage = null;
-    } catch (e) {
-      await secureStorageService.clearTokens();
-      apiClient.setAuthToken(null);
-      _currentUser = null;
-      _accessToken = null;
-      _status = AuthStatus.unauthenticated;
+        await secureStorageService.saveAccessToken(tokenData.accessToken);
+        await secureStorageService.saveRefreshToken(tokenData.refreshToken);
+        await secureStorageService.saveUserData(jsonEncode(tokenData.user.toJson()));
+
+        _accessToken = tokenData.accessToken;
+        _currentUser = tokenData.user;
+        apiClient.setAuthToken(tokenData.accessToken);
+        _status = AuthStatus.authenticated;
+        _errorMessage = null;
+      } catch (e) {
+        // Only invalidate if the backend explicitly reports unauthorized/revoked token (401)
+        // If network is offline or server cold start, keep user logged in with cached profile!
+        final errStr = e.toString().toLowerCase();
+        if (errStr.contains('401') || errStr.contains('unauthorized') || errStr.contains('invalid token')) {
+          await secureStorageService.clearTokens();
+          apiClient.setAuthToken(null);
+          _currentUser = null;
+          _accessToken = null;
+          _status = AuthStatus.unauthenticated;
+        } else if (_currentUser == null) {
+          _status = AuthStatus.unauthenticated;
+        }
+      }
+    } catch (_) {
+      if (_currentUser == null) {
+        _status = AuthStatus.unauthenticated;
+      }
     }
 
     notifyListeners();
@@ -119,6 +151,7 @@ class AuthController extends ChangeNotifier {
 
       await secureStorageService.saveAccessToken(tokenData.accessToken);
       await secureStorageService.saveRefreshToken(tokenData.refreshToken);
+      await secureStorageService.saveUserData(jsonEncode(tokenData.user.toJson()));
 
       _accessToken = tokenData.accessToken;
       _currentUser = tokenData.user;
@@ -164,6 +197,7 @@ class AuthController extends ChangeNotifier {
 
       await secureStorageService.saveAccessToken(tokenData.accessToken);
       await secureStorageService.saveRefreshToken(tokenData.refreshToken);
+      await secureStorageService.saveUserData(jsonEncode(tokenData.user.toJson()));
 
       _accessToken = tokenData.accessToken;
       _currentUser = tokenData.user;
@@ -211,6 +245,7 @@ class AuthController extends ChangeNotifier {
 
       await secureStorageService.saveAccessToken(tokenData.accessToken);
       await secureStorageService.saveRefreshToken(tokenData.refreshToken);
+      await secureStorageService.saveUserData(jsonEncode(tokenData.user.toJson()));
 
       _accessToken = tokenData.accessToken;
       _currentUser = tokenData.user;
@@ -245,6 +280,7 @@ class AuthController extends ChangeNotifier {
 
     try {
       final updatedUser = await authRemoteDataSource.completeProfile(profileData: profileData);
+      await secureStorageService.saveUserData(jsonEncode(updatedUser.toJson()));
       _currentUser = updatedUser;
       _status = AuthStatus.authenticated;
       _errorMessage = null;

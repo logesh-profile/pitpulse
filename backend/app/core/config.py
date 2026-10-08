@@ -38,6 +38,14 @@ class Settings(BaseSettings):
     # Google Gemini AI configuration (100% Free)
     GEMINI_API_KEY: str = ""
 
+    # SMTP Email Dispatch configuration
+    SMTP_HOST: str = "smtp.gmail.com"
+    SMTP_PORT: int = 587
+    SMTP_USER: str = ""
+    SMTP_PASSWORD: str = ""
+    SMTP_FROM: str = ""
+    SMTP_TLS: bool = True
+
     # Database configuration
     DATABASE_URL: str = "postgresql+asyncpg://postgres:logesh%40360@127.0.0.1:5432/pitpulse_db"
     SYNC_DATABASE_URL: str = "postgresql+psycopg2://postgres:logesh%40360@127.0.0.1:5432/pitpulse_db"
