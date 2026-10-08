@@ -116,7 +116,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen>
                       fontSize: 13,
                       fontWeight: FontWeight.bold,
                       letterSpacing: 0.8,
-                      color: Colors.white,
+                      color: MaatraTheme.brandEmerald,
                     ),
                   ),
                 ],

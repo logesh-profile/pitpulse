@@ -47,11 +47,11 @@ class Settings(BaseSettings):
     SMTP_TLS: bool = True
 
     # App In-App Version & Update configuration
-    APP_LATEST_VERSION: str = "1.0.1"
+    APP_LATEST_VERSION: str = "1.0.6"
     APP_MIN_SUPPORTED_VERSION: str = "1.0.0"
     APP_FORCE_UPDATE: bool = False
     APP_DOWNLOAD_URL: str = "https://github.com/logesh-profile/pitpulse/releases/latest"
-    APP_RELEASE_NOTES: str = "Enhanced persistent session auto-login, Anu AI persona, and technical Gmail validation."
+    APP_RELEASE_NOTES: str = "Zero-login Offline Emergency Care Suite, Medical Radar for PHCs/GHs/Pharmacies, Fetal Kick Counter, and Labor Contraction Timer."
 
     # Database configuration
     DATABASE_URL: str = "postgresql+asyncpg://postgres:logesh%40360@127.0.0.1:5432/pitpulse_db"

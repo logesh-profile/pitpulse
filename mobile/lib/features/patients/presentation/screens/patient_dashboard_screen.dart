@@ -14,6 +14,7 @@ import 'package:pitpulse_mobile/features/patient_ai/presentation/screens/patient
 import 'package:pitpulse_mobile/features/common/presentation/screens/profile_settings_screen.dart';
 import 'package:pitpulse_mobile/features/patients/presentation/screens/nearby_facilities_screen.dart';
 import 'package:pitpulse_mobile/features/patients/presentation/screens/fetal_kick_counter_screen.dart';
+import 'package:pitpulse_mobile/features/patients/presentation/screens/contraction_timer_screen.dart';
 import 'package:pitpulse_mobile/features/patients/presentation/widgets/emergency_sos_sheet.dart';
 
 class PatientDashboardScreen extends StatefulWidget {
@@ -595,6 +596,64 @@ class _PatientDashboardScreenState extends State<PatientDashboardScreen> {
                       ],
                     ),
 
+                    const SizedBox(height: 10),
+
+                    // Labor Contraction Timer Tile
+                    GestureDetector(
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => ContractionTimerScreen(
+                              ashaPhoneNumber: ashaAssignment?.ashaWorkerName,
+                            ),
+                          ),
+                        );
+                      },
+                      child: Container(
+                        padding: const EdgeInsets.all(14),
+                        decoration: BoxDecoration(
+                          color: MaatraTheme.surfacePorcelain,
+                          borderRadius: BorderRadius.circular(14),
+                          border: Border.all(color: MaatraTheme.borderHairline),
+                        ),
+                        child: Row(
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.all(8),
+                              decoration: BoxDecoration(
+                                color: const Color(0xFFE0F2FE),
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                              child: const Icon(Icons.timer_outlined, size: 20, color: Color(0xFF0284C7)),
+                            ),
+                            const SizedBox(width: 12),
+                            const Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    'Labor Contraction Timer',
+                                    style: TextStyle(
+                                      fontSize: 14,
+                                      fontWeight: FontWeight.w700,
+                                      color: MaatraTheme.textCharcoal,
+                                    ),
+                                  ),
+                                  SizedBox(height: 2),
+                                  Text(
+                                    'Clinical 5-1-1 active labor benchmark • Offline stopwatch',
+                                    style: TextStyle(fontSize: 11, color: MaatraTheme.textMuted),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            const Icon(Icons.arrow_forward_ios_rounded, size: 14, color: MaatraTheme.textMuted),
+                          ],
+                        ),
+                      ),
+                    ),
+
                     const SizedBox(height: 24),
                     // STAGE 5: Assigned ASHA Health Worker Section
                     // ==========================================
@@ -981,7 +1040,7 @@ class _PatientDashboardScreenState extends State<PatientDashboardScreen> {
                                       children: [
                                         const Text('BLOOD PRESSURE', style: TextStyle(fontSize: 10, color: Colors.grey)),
                                         const SizedBox(height: 2),
-                                        Text(vit.bpDisplay, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: Colors.white)),
+                                        Text(vit.bpDisplay, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: MaatraTheme.textCharcoal)),
                                       ],
                                     ),
                                     Column(
@@ -989,7 +1048,7 @@ class _PatientDashboardScreenState extends State<PatientDashboardScreen> {
                                       children: [
                                         const Text('WEIGHT', style: TextStyle(fontSize: 10, color: Colors.grey)),
                                         const SizedBox(height: 2),
-                                        Text(vit.weightDisplay, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: Colors.white)),
+                                        Text(vit.weightDisplay, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: MaatraTheme.textCharcoal)),
                                       ],
                                     ),
                                     Column(
@@ -997,7 +1056,7 @@ class _PatientDashboardScreenState extends State<PatientDashboardScreen> {
                                       children: [
                                         const Text('TEMP', style: TextStyle(fontSize: 10, color: Colors.grey)),
                                         const SizedBox(height: 2),
-                                        Text(vit.temperatureDisplay, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: Colors.white)),
+                                        Text(vit.temperatureDisplay, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: MaatraTheme.textCharcoal)),
                                       ],
                                     ),
                                   ],
@@ -1147,9 +1206,9 @@ class _PatientDashboardScreenState extends State<PatientDashboardScreen> {
         ),
       ),
       floatingActionButton: FloatingActionButton.extended(
-        backgroundColor: const Color(0xFF0D9488),
-        icon: const Icon(Icons.auto_awesome, color: Colors.white),
-        label: const Text('Maternal AI', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+        backgroundColor: MaatraTheme.brandEmerald,
+        icon: const Icon(Icons.chat_bubble_outline_rounded, color: Colors.white),
+        label: const Text('Anu AI Companion', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
         onPressed: _openPatientAi,
       ),
     );

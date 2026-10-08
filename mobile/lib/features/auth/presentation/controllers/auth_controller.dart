@@ -346,4 +346,25 @@ class AuthController extends ChangeNotifier {
       notifyListeners();
     }
   }
+
+  bool get isGuest => _currentUser?.id == 'offline-guest';
+
+  Future<void> continueAsGuest() async {
+    final guestUser = UserModel(
+      id: 'offline-guest',
+      email: 'guest@maatra.local',
+      fullName: 'Offline Patient',
+      role: 'PATIENT',
+      isActive: true,
+      isVerified: true,
+      isProfileCompleted: true,
+      createdAt: DateTime.now().toIso8601String(),
+    );
+    await secureStorageService.saveUserData(jsonEncode(guestUser.toJson()));
+    _currentUser = guestUser;
+    _accessToken = 'offline-guest-token';
+    _status = AuthStatus.authenticated;
+    _errorMessage = null;
+    notifyListeners();
+  }
 }

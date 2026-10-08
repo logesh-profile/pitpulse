@@ -4,6 +4,7 @@ import '../../../../core/theme/maatra_theme.dart';
 import '../controllers/auth_controller.dart';
 import 'gmail_verification_screen.dart';
 import 'register_screen.dart';
+import 'package:pitpulse_mobile/features/patients/presentation/screens/offline_emergency_hub_screen.dart';
 
 class LoginScreen extends StatefulWidget {
   final AuthController authController;
@@ -391,6 +392,83 @@ class _LoginScreenState extends State<LoginScreen> {
                         color: MaatraTheme.brandEmerald,
                         fontSize: 14,
                         fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+
+                  const SizedBox(height: 24),
+                  const Divider(color: MaatraTheme.borderHairline),
+                  const SizedBox(height: 16),
+
+                  // ZERO-LOGIN OFFLINE EMERGENCY CARE & RADAR
+                  GestureDetector(
+                    key: const Key('zero_login_emergency_button'),
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (_) => const OfflineEmergencyHubScreen()),
+                      );
+                    },
+                    child: Container(
+                      padding: const EdgeInsets.all(14),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFFDE8E8),
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(color: const Color(0xFFC53030).withValues(alpha: 0.5), width: 1.5),
+                      ),
+                      child: Row(
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.all(10),
+                            decoration: const BoxDecoration(
+                              shape: BoxShape.circle,
+                              color: Color(0xFFC53030),
+                            ),
+                            child: const Icon(Icons.emergency_outlined, color: Colors.white, size: 22),
+                          ),
+                          const SizedBox(width: 12),
+                          const Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  'Emergency SOS & Hospital Radar',
+                                  style: TextStyle(
+                                    fontSize: 14.5,
+                                    fontWeight: FontWeight.w800,
+                                    color: Color(0xFFC53030),
+                                  ),
+                                ),
+                                SizedBox(height: 2),
+                                Text(
+                                  'Zero Login Required • 100% Offline • 108 Calling',
+                                  style: TextStyle(fontSize: 11.5, color: Color(0xFF7A1C1C), fontWeight: FontWeight.w500),
+                                ),
+                              ],
+                            ),
+                          ),
+                          const Icon(Icons.arrow_forward_ios_rounded, size: 14, color: Color(0xFFC53030)),
+                        ],
+                      ),
+                    ),
+                  ),
+
+                  const SizedBox(height: 12),
+
+                  // OFFLINE GUEST PATIENT ACCESS
+                  TextButton.icon(
+                    key: const Key('offline_guest_mode_button'),
+                    onPressed: () async {
+                      await widget.authController.continueAsGuest();
+                    },
+                    icon: const Icon(Icons.cloud_off_rounded, size: 16, color: MaatraTheme.brandSage),
+                    label: const Text(
+                      'No Internet? Continue as Offline Patient',
+                      style: TextStyle(
+                        color: MaatraTheme.brandSage,
+                        fontSize: 13,
+                        fontWeight: FontWeight.w700,
+                        decoration: TextDecoration.underline,
                       ),
                     ),
                   ),

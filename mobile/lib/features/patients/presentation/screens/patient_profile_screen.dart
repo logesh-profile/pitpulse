@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:pitpulse_mobile/core/theme/maatra_theme.dart';
 import '../controllers/patient_controller.dart';
 import 'edit_patient_profile_screen.dart';
 
@@ -71,15 +72,15 @@ class PatientProfileScreen extends StatelessWidget {
 
                   // Profile Details Card
                   Card(
-                    color: const Color(0xFF1E293B),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    color: MaatraTheme.surfacePorcelain, elevation: 0, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16), side: const BorderSide(color: MaatraTheme.borderHairline)),
+                    // shape set above
                     child: Padding(
                       padding: const EdgeInsets.all(16.0),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text('Personal Information', style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
-                          const Divider(height: 24),
+                          const Divider(height: 24, color: MaatraTheme.borderHairline),
                           _buildDetailRow('Full Name', profile.fullName),
                           _buildDetailRow('Email Address', profile.email),
                           _buildDetailRow('Phone Number', profile.phone ?? 'Not provided'),
@@ -96,15 +97,15 @@ class PatientProfileScreen extends StatelessWidget {
 
                   // Emergency & Baseline Card
                   Card(
-                    color: const Color(0xFF1E293B),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    color: MaatraTheme.surfacePorcelain, elevation: 0, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16), side: const BorderSide(color: MaatraTheme.borderHairline)),
+                    // shape set above
                     child: Padding(
                       padding: const EdgeInsets.all(16.0),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text('Emergency & Baseline Info', style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
-                          const Divider(height: 24),
+                          const Divider(height: 24, color: MaatraTheme.borderHairline),
                           _buildDetailRow('Emergency Contact', profile.emergencyContactName ?? 'Not provided'),
                           _buildDetailRow('Emergency Phone', profile.emergencyContactPhone ?? 'Not provided'),
                           _buildDetailRow('Baseline Notes', profile.baselineHealthInfo ?? 'No known health conditions recorded'),
@@ -148,10 +149,10 @@ class PatientProfileScreen extends StatelessWidget {
         children: [
           SizedBox(
             width: 130,
-            child: Text(label, style: const TextStyle(color: Colors.grey, fontSize: 13)),
+            child: Text(label, style: const TextStyle(color: MaatraTheme.textMuted, fontSize: 13)),
           ),
           Expanded(
-            child: Text(value, style: const TextStyle(fontWeight: FontWeight.w500, fontSize: 13)),
+            child: Text(value, style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 13, color: MaatraTheme.textCharcoal)),
           ),
         ],
       ),
