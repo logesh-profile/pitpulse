@@ -63,7 +63,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
             builder: (_) => GmailVerificationScreen(
               authController: widget.authController,
               email: _emailController.text.trim(),
-              initialCode: widget.authController.lastVerificationCode,
             ),
           ),
         );

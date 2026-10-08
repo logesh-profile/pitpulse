@@ -249,10 +249,46 @@ class ProfileSettingsScreen extends StatelessWidget {
                 ),
                 child: Column(
                   children: [
-                    _buildInfoTile(
-                      icon: Icons.smart_toy_outlined,
-                      title: 'AI Companion',
-                      value: 'Anu (ur ai at ur place)',
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                      child: Row(
+                        children: [
+                          Container(
+                            width: 28,
+                            height: 28,
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              border: Border.all(color: MaatraTheme.accentLilac.withValues(alpha: 0.6)),
+                            ),
+                            child: ClipOval(
+                              child: Image.asset(
+                                'assets/images/anu_avatar.png',
+                                fit: BoxFit.cover,
+                                errorBuilder: (context, error, stackTrace) => const Icon(Icons.smart_toy_outlined, color: MaatraTheme.accentLilac, size: 18),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 14),
+                          Expanded(
+                            child: Text(
+                              'AI Companion',
+                              style: GoogleFonts.plusJakartaSans(
+                                color: MaatraTheme.textSecondary,
+                                fontSize: 13,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                          ),
+                          Text(
+                            'Anu (ur ai at ur place)',
+                            style: GoogleFonts.plusJakartaSans(
+                              color: MaatraTheme.textPrimary,
+                              fontSize: 13,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
                     const Divider(color: MaatraTheme.borderMuted, height: 1),
                     _buildInfoTile(

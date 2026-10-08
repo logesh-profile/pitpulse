@@ -37,12 +37,10 @@ async def register(
     req: UserRegisterRequest,
     db: AsyncSession = Depends(get_db),
 ) -> UserRegisterResponse:
-    user, dev_code = await AuthService.register_user(db=db, req=req)
+    user, _ = await AuthService.register_user(db=db, req=req)
     return UserRegisterResponse(
-        message="Registration successful. A 6-digit verification code has been sent to your Gmail.",
+        message="Registration successful. A 6-digit verification code has been dispatched to your Gmail inbox.",
         user=UserResponse.model_validate(user),
-        dev_verification_token=dev_code,
-        dev_verification_code=dev_code,
     )
 
 
@@ -74,10 +72,9 @@ async def resend_code(
     req: ResendVerificationRequest,
     db: AsyncSession = Depends(get_db),
 ):
-    code = await AuthService.resend_verification_code(db=db, email=req.email)
+    await AuthService.resend_verification_code(db=db, email=req.email)
     return {
-        "message": "A fresh 6-digit verification code has been dispatched to your Gmail.",
-        "dev_verification_code": code,
+        "message": "A fresh 6-digit verification code has been dispatched to your Gmail inbox.",
     }
 
 

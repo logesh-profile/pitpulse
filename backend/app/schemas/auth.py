@@ -109,8 +109,6 @@ class ActivateProfessionalRequest(BaseModel):
 class UserRegisterResponse(BaseModel):
     message: str
     user: UserResponse
-    dev_verification_token: Optional[str] = None
-    dev_verification_code: Optional[str] = None
 
 
 class VerifyEmailResponse(BaseModel):

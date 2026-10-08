@@ -7,13 +7,11 @@ import '../controllers/auth_controller.dart';
 class GmailVerificationScreen extends StatefulWidget {
   final AuthController authController;
   final String email;
-  final String? initialCode;
 
   const GmailVerificationScreen({
     super.key,
     required this.authController,
     required this.email,
-    this.initialCode,
   });
 
   @override
@@ -33,13 +31,6 @@ class _GmailVerificationScreenState extends State<GmailVerificationScreen> {
   void initState() {
     super.initState();
     _startTimer();
-
-    // Auto-fill in dev mode if provided
-    if (widget.initialCode != null && widget.initialCode!.length == 6) {
-      for (int i = 0; i < 6; i++) {
-        _controllers[i].text = widget.initialCode![i];
-      }
-    }
   }
 
   @override
@@ -200,77 +191,39 @@ class _GmailVerificationScreenState extends State<GmailVerificationScreen> {
                   ),
                 ),
               ),
-              Builder(
-                builder: (context) {
-                  final codeToDisplay = widget.initialCode ?? widget.authController.lastVerificationCode;
-                  if (codeToDisplay == null || codeToDisplay.isEmpty) {
-                    return const SizedBox(height: 36);
-                  }
-                  return Column(
-                    children: [
-                      const SizedBox(height: 16),
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                        decoration: BoxDecoration(
-                          color: MaatraTheme.primaryAmethyst.withValues(alpha: 0.12),
-                          borderRadius: BorderRadius.circular(14),
-                          border: Border.all(color: MaatraTheme.primaryAmethyst.withValues(alpha: 0.35)),
-                        ),
-                        child: Row(
-                          children: [
-                            const Icon(Icons.vpn_key_rounded, color: MaatraTheme.accentLilac, size: 20),
-                            const SizedBox(width: 12),
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    'Instant Verification Code:',
-                                    style: GoogleFonts.plusJakartaSans(
-                                      color: MaatraTheme.accentLilac,
-                                      fontSize: 11.5,
-                                      fontWeight: FontWeight.w600,
-                                    ),
-                                  ),
-                                  const SizedBox(height: 2),
-                                  Text(
-                                    codeToDisplay,
-                                    style: GoogleFonts.jetBrainsMono(
-                                      color: Colors.white,
-                                      fontSize: 17,
-                                      fontWeight: FontWeight.bold,
-                                      letterSpacing: 2.5,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                            ElevatedButton(
-                              onPressed: () {
-                                for (int i = 0; i < 6 && i < codeToDisplay.length; i++) {
-                                  _controllers[i].text = codeToDisplay[i];
-                                }
-                                _submitCode();
-                              },
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: MaatraTheme.primaryAmethyst,
-                                foregroundColor: Colors.white,
-                                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                              ),
-                              child: Text(
-                                'Auto-fill',
-                                style: GoogleFonts.plusJakartaSans(fontWeight: FontWeight.bold, fontSize: 12),
-                              ),
-                            ),
-                          ],
+              const SizedBox(height: 18),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                decoration: BoxDecoration(
+                  color: MaatraTheme.cardDark,
+                  borderRadius: BorderRadius.circular(14),
+                  border: Border.all(color: MaatraTheme.borderMuted),
+                ),
+                child: Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: MaatraTheme.primaryAmethyst.withValues(alpha: 0.15),
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: const Icon(Icons.mark_email_read_outlined, color: MaatraTheme.accentLilac, size: 20),
+                    ),
+                    const SizedBox(width: 14),
+                    Expanded(
+                      child: Text(
+                        'Please open your Gmail inbox (or check spam) and enter the 6-digit verification code below.',
+                        style: GoogleFonts.plusJakartaSans(
+                          color: MaatraTheme.textSecondary,
+                          fontSize: 12.5,
+                          height: 1.45,
                         ),
                       ),
-                      const SizedBox(height: 24),
-                    ],
-                  );
-                },
+                    ),
+                  ],
+                ),
               ),
+              const SizedBox(height: 28),
 
               // 6 Digits Input Grid
               Row(

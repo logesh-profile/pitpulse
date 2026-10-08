@@ -260,21 +260,27 @@ class _PatientDashboardScreenState extends State<PatientDashboardScreen> {
                                 Row(
                                   children: [
                                     Container(
-                                      padding: const EdgeInsets.all(12),
+                                      width: 52,
+                                      height: 52,
                                       decoration: BoxDecoration(
-                                        gradient: const LinearGradient(
-                                          colors: [MaatraTheme.deepAmethyst, MaatraTheme.primaryAmethyst],
-                                        ),
                                         borderRadius: BorderRadius.circular(16),
+                                        border: Border.all(color: MaatraTheme.primaryAmethyst.withValues(alpha: 0.5), width: 1.5),
                                         boxShadow: [
                                           BoxShadow(
-                                            color: MaatraTheme.primaryAmethyst.withValues(alpha: 0.3),
-                                            blurRadius: 10,
-                                            offset: const Offset(0, 3),
+                                            color: MaatraTheme.primaryAmethyst.withValues(alpha: 0.35),
+                                            blurRadius: 12,
+                                            offset: const Offset(0, 4),
                                           ),
                                         ],
                                       ),
-                                      child: const Icon(Icons.auto_awesome, color: Colors.white, size: 22),
+                                      child: ClipRRect(
+                                        borderRadius: BorderRadius.circular(14.5),
+                                        child: Image.asset(
+                                          'assets/images/anu_avatar.png',
+                                          fit: BoxFit.cover,
+                                          errorBuilder: (context, error, stackTrace) => const Icon(Icons.auto_awesome, color: Colors.white, size: 22),
+                                        ),
+                                      ),
                                     ),
                                     const SizedBox(width: 14),
                                     Expanded(

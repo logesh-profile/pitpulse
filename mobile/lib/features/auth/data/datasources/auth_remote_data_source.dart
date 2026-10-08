@@ -59,12 +59,11 @@ abstract class AuthRemoteDataSource {
 
 class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
   final ApiClient apiClient;
-  String? _lastVerificationCode;
 
   AuthRemoteDataSourceImpl({required this.apiClient});
 
   @override
-  String? get lastVerificationCode => _lastVerificationCode;
+  String? get lastVerificationCode => null;
 
   @override
   Future<UserModel> register({
@@ -86,7 +85,6 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
     if (response.data != null) {
       try {
         final userJson = response.data!['user'] as Map<String, dynamic>? ?? response.data!;
-        _lastVerificationCode = response.data!['dev_verification_code'] as String?;
         return UserModel.fromJson(userJson);
       } catch (e) {
         throw ParsingFailure('Failed to parse registration response: $e');
@@ -154,15 +152,12 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
   Future<void> resendCode({
     required String email,
   }) async {
-    final response = await apiClient.post<Map<String, dynamic>>(
+    await apiClient.post<Map<String, dynamic>>(
       '/api/v1/auth/resend-code',
       data: {
         'email': email.trim(),
       },
     );
-    if (response.data != null) {
-      _lastVerificationCode = response.data!['dev_verification_code'] as String?;
-    }
   }
 
   @override

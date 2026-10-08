@@ -232,14 +232,21 @@ class _PatientAiChatScreenState extends State<PatientAiChatScreen> with TickerPr
         title: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            ClipRRect(
-              borderRadius: BorderRadius.circular(6),
-              child: Image.asset(
-                'assets/images/maatra_logo.png',
-                width: 24,
-                height: 24,
-                fit: BoxFit.contain,
-                errorBuilder: (context, error, stackTrace) => const Icon(Icons.circle_outlined, size: 18, color: textPrimary),
+            Container(
+              width: 32,
+              height: 32,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                border: Border.all(color: borderActive, width: 1.2),
+              ),
+              child: ClipOval(
+                child: Image.asset(
+                  'assets/images/anu_avatar.png',
+                  width: 32,
+                  height: 32,
+                  fit: BoxFit.cover,
+                  errorBuilder: (context, error, stackTrace) => const Icon(Icons.circle_outlined, size: 18, color: textPrimary),
+                ),
               ),
             ),
             const SizedBox(width: 10),
@@ -462,22 +469,22 @@ class _PatientAiChatScreenState extends State<PatientAiChatScreen> with TickerPr
           Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Subtle Minimalist Logo Mark
+              // Subtle Minimalist Avatar Mark
               Container(
-                width: 26,
-                height: 26,
+                width: 28,
+                height: 28,
                 margin: const EdgeInsets.only(top: 2),
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
                   color: surfaceDark,
                   border: Border.all(color: borderMuted),
                 ),
-                child: Center(
+                child: ClipOval(
                   child: Image.asset(
-                    'assets/images/maatra_logo.png',
-                    width: 16,
-                    height: 16,
-                    fit: BoxFit.contain,
+                    'assets/images/anu_avatar.png',
+                    width: 28,
+                    height: 28,
+                    fit: BoxFit.cover,
                     errorBuilder: (context, error, stackTrace) => const Icon(Icons.auto_awesome, size: 12, color: textPrimary),
                   ),
                 ),
