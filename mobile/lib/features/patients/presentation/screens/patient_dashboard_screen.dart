@@ -12,6 +12,9 @@ import 'package:pitpulse_mobile/features/pregnancy/presentation/screens/pregnanc
 import 'package:pitpulse_mobile/features/patient_ai/domain/models/patient_ai_context.dart';
 import 'package:pitpulse_mobile/features/patient_ai/presentation/screens/patient_ai_chat_screen.dart';
 import 'package:pitpulse_mobile/features/common/presentation/screens/profile_settings_screen.dart';
+import 'package:pitpulse_mobile/features/patients/presentation/screens/nearby_facilities_screen.dart';
+import 'package:pitpulse_mobile/features/patients/presentation/screens/fetal_kick_counter_screen.dart';
+import 'package:pitpulse_mobile/features/patients/presentation/widgets/emergency_sos_sheet.dart';
 
 class PatientDashboardScreen extends StatefulWidget {
   final AuthController authController;
@@ -400,6 +403,198 @@ class _PatientDashboardScreenState extends State<PatientDashboardScreen> {
                         ),
                       ),
                     ),
+                    const SizedBox(height: 24),
+
+                    // ==========================================
+                    // RURAL CARE & OFFLINE EMERGENCY SUITE
+                    // ==========================================
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          'Offline Emergency & Rural Care',
+                          style: theme.textTheme.titleSmall?.copyWith(
+                            color: MaatraTheme.textCharcoal,
+                            fontWeight: FontWeight.w800,
+                          ),
+                        ),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFE8F5EF),
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          child: const Text(
+                            '100% OFFLINE',
+                            style: TextStyle(
+                              fontSize: 10,
+                              fontWeight: FontWeight.bold,
+                              color: Color(0xFF1B7A58),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 10),
+
+                    // 1-Tap Emergency SOS Card (High-Impact Red Banner)
+                    GestureDetector(
+                      onTap: () {
+                        EmergencySosSheet.show(
+                          context,
+                          ashaName: ashaAssignment?.ashaWorkerName,
+                        );
+                      },
+                      child: Container(
+                        padding: const EdgeInsets.all(16),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFFDE8E8),
+                          borderRadius: BorderRadius.circular(16),
+                          border: Border.all(color: const Color(0xFFC53030).withValues(alpha: 0.4), width: 1.5),
+                        ),
+                        child: Row(
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.all(10),
+                              decoration: const BoxDecoration(
+                                shape: BoxShape.circle,
+                                color: Color(0xFFC53030),
+                              ),
+                              child: const Icon(Icons.emergency_outlined, color: Colors.white, size: 24),
+                            ),
+                            const SizedBox(width: 14),
+                            const Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    '1-Tap Emergency SOS (108 & ASHA)',
+                                    style: TextStyle(
+                                      fontSize: 15,
+                                      fontWeight: FontWeight.w800,
+                                      color: Color(0xFFC53030),
+                                    ),
+                                  ),
+                                  SizedBox(height: 2),
+                                  Text(
+                                    'Direct cellular call • No data required • Offline first-aid',
+                                    style: TextStyle(
+                                      fontSize: 12,
+                                      color: Color(0xFF7A1C1C),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            const Icon(Icons.arrow_forward_ios_rounded, size: 16, color: Color(0xFFC53030)),
+                          ],
+                        ),
+                      ),
+                    ),
+
+                    const SizedBox(height: 10),
+
+                    // Two Grid Tiles: Nearby Medical Radar & Fetal Kick Counter
+                    Row(
+                      children: [
+                        // Nearby Medical Radar
+                        Expanded(
+                          child: GestureDetector(
+                            onTap: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(builder: (_) => const NearbyFacilitiesScreen()),
+                              );
+                            },
+                            child: Container(
+                              padding: const EdgeInsets.all(14),
+                              decoration: BoxDecoration(
+                                color: MaatraTheme.surfacePorcelain,
+                                borderRadius: BorderRadius.circular(14),
+                                border: Border.all(color: MaatraTheme.borderHairline),
+                              ),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Container(
+                                    padding: const EdgeInsets.all(8),
+                                    decoration: BoxDecoration(
+                                      color: MaatraTheme.brandSageWash,
+                                      borderRadius: BorderRadius.circular(10),
+                                    ),
+                                    child: const Icon(Icons.radar_rounded, size: 20, color: MaatraTheme.brandEmerald),
+                                  ),
+                                  const SizedBox(height: 10),
+                                  const Text(
+                                    'Medical Radar',
+                                    style: TextStyle(
+                                      fontSize: 14,
+                                      fontWeight: FontWeight.w700,
+                                      color: MaatraTheme.textCharcoal,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 2),
+                                  const Text(
+                                    'PHCs, GHs, Clinics & Medical Shops',
+                                    style: TextStyle(fontSize: 11, color: MaatraTheme.textMuted),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ),
+
+                        const SizedBox(width: 10),
+
+                        // Fetal Kick Counter (DFMC)
+                        Expanded(
+                          child: GestureDetector(
+                            onTap: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(builder: (_) => const FetalKickCounterScreen()),
+                              );
+                            },
+                            child: Container(
+                              padding: const EdgeInsets.all(14),
+                              decoration: BoxDecoration(
+                                color: MaatraTheme.surfacePorcelain,
+                                borderRadius: BorderRadius.circular(14),
+                                border: Border.all(color: MaatraTheme.borderHairline),
+                              ),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Container(
+                                    padding: const EdgeInsets.all(8),
+                                    decoration: BoxDecoration(
+                                      color: const Color(0xFFFEF5E7),
+                                      borderRadius: BorderRadius.circular(10),
+                                    ),
+                                    child: const Icon(Icons.favorite_rounded, size: 20, color: Color(0xFFB46A10)),
+                                  ),
+                                  const SizedBox(height: 10),
+                                  const Text(
+                                    'Fetal Kick Counter',
+                                    style: TextStyle(
+                                      fontSize: 14,
+                                      fontWeight: FontWeight.w700,
+                                      color: MaatraTheme.textCharcoal,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 2),
+                                  const Text(
+                                    '10 movements within 2 hours • Offline',
+                                    style: TextStyle(fontSize: 11, color: MaatraTheme.textMuted),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+
                     const SizedBox(height: 24),
                     // STAGE 5: Assigned ASHA Health Worker Section
                     // ==========================================

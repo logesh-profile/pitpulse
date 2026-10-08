@@ -226,6 +226,12 @@ All functional, security, and visual updates implemented across the platform to 
 - **Dashboard & Chat Refinement**: Redesigned Patient Dashboard cards, Maternal Health sections, and Anu AI Chat bubbles into clean, high-end clinical interfaces.
 - **Quality Assurance**: Maintained 0 errors in `flutter analyze`, 100% test suite pass rate, and successful release APK compilation (`app-release.apk`, 53.7 MB).
 
+### Version 1.0.6 — Offline Rural Care & Healthcare Radar Suite
+- **1-Tap Emergency Cellular SOS**: Direct telephony action on patient dashboard for **108 Ambulance** and assigned **ASHA Worker** requiring zero mobile data or internet, coupled with offline step-by-step first-aid protocols (hemorrhage, eclampsia/fits, premature water rupture).
+- **Offline Healthcare & Medical Radar**: Embedded dataset and satellite GPS engine locating nearby Primary Health Centres (PHCs), Government Taluk & District Hospitals (GHs), Private Maternity Clinics, 24x7 Delivery Units, and Medical Shops/Pharmacies. Computes Haversine straight-line distance, compass bearings, 1-tap direct calling, and navigation directions completely offline.
+- **Daily Fetal Kick Counter (DFMC)**: 100% offline 3rd-trimester fetal movement monitor with large tactile tap counter, 2-hour clinical session timer, timeline logger, and low-movement warning protocol.
+- **Automated Test Coverage**: Created `test/offline_rural_suite_test.dart` validating Haversine distance calculations, category filters, and search capabilities. Release APK built cleanly (`app-release.apk`, 54.1 MB).
+
 ---
 
 ## 8. Directory Structure
