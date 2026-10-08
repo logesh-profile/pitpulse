@@ -1,6 +1,6 @@
 # MAATRA
 
-MAATRA is an enterprise-grade healthcare intelligence and continuum platform engineered for Android and cloud deployment. It unifies maternal health monitoring, clinical triage, field community health workflows, and an intelligent clinical conversational agent into a resilient, offline-capable architecture.
+MAATRA is an enterprise-grade healthcare intelligence and clinical continuum platform engineered for Android and cloud deployment. It unifies maternal health monitoring, clinical triage, community health worker field operations, and an intelligent clinical conversational agent into a resilient, offline-capable architecture.
 
 ---
 
@@ -10,18 +10,19 @@ MAATRA is an enterprise-grade healthcare intelligence and continuum platform eng
 2. Core Capabilities and Architectural Invariants
 3. What Has Been Included vs. Excluded
 4. System Architecture
-5. Design System and Visual Standards
+5. Design System and Visual Standards (Swiss Medical Precision)
 6. Role-Based Access Control and Workflows
-7. Directory Structure
-8. API Endpoints and Data Contracts
-9. Environment Setup and Deployment
-10. Testing and Verification Standards
+7. Complete Changelog and System Update History
+8. Directory Structure
+9. API Endpoints and Data Contracts
+10. Environment Setup and Deployment
+11. Testing and Verification Standards
 
 ---
 
 ## 1. Executive Overview
 
-MAATRA bridges community-level healthcare workers (ASHA), certified medical practitioners (Doctors), patients, and system administrators into a synchronized clinical loop. Built on Flutter for the mobile client and FastAPI with PostgreSQL for the backend service, MAATRA is engineered to operate in remote, low-connectivity rural environments while maintaining full data integrity and zero hardcoded records.
+MAATRA bridges community-level healthcare workers (ASHA), certified medical practitioners (Doctors), patients, and system administrators into a synchronized clinical loop. Built on Flutter for the mobile client and FastAPI with PostgreSQL on cloud infrastructure, MAATRA is engineered to operate in remote, low-connectivity rural environments while maintaining full data integrity and zero hardcoded records.
 
 ---
 
@@ -30,15 +31,18 @@ MAATRA bridges community-level healthcare workers (ASHA), certified medical prac
 ### Zero Hardcoded Data Policy
 Every record displayed in the application is dynamically fetched and synchronized with real database models. No dummy patient identifiers, static provider contact lists, or synthetic mock vitals are hardcoded into client screens or services.
 
-### Resilient Clinical AI Engine
-MAATRA integrates high-capability large language models (Google Gemini 1.5 Flash and xAI Grok) connected directly to dynamic patient health records. The assistant handles:
+### Resilient Clinical AI Engine (Anu Health Companion)
+MAATRA integrates high-capability large language models (Google Gemini 1.5 Flash / Flash-Lite / 2.0 with fallback to xAI Grok) connected directly to dynamic patient health records. The assistant handles:
 - Natural human conversation across multiple languages (English, Tamil, Tanglish).
 - Home remedies, general wellness, triage advice, and preventative health guidance.
 - Dynamic grounding using the authenticated user's actual vitals, prescriptions, and visit logs.
 - Strict safety guardrails that detect red-flag clinical conditions (e.g., preeclampsia, high fever, severe hemorrhaging) and trigger immediate medical escalation alerts.
+- Bilingual Speech-to-Text (STT) voice input and Text-to-Speech (TTS) auditory readback.
 
-### Genuine Multi-Factor Authentication
-Patient registration requires verification via a 6-digit one-time password (OTP) dispatched to a valid email address. Unverified accounts cannot authenticate or access clinical APIs.
+### Genuine Multi-Factor Authentication & Google OAuth
+- **Out-of-Band Email OTP**: Patient registration requires verification via a 6-digit one-time password (OTP) dispatched strictly out-of-band to a verified email address via SMTP. Verification codes are never exposed on client screens or API response payloads.
+- **Native Google Sign-In**: Fully integrated Google OAuth 2.0 flow verifying ID tokens on the FastAPI backend with automated role onboarding.
+- **Persistent Sessions**: Encrypted local session storage using Android Keystore ensures returning users seamlessly bypass authentication screens.
 
 ### First-Login Professional Onboarding
 Medical practitioners and ASHA workers are provisioned by the Administrator using their email and initial temporary credentials. Upon initial sign-in, the system intercepts uncompleted profiles and mandates the submission of personal details (full name, age, gender, contact number, medical license or assigned field sector) before granting operational dashboard access.
@@ -47,7 +51,7 @@ Medical practitioners and ASHA workers are provisioned by the Administrator usin
 - **Administrator**: Dedicated strictly to provider account provisioning, lifecycle status management (activation and deactivation), and account decommissioning. Clinical operations and patient-to-worker assignments are intentionally decoupled from the administrative console.
 - **Doctor**: Oversees clinical registries, reviews triage flags, and directly maps patients to designated community ASHA workers.
 - **ASHA Worker**: Conducts field home visits, logs offline maternal and child health vitals, and tracks clinical alerts.
-- **Patient**: Views verified personal health records, consults the clinical AI assistant, and tracks healthcare team details.
+- **Patient**: Views verified personal health records, consults the Anu AI health companion, and tracks assigned healthcare team members.
 
 ---
 
@@ -55,16 +59,17 @@ Medical practitioners and ASHA workers are provisioned by the Administrator usin
 
 | Feature Area | Included in Current Release | Excluded / Deprecated |
 | :--- | :--- | :--- |
-| Application Name | MAATRA | PitPulse (legacy name deprecated) |
-| Visual Design System | Midnight Slate and Royal Amethyst (Dark Theme) | Generic Material defaults and harsh neon palettes |
-| Typography | Plus Jakarta Sans (Google Fonts) | Default system serif/sans |
-| Clinical AI Engine | Live LLM integration (Gemini / Grok) with patient record context | Hardcoded pregnancy-only response trees |
-| Data Layer | Relational PostgreSQL and client SQLite store | Hardcoded mock JSON fixtures |
-| Patient Auth | Email registration with mandatory 6-digit OTP code | Instant unverified registration |
-| Provider Management | Provisioning via email followed by mandatory first-login profile onboarding | Unauthenticated or pre-filled provider accounts |
-| Patient-ASHA Mapping | Managed exclusively by Doctors through the Doctor Dashboard | Centralized administrative manual mapping |
+| Application Name | MAATRA | PitPulse (legacy name permanently deprecated) |
+| Visual Design System | Swiss Medical Precision (Warm Ivory, Porcelain, Emerald) | Neon gradients, dark cyberpunk glows, generic material defaults |
+| Typography | Plus Jakarta Sans (Google Fonts) with strict weight hierarchy | Default system serif/sans |
+| Clinical AI Engine | Grounded LLM integration (Gemini / Grok) with patient records | Hardcoded pregnancy-only static decision trees |
+| AI Identity | Anu 3D clinical character avatar across dashboard & chat | Generic robot or sparkle AI icons |
+| Verification Model | Out-of-band SMTP delivery to inbox with zero code leakage | On-screen verification code auto-displays |
+| Google Auth | Native Google OAuth 2.0 with backend token verification | Web-view scraping or unverified mock Google buttons |
+| Launch Experience | Geometric 3-ring logo convergence with wordmark reveal | Static blank screen or unpolished raw asset jump |
+| Data Layer | Relational PostgreSQL on cloud and client SQLite store | Hardcoded mock JSON fixtures |
+| Patient-ASHA Mapping | Managed exclusively by Doctors through Doctor Dashboard | Centralized administrative manual mapping |
 | Admin Scope | Strictly user lifecycle: provision, activate, deactivate, delete | Clinical patient data management |
-| Launch Experience | Smooth signature ribbon reveal transition | Static blank splash screen |
 
 ---
 
@@ -81,7 +86,7 @@ Medical practitioners and ASHA workers are provisioned by the Administrator usin
                                          v
                   +----------------------------------------------+
                   |               FastAPI REST Backend           |
-                  |                 (Python 3.13)                |
+                  |           (Python 3.11+ on Render)           |
                   +-------+--------------------+-----------+-----+
                           |                    |           |
                           v                    v           v
@@ -92,42 +97,46 @@ Medical practitioners and ASHA workers are provisioned by the Administrator usin
 ```
 
 ### Mobile Client Stack
-- **Framework**: Flutter 3.x
+- **Framework**: Flutter 3.24+ (Dart)
 - **State Management**: Reactive Controller Pattern with ChangeNotifier
 - **Networking**: Dio with custom auth interceptors, retry handlers, and token vaults
 - **Offline Storage**: SQLite (sqflite) with bidirectional transaction queue
 - **Secure Storage**: flutter_secure_storage utilizing Android Keystore
 - **Typography & Theme**: Google Fonts (Plus Jakarta Sans) with centralized design tokens
+- **Audio Services**: flutter_tts for voice synthesis, speech_to_text for vocal input
 
 ### Backend API Stack
 - **Framework**: FastAPI (Asynchronous Python)
 - **Database Engine**: SQLAlchemy 2.0 Async with asyncpg / PostgreSQL
-- **Authentication**: OAuth2 Password Flow with RFC 7519 JWT and Passlib (bcrypt)
-- **AI Integration**: Google GenAI SDK and HTTP-based xAI endpoints
+- **Authentication**: OAuth2 Password Flow with RFC 7519 JWT, Passlib (bcrypt), and Google Auth
+- **AI Integration**: Google GenAI SDK and HTTP-based xAI Grok endpoints
 - **Validation**: Pydantic v2 schemas for bidirectional type safety
+- **Email Service**: Asynchronous SMTP client with HTML templates
 
 ---
 
-## 5. Design System and Visual Standards
+## 5. Design System and Visual Standards (Swiss Medical Precision)
 
-MAATRA utilizes the **Midnight Slate and Royal Amethyst** visual language, tailored for high-contrast visibility and reduced eye strain during clinical and night-shift environments.
+MAATRA adheres to the **Swiss Medical Precision** aesthetic, inspired by modern clinical leaders (One Medical, Apple Health). It replaces AI cliches (dark violet glows, neon rings) with warm, organic, authoritative healthcare design tokens.
 
 ### Color Tokens
 
 ```text
 Token Name                Hex Code     Semantic Purpose
 -----------------------   ----------   -------------------------------------------
-Void Midnight Slate       #0B0F19      Scaffold and primary background
-Obsidian Card Surface     #111827      Elevated card and bottom sheet background
-Deep Amethyst             #6D28D9      Primary gradient start and container accent
-Royal Amethyst            #8B5CF6      Primary brand accent, focus states, CTAs
-Electric Lilac            #A78BFA      Secondary iconography, highlights, labels
-Pastel Amethyst           #C4B5FD      Subtle badge fills and secondary text
-Emerald Confirmation      #10B981      Active states, verified badges, safe vitals
-Amber Warning             #F59E0B      Pending verification, moderate triage flags
-Crimson Escalation        #EF4444      Critical vitals alerts, delete confirmations
-Crisp Ivory               #F9FAFB      Primary typography and header text
-Slate Lavender            #9CA3AF      Secondary typography, hints, subtitles
+Warm Ivory Canvas         #FAF8F5      Primary scaffold background, calm organic feel
+Porcelain Card Surface    #FFFFFF      Elevated clinical cards, modals, sheets
+Subtle Inset Wash         #F3EFEA      Input fields, inset backgrounds, secondary pills
+Hairline Divider Border   #E8E2D8      1px clean hairline border, restrained separation
+Brand Medical Emerald     #0D483A      Primary brand color, authoritative clinical trust
+Brand Sage                #2E6555      Secondary clinical action and category badges
+Brand Sage Wash           #EBF3F0      Soft badge fill and indicator pill background
+Charcoal Ink Typography   #1B2421      Primary headline and body text, deep readability
+Muted Slate Sage          #56635F      Secondary copy, subtitles, metadata
+Quiet Gray                #8A9793      Timestamps, captions, subtle form labels
+Healthy Vitals Green      #1B7A58      Normal clinical observation readings
+Warning Amber             #B46A10      Attention required, trimester badge, borderline
+Medical Terracotta Alert  #C53030      Critical clinical alerts, emergency escalation
 ```
 
 ### Typography Hierarchy
@@ -151,10 +160,10 @@ Slate Lavender            #9CA3AF      Secondary typography, hints, subtitles
 
 [ DOCTOR / ASHA WORKER ]
     |
-    +---> First Login -> Profile Onboarding Screen
+    +---> First Login -> Mandatory Profile Onboarding Screen
     |        (Submits: Name, Age, Gender, Phone, License / Locality)
     |
-    +---> Subsequent Logins -> Clinical Workspace
+    +---> Subsequent Logins -> Dedicated Clinical Workspace
              Doctor:
                - Inspects dynamic Patient Registry
                - Inspects ASHA Worker Directory
@@ -166,22 +175,67 @@ Slate Lavender            #9CA3AF      Secondary typography, hints, subtitles
 
 [ PATIENT ]
     |
-    +---> Register -> 6-Digit Email Verification (OTP)
-    +---> Verified Login -> MAATRA Dashboard
-             - Views live health metrics and records
-             - Accesses MAATRA Clinical AI Assistant
+    +---> Native Google Sign-In OR Email Register + Out-of-Band OTP
+    +---> Verified Login -> MAATRA Patient Dashboard
+             - Views live maternal records (gestational age, trimester, EDD)
+             - Views clinical vital observation history
+             - Views assigned ASHA field health worker contact card
+             - Interacts with Anu Clinical AI Companion
 ```
 
 ---
 
-## 7. Directory Structure
+## 7. Complete Changelog and System Update History
+
+All functional, security, and visual updates implemented across the platform to date:
+
+### Version 1.0.0 — Foundation, Cloud Architecture, and Rebranding
+- **Cloud Infrastructure**: Deployed FastAPI backend and PostgreSQL database to Render production environment (`https://pitpulse-backend.onrender.com`).
+- **Brand Transition**: Replaced legacy name PitPulse with **MAATRA** across application manifests, package identifiers, and UI headers.
+- **Relational Schemas**: Created SQLAlchemy models for users, patient profiles, maternal health records, vitals observations, and field visit logs.
+- **Admin Seeding**: Implemented automated startup seeder creating master administrator credentials (`admin123@gmail.com`).
+
+### Version 1.0.1 — Clinical Continuum and Care Mapping
+- **Doctor Care Mapping**: Built Doctor Dashboard enabling medical officers to review unregistered patients and assign them directly to field ASHA workers.
+- **ASHA Field Workflows**: Implemented home visit logging with offline mutation queues and local SQLite synchronization.
+- **Role Onboarding**: Added mandatory first-login profile onboarding intercepts for provisioned Doctors and ASHA workers.
+
+### Version 1.0.2 — Intelligent Clinical Assistant & RAG Engine
+- **Deprecation of Static Decision Trees**: Permanently deleted legacy hardcoded pregnancy trees (`pregnancy_assistant_service.dart`).
+- **Multi-Model AI Service**: Integrated Google Gemini 1.5 Flash / Flash-Lite / 2.0 with fallback failover to xAI Grok.
+- **Context-Aware Grounding**: Configured multi-tool agentic RAG that binds user prompts to actual database health records (gestational age, maternal blood pressure, hemoglobin, fetal heart rate).
+- **Trilingual Support**: Added natural language processing for English, Tamil, and Tanglish health conversations.
+- **Clinical Safety Guardrails**: Built automated clinical escalation triggers identifying dangerous symptoms (preeclampsia, severe bleeding, persistent high fever).
+
+### Version 1.0.3 — Authentication Hardening and Google OAuth
+- **Real SMTP OTP Verification**: Wired genuine 6-digit verification code generation delivered directly to the user's inbox via SMTP.
+- **Security Elimination of Dev Code Leakage**: Completely removed `dev_verification_code` from backend API responses and purged all on-screen OTP banners/autofills from mobile screens.
+- **Native Google Sign-In**: Integrated Google OAuth 2.0 (`google_sign_in`) with Web client ID backend validation via `/api/v1/auth/google-login`.
+- **Persistent Sessions**: Implemented auto-login via encrypted token storage, seamlessly bypassing splash/login on subsequent app launches.
+- **Account Management**: Built Profile Settings screen featuring account details, live server connectivity indicators, and secure sign-out.
+
+### Version 1.0.4 — System Versioning and Logo Reveal Animation
+- **In-App Version Checker**: Created `/api/v1/system/app-version` endpoint and mobile version checking service for over-the-air update notifications.
+- **Cinematic Logo Reveal**: Designed and implemented `MaatraLogoReveal`, a 3.2-second geometric motion sequence featuring 3-ring circular convergence, center symbol lock, and smooth wordmark emergence.
+- **Anu 3D Character Avatar**: Integrated the uploaded high-fidelity 3D character portrait (`anu_avatar.png`) across dashboard hero cards, chat headers, and conversation responses.
+
+### Version 1.0.5 — Swiss Medical Precision Frontend Overhaul
+- **Complete Visual Overhaul**: Fully eliminated dark cyberpunk palettes and neon AI glows.
+- **Organic Warm Canvas**: Migrated backgrounds to Warm Ivory (`#FAF8F5`) and cards to Pure Porcelain (`#FFFFFF`) with 1px hairline dividers (`#E8E2D8`).
+- **Authoritative Palette**: Established Medical Forest Emerald (`#0D483A`), Clinical Sage (`#2E6555`), and Charcoal Ink typography (`#1B2421`).
+- **Dashboard & Chat Refinement**: Redesigned Patient Dashboard cards, Maternal Health sections, and Anu AI Chat bubbles into clean, high-end clinical interfaces.
+- **Quality Assurance**: Maintained 0 errors in `flutter analyze`, 100% test suite pass rate, and successful release APK compilation (`app-release.apk`, 53.7 MB).
+
+---
+
+## 8. Directory Structure
 
 ```text
 pitpulse/
 ├── mobile/
 │   ├── android/                        # Native Android Gradle configuration
 │   ├── assets/
-│   │   └── images/                     # Production brand iconography
+│   │   └── images/                     # Brand emblem, wordmark, and Anu character avatar
 │   ├── lib/
 │   │   ├── app/
 │   │   │   └── app.dart                # MaterialApp configuration, routes, theme
@@ -190,12 +244,12 @@ pitpulse/
 │   │   │   ├── network/                # ApiClient, interceptors, connectivity
 │   │   │   ├── storage/                # SecureStorageService and SQLite database
 │   │   │   └── theme/
-│   │   │       └── maatra_theme.dart   # Royal Amethyst theme tokens & styles
+│   │   │       └── maatra_theme.dart   # Swiss Medical Precision design tokens
 │   │   └── features/
 │   │       ├── admin/                  # Provider provisioning and lifecycle screens
 │   │       ├── asha/                   # Field visit logs, patient triage, offline queue
-│   │       ├── auth/                   # Login, register, OTP verification, onboarding
-│   │       ├── common/                 # Signature ribbon animation and shared widgets
+│   │       ├── auth/                   # Login, register, Google auth, OTP verification
+│   │       ├── common/                 # Cinematic logo reveal, profile settings, widgets
 │   │       ├── doctor/                 # Patient registry, ASHA directory, care mapping
 │   │       ├── patient/                # Health record views and patient profile
 │   │       └── patient_ai/             # Gemini/Grok AI chat, safety triage, audio service
@@ -218,24 +272,25 @@ pitpulse/
 │   ├── requirements.txt                # Python package dependencies
 │   └── .env.example                    # Environment variable template
 │
-├── docs/                               # Architecture blueprints and system contracts
-│   ├── ARCHITECTURE.md
-│   └── DEVELOPMENT_RULES.md
 └── README.md                           # Master documentation
 ```
 
 ---
 
-## 8. API Endpoints and Data Contracts
+## 9. API Endpoints and Data Contracts
 
-### Authentication and Onboarding
+### Authentication and Identity
 - `POST /api/v1/auth/register` : Patient registration with automatic OTP generation.
 - `POST /api/v1/auth/verify-code` : Validates 6-digit email OTP and issues JWT tokens.
 - `POST /api/v1/auth/resend-code` : Dispatches a fresh 6-digit OTP code with cooldown check.
+- `POST /api/v1/auth/google-login` : Verifies native Google ID token and returns session tokens.
 - `POST /api/v1/auth/login` : Authenticates user credentials across all roles.
 - `POST /api/v1/auth/refresh` : Exchanges valid refresh token for a new access token.
 - `POST /api/v1/auth/complete-profile` : Saves practitioner personal onboarding details.
 - `GET /api/v1/auth/me` : Returns authenticated user profile including verification status.
+
+### System and Versioning
+- `GET /api/v1/system/app-version` : Returns current minimum and recommended app versions with download URLs.
 
 ### Provider Administration
 - `POST /api/v1/admin/users/doctors` : Provisions a doctor account with temporary credentials.
@@ -252,7 +307,7 @@ pitpulse/
 
 ---
 
-## 9. Environment Setup and Deployment
+## 10. Environment Setup and Deployment
 
 ### Prerequisites
 - Python 3.11+
@@ -309,11 +364,11 @@ flutter build apk --release
 
 ---
 
-## 10. Testing and Verification Standards
+## 11. Testing and Verification Standards
 
 MAATRA maintains rigorous continuous integration standards across both tiers:
 
-- **Static Analysis**: The Flutter codebase must maintain zero errors and zero warnings (`flutter analyze` returns code 0).
+- **Static Analysis**: The Flutter codebase strictly enforces zero errors and zero warnings (`flutter analyze` returns code 0).
 - **Unit and Widget Testing**: Automated suites validate the authentication state machine, OTP input behaviors, login validation states, and grounded AI responses.
 - **Integration Validation**: Automated tests confirm end-to-end flows from administrative account provisioning through role onboarding and clinical assignments.
 - **Offline Integrity**: Local mutation queues guarantee that updates performed in low-connectivity conditions synchronize safely without duplicate records once connectivity is restored.
